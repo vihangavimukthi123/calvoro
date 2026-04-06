@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script>
+        (function () {
+            if (typeof window.CalvoroAPIBase !== 'undefined') return;
+            try {
+                var port = (window.location.port || '');
+                var host = window.location.hostname || 'localhost';
+                var protocol = window.location.protocol || 'http:';
+                if (protocol === 'file:') window.CalvoroAPIBase = 'http://localhost:3000';
+                else if (port !== '3000') window.CalvoroAPIBase = protocol + '//' + host + ':3000';
+                else window.CalvoroAPIBase = '';
+            } catch (e) { window.CalvoroAPIBase = ''; }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html" class="active">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Products</h1>
+                <button class="btn-primary" onclick="showAddProductModal()">+ Add Product</button>
+            </header>
+
+            <div class="content">
+                <!-- Filters -->
+                <div class="filters">
+                    <input type="search" id="searchProducts" placeholder="Search products..." class="search-input">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+
+                <!-- Products Table -->
+                <div class="card">
+                    <div class="table-container">
+                        <table id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Product</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="productName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Category (collection)</label>
+                        <select id="productCategory">
+                            <option value="">None</option>
+                        </select>
+                        <small>Men / Women – used for collection page (Men, Women). Gifts are on the Gift Vouchers page.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Main category (sidebar filter on Men / Women only)</label>
+                        <select id="productType">
+                            <option value="">— None —</option>
+                            <option value="Tanks">Tanks</option>
+                            <option value="T-Shirts">T-Shirts</option>
+                            <option value="Shorts">Shorts</option>
+                            <option value="Hoodies">Hoodies</option>
+                            <option value="Sports Bras">Sports Bras</option>
+                            <option value="Leggings">Leggings</option>
+                            <option value="Tops">Tops</option>
+                        </select>
+                        <small>Shows in sidebar on Men’s and Women’s collection pages. Gift products are managed separately.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Fit</label>
+                        <select id="productFit">
+                            <option value="">— Select —</option>
+                            <option value="Fitted">Fitted</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Oversize">Oversize</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="productDescription" rows="4"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price (LKR) *</label>
+                        <input type="number" id="productPrice" step="0.01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sale Price (LKR)</label>
+                        <input type="number" id="productSalePrice" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock *</label>
+                        <input type="number" id="productStock" value="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Product images (upload or URL)</label>
+                    <p style="font-size:12px;color:#666;margin-bottom:6px;">Each image can have an optional hover video (plays on product page when hovering).</p>
+                    <div id="productImagesList" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;"></div>
+                    <input type="file" id="productImageFile" accept="image/*" style="display:none;">
+                    <button type="button" class="btn-sm" onclick="document.getElementById('productImageFile').click()">Upload image locally</button>
+                    <span style="margin-left:8px;font-size:12px;color:#666;">or add URL below</span>
+                    <input type="text" id="productImageUrl" placeholder="Or paste image URL" style="width:100%;margin-top:6px;">
+                    <button type="button" class="btn-sm" onclick="addProductImageFromUrl()" style="margin-top:4px;">Add URL to list</button>
+                </div>
+
+                <div class="form-group product-form-section">
+                    <label class="section-label">Colors</label>
+                    <p class="section-hint">Click to add; type to add custom. Same names for color images below.</p>
+                    <div class="color-chips" id="colorChips">
+                        <button type="button" class="chip" data-value="Black">Black</button>
+                        <button type="button" class="chip" data-value="White">White</button>
+                        <button type="button" class="chip" data-value="Grey">Grey</button>
+                        <button type="button" class="chip" data-value="Blue">Blue</button>
+                        <button type="button" class="chip" data-value="Navy">Navy</button>
+                        <button type="button" class="chip" data-value="Red">Red</button>
+                        <button type="button" class="chip" data-value="Pink">Pink</button>
+                        <button type="button" class="chip" data-value="Brown">Brown</button>
+                        <button type="button" class="chip" data-value="Green">Green</button>
+                        <button type="button" class="chip" data-value="Maroon">Maroon</button>
+                    </div>
+                    <input type="text" id="productColorsInput" placeholder="Or type custom (e.g. Olive, Beige) and press Enter" class="chip-input">
+                    <input type="hidden" id="productColors">
+
+                </div>
+
+                <div class="form-group">
+                    <label>Image per color (optional – main image changes when customer selects color)</label>
+                    <div id="colorImagesContainer"></div>
+                    <button type="button" class="btn-sm" onclick="addColorImageRow()" style="margin-top:6px;">+ Add color image</button>
+                    <p style="font-size:12px;color:#666;">Upload an image for each color (same names as Colors). Optional: upload a short video (mp4/webm) per variant for hover preview on the product page.</p>
+                </div>
+
+                <div class="form-group product-form-section">
+                    <label class="section-label">Sizes</label>
+                    <p class="section-hint">Click to add; type to add custom.</p>
+                    <div class="size-chips" id="sizeChips">
+                        <button type="button" class="chip" data-value="XS">XS</button>
+                        <button type="button" class="chip" data-value="S">S</button>
+                        <button type="button" class="chip" data-value="M">M</button>
+                        <button type="button" class="chip" data-value="L">L</button>
+                        <button type="button" class="chip" data-value="XL">XL</button>
+                        <button type="button" class="chip" data-value="XXL">XXL</button>
+                    </div>
+                    <input type="text" id="productSizesInput" placeholder="Or type custom size and press Enter" class="chip-input">
+                    <input type="hidden" id="productSizes">
+                </div>
+
+                <div class="form-group product-form-section">
+                    <label class="section-label">Size Guide Image</label>
+                    <div style="display:flex; gap: 12px; align-items:flex-start;">
+                        <div id="sizeGuidePreviewBox" style="width:100px;height:100px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;background:#fafafa;overflow:hidden;">
+                            <span style="font-size:10px;color:#999;text-align:center;">No<br>Image</span>
+                        </div>
+                        <div style="flex:1;">
+                            <input type="hidden" id="productSizeGuideUrl">
+                            <input type="file" id="productSizeGuideFile" accept="image/*" style="display:none;" onchange="uploadSizeGuide(this)">
+                            <button type="button" class="btn-sm" onclick="document.getElementById('productSizeGuideFile').click()">Upload Size Guide</button>
+                            <button type="button" class="btn-sm" style="margin-left:8px;" onclick="removeSizeGuide()">Remove</button>
+                            <p style="font-size:12px;color:#666;margin-top:6px;">Shown dynamically when a user clicks 'Size Guide' on the frontend product page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="productFeatured">
+                        Featured Product
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="productStatus">
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        checkAuth();
+
+        var products = [];
+        var categories = [];
+        function adminApiBase() {
+            if (typeof window.CalvoroAPIBase !== 'undefined' && window.CalvoroAPIBase !== null && String(window.CalvoroAPIBase).trim() !== '') {
+                return String(window.CalvoroAPIBase).replace(/\/$/, '');
+            }
+            return window.location.origin || '';
+        }
+        var apiBase = adminApiBase();
+
+        // Load products: admin endpoint returns ALL products + live stock (requires admin session cookie)
+        async function loadProducts() {
+            var tbody = document.querySelector('#productsTable tbody');
+            try {
+                var res = await fetch(adminApiBase() + '/api/admin/products', { credentials: 'include' });
+                if (res.status === 401) {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Session expired. <a href="index.html">Log in</a> again.</td></tr>';
+                    return;
+                }
+                var data = await res.json();
+                products = Array.isArray(data) ? data : [];
+                renderProducts();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Could not load products. Open <a href="' + adminApiBase() + '/admin/products.html">' + adminApiBase() + '/admin/products.html</a> and ensure the backend is running.</td></tr>';
+            }
+        }
+
+        async function loadCategories() {
+            var categoryFilter = document.getElementById('categoryFilter');
+            var productCategory = document.getElementById('productCategory');
+            try {
+                var res = await fetch(apiBase + '/api/categories');
+                if (!res.ok) throw new Error(res.status);
+                var data = await res.json();
+                categories = Array.isArray(data) ? data : [];
+                categories = categories.filter(function(cat) {
+                    var slug = (cat && cat.slug ? String(cat.slug) : '').toLowerCase();
+                    var name = (cat && cat.name ? String(cat.name) : '').toLowerCase();
+                    return slug !== 'gifts' && name !== 'gifts' && name !== 'gift vouchers';
+                });
+
+                categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                productCategory.innerHTML = '<option value="">None</option>';
+                categories.forEach(function(cat) {
+                    categoryFilter.add(new Option(cat.name, cat.id));
+                    productCategory.add(new Option(cat.name, cat.id));
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                if (categoryFilter) categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                if (productCategory) productCategory.innerHTML = '<option value="">None</option><option value="" disabled>— Load failed —</option>';
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.querySelector('#productsTable tbody');
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No products found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = products.map(product => `
+                <tr>
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td>${product.category_name || '-'}</td>
+                    <td>LKR ${product.price.toLocaleString()}</td>
+                    <td>
+                        <strong>${product.stock != null ? product.stock : '—'}</strong>
+                        ${Number(product.stock) <= 0 ? '<span class="badge" style="margin-left:8px;background:#7f1d1d;color:#fff;">Sold out</span>' : ''}
+                    </td>
+                    <td><span class="badge badge-${product.status}">${product.status}</span></td>
+                    <td>
+                        <button class="btn-sm" onclick="editProduct(${product.id})">Edit</button>
+                        <button class="btn-sm btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        let productImages = [];
+
+        function renderProductImages() {
+            const list = document.getElementById('productImagesList');
+            list.innerHTML = productImages.map((item, i) => {
+                const url = typeof item === 'string' ? item : (item.url || '');
+                const video = typeof item === 'string' ? '' : (item.video || '');
+                const vidPreview = video ? '<video src="' + (video || '').replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>' : '<span style="font-size:10px;color:#999;">No video</span>';
+                return '<div class="main-image-row" data-index="' + i + '" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:1px solid #ddd;border-radius:6px;padding:6px;background:#fafafa;">' +
+                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                    '<img src="' + (url || '').replace(/"/g, '&quot;') + '" alt="" style="width:56px;height:56px;object-fit:cover;border:1px solid #ddd;">' +
+                    '<div style="width:56px;height:42px;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f0f0f0;font-size:9px;color:#999;display:flex;align-items:center;justify-content:center;">' + vidPreview + '</div>' +
+                    '<button type="button" class="btn-sm" style="padding:2px 6px;" onclick="productImages.splice(' + i + ',1);renderProductImages();">×</button>' +
+                    '</div>' +
+                    '<input type="hidden" class="main-img-url" value="' + (url || '').replace(/"/g, '&quot;') + '">' +
+                    '<input type="hidden" class="main-img-video" value="' + (video || '').replace(/"/g, '&quot;') + '">' +
+                    '<input type="file" accept="video/mp4,video/webm,.mp4,.webm" class="main-img-video-file" style="display:none;">' +
+                    '<button type="button" class="btn-sm" onclick="uploadMainImageVideo(' + i + ')">+ Hover video</button>' +
+                    '</div>';
+            }).join('');
+        }
+
+        document.getElementById('productImageFile').addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const res = await fetch((apiBase || '') + '/api/upload', { method: 'POST', body: fd, credentials: 'include' });
+                const data = await res.json();
+                if (data.url) { productImages.push({ url: data.url, video: '' }); renderProductImages(); }
+                else alert(data.error || 'Upload failed');
+            } catch (e) { alert('Upload failed'); }
+            this.value = '';
+        });
+
+        function addProductImageFromUrl() {
+            const url = document.getElementById('productImageUrl').value.trim();
+            if (url) { productImages.push({ url: url, video: '' }); renderProductImages(); document.getElementById('productImageUrl').value = ''; }
+        }
+
+        async function uploadMainImageVideo(index) {
+            const row = document.querySelector('.main-image-row[data-index="' + index + '"]');
+            if (!row) return;
+            const fileInput = row.querySelector('.main-img-video-file');
+            fileInput.onchange = async function() {
+                const file = this.files[0];
+                if (!file) return;
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const url = (apiBase || window.location.origin || '') + '/api/upload';
+                    const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+                    let data;
+                    try { data = await res.json(); } catch (_) { data = {}; }
+                    if (res.ok && data.url) {
+                        productImages[index] = productImages[index] && typeof productImages[index] === 'object' ? { url: productImages[index].url, video: data.url } : { url: productImages[index] || '', video: data.url };
+                        renderProductImages();
+                    } else {
+                        alert(data.error || res.statusText || 'Upload failed (mp4, webm, max 80MB)');
+                    }
+                } catch (e) { alert('Upload failed: ' + (e.message || 'network error')); }
+                this.value = '';
+            };
+            fileInput.click();
+        }
+
+        function addColorImageRow(colorName, imageUrl, videoUrl) {
+            const container = document.getElementById('colorImagesContainer');
+            const row = document.createElement('div');
+            row.className = 'color-image-row';
+            row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;';
+            const vidPreview = videoUrl ? '<video src="' + (videoUrl || '').replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>' : '<span style="font-size:10px;color:#999;">No video</span>';
+            row.innerHTML = `
+                <input type="text" placeholder="Color name" class="color-name" value="${(colorName || '').replace(/"/g, '&quot;')}" style="flex:1;min-width:100px;">
+                <input type="hidden" class="color-url" value="${(imageUrl || '').replace(/"/g, '&quot;')}">
+                <div class="color-preview" style="width:48px;height:48px;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">${imageUrl ? '<img src="' + (imageUrl || '').replace(/"/g, '&quot;') + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : 'No img'}</div>
+                <input type="file" accept="image/*" class="color-file" style="display:none;">
+                <button type="button" class="btn-sm" onclick="uploadColorImage(this)">Upload img</button>
+                <input type="hidden" class="color-video-url" value="${(videoUrl || '').replace(/"/g, '&quot;')}">
+                <div class="color-video-preview" style="width:64px;height:48px;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">${vidPreview}</div>
+                <input type="file" accept="video/mp4,video/webm,.mp4,.webm" class="color-video-file" style="display:none;">
+                <button type="button" class="btn-sm" onclick="uploadColorVideo(this)">Upload video</button>
+                <button type="button" class="btn-sm" onclick="this.closest('.color-image-row').remove()">−</button>
+            `;
+            container.appendChild(row);
+        }
+
+        async function uploadSizeGuide(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const url = (apiBase || window.location.origin || '') + '/api/upload';
+                const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+                const data = await res.json().catch(()=>({}));
+                if (data.url) {
+                    document.getElementById('productSizeGuideUrl').value = data.url;
+                    document.getElementById('sizeGuidePreviewBox').innerHTML = '<img src="' + data.url.replace(/"/g, '&quot;') + '" alt="Size Guide" style="width:100%;height:100%;object-fit:cover;">';
+                } else alert(data.error || 'Upload failed');
+            } catch (e) { alert('Upload failed'); }
+            input.value = '';
+        }
+
+        function removeSizeGuide() {
+            document.getElementById('productSizeGuideUrl').value = '';
+            document.getElementById('sizeGuidePreviewBox').innerHTML = '<span style="font-size:10px;color:#999;text-align:center;">No<br>Image</span>';
+        }
+
+        async function uploadColorImage(btn) {
+            const row = btn.closest('.color-image-row');
+            const fileInput = row.querySelector('.color-file');
+            fileInput.onchange = async function() {
+                const file = this.files[0];
+                if (!file) return;
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const res = await fetch((apiBase || '') + '/api/upload', { method: 'POST', body: fd, credentials: 'include' });
+                    const data = await res.json();
+                    if (data.url) {
+                        row.querySelector('.color-url').value = data.url;
+                        var prev = row.querySelector('.color-preview');
+                        prev.innerHTML = '<img src="' + data.url.replace(/"/g, '&quot;') + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+                    } else alert(data.error || 'Upload failed');
+                } catch (e) { alert('Upload failed'); }
+                this.value = '';
+            };
+            fileInput.click();
+        }
+
+        async function uploadColorVideo(btn) {
+            const row = btn.closest('.color-image-row');
+            const fileInput = row.querySelector('.color-video-file');
+            fileInput.onchange = async function() {
+                const file = this.files[0];
+                if (!file) return;
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const url = (apiBase || window.location.origin || '') + '/api/upload';
+                    const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+                    let data;
+                    try { data = await res.json(); } catch (_) { data = {}; }
+                    if (res.ok && data.url) {
+                        row.querySelector('.color-video-url').value = data.url;
+                        var prev = row.querySelector('.color-video-preview');
+                        prev.innerHTML = '<video src="' + data.url.replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+                    } else {
+                        alert(data.error || res.statusText || 'Upload failed (check file size & format: mp4, webm)');
+                    }
+                } catch (e) {
+                    alert('Upload failed: ' + (e.message || 'network error'));
+                }
+                this.value = '';
+            };
+            fileInput.click();
+        }
+
+        function getSelectedColors() {
+            var list = [];
+            document.querySelectorAll('#colorChips .chip.selected').forEach(function(el) { list.push(el.getAttribute('data-value')); });
+            var custom = (document.getElementById('productColorsInput').value || '').split(/[,\n]/).map(function(s) { return s.trim(); }).filter(Boolean);
+            custom.forEach(function(c) { if (list.indexOf(c) === -1) list.push(c); });
+            return list;
+        }
+        function getSelectedSizes() {
+            var list = [];
+            document.querySelectorAll('#sizeChips .chip.selected').forEach(function(el) { list.push(el.getAttribute('data-value')); });
+            var custom = (document.getElementById('productSizesInput').value || '').split(/[,\n]/).map(function(s) { return s.trim(); }).filter(Boolean);
+            custom.forEach(function(c) { if (list.indexOf(c) === -1) list.push(c); });
+            return list;
+        }
+        function syncColorsToHidden() { document.getElementById('productColors').value = getSelectedColors().join(', '); }
+        function syncSizesToHidden() { document.getElementById('productSizes').value = getSelectedSizes().join(', '); }
+        function initColorSizeChips() {
+            document.querySelectorAll('#colorChips .chip').forEach(function(btn) {
+                btn.onclick = function() {
+                    this.classList.toggle('selected');
+                    syncColorsToHidden();
+                };
+            });
+            document.querySelectorAll('#sizeChips .chip').forEach(function(btn) {
+                btn.onclick = function() {
+                    this.classList.toggle('selected');
+                    syncSizesToHidden();
+                };
+            });
+            document.getElementById('productColorsInput').onkeydown = function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); var v = this.value.trim(); if (v) { getSelectedColors(); syncColorsToHidden(); this.value = ''; } }
+            };
+            document.getElementById('productSizesInput').onkeydown = function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); var v = this.value.trim(); if (v) { getSelectedSizes(); syncSizesToHidden(); this.value = ''; } }
+            };
+        }
+        function showAddProductModal() {
+            document.getElementById('modalTitle').textContent = 'Add Product';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            productImages = [];
+            renderProductImages();
+            document.getElementById('colorImagesContainer').innerHTML = '';
+            addColorImageRow();
+            document.querySelectorAll('#colorChips .chip, #sizeChips .chip').forEach(function(el) { el.classList.remove('selected'); });
+            document.getElementById('productColorsInput').value = '';
+            document.getElementById('productSizesInput').value = '';
+            syncColorsToHidden();
+            syncSizesToHidden();
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            document.getElementById('modalTitle').textContent = 'Edit Product';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCategory').value = product.category_id || '';
+            document.getElementById('productType').value = product.product_type || '';
+            document.getElementById('productFit').value = product.fit || '';
+            var media = product.media || [];
+            var imageMedia = media.filter(function(m) { return m.type !== 'video'; });
+            if (imageMedia.length) {
+                productImages = imageMedia.map(function(m) { return { url: m.url || '', video: m.hover_video_url || '' }; });
+            } else {
+                var imgs = product.images && product.images.length ? product.images : [];
+                productImages = imgs.map(function(url) { return { url: url, video: '' }; });
+            }
+            renderProductImages();
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productSalePrice').value = product.sale_price || '';
+            document.getElementById('productStock').value = product.stock;
+            var colors = Array.isArray(product.colors) ? product.colors : (product.colors ? String(product.colors).split(',').map(function(c) { return c.trim(); }).filter(Boolean) : []);
+            var sizes = Array.isArray(product.sizes) ? product.sizes : (product.sizes ? String(product.sizes).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : []);
+            var presetColors = ['Black','White','Grey','Blue','Navy','Red','Pink','Brown','Green','Maroon'];
+            var presetSizes = ['XS','S','M','L','XL','XXL'];
+            document.querySelectorAll('#colorChips .chip').forEach(function(el) { el.classList.toggle('selected', colors.indexOf(el.getAttribute('data-value')) !== -1); });
+            document.getElementById('productColorsInput').value = colors.filter(function(c) { return presetColors.indexOf(c) === -1; }).join(', ');
+            document.querySelectorAll('#sizeChips .chip').forEach(function(el) { el.classList.toggle('selected', sizes.indexOf(el.getAttribute('data-value')) !== -1); });
+            document.getElementById('productSizesInput').value = sizes.filter(function(s) { return presetSizes.indexOf(s) === -1; }).join(', ');
+            syncColorsToHidden();
+            syncSizesToHidden();
+            document.getElementById('productFeatured').checked = product.featured;
+            document.getElementById('productStatus').value = product.status;
+            // Color images and optional videos
+            const container = document.getElementById('colorImagesContainer');
+            container.innerHTML = '';
+            const colorImages = product.color_images || {};
+            const colorVideos = product.color_videos || {};
+            const entries = Object.entries(colorImages);
+            if (entries.length === 0) addColorImageRow();
+            else entries.forEach(([color, url]) => { addColorImageRow(color, url, colorVideos[color] || ''); });
+
+            const sizeGuideUrl = product.size_guide_url || '';
+            document.getElementById('productSizeGuideUrl').value = sizeGuideUrl;
+            if (sizeGuideUrl) {
+                document.getElementById('sizeGuidePreviewBox').innerHTML = '<img src="' + sizeGuideUrl.replace(/"/g, '&quot;') + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+            } else {
+                document.getElementById('sizeGuidePreviewBox').innerHTML = '<span style="font-size:10px;color:#999;text-align:center;">No<br>Image</span>';
+            }
+
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+
+            try {
+                const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('Product deleted successfully');
+                    loadProducts();
+                } else {
+                    alert(data.error || 'Failed to delete product');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('productId').value;
+            const colors = getSelectedColors();
+            const sizes = getSelectedSizes();
+
+            const colorImages = {};
+            const colorVideos = {};
+            document.querySelectorAll('#colorImagesContainer .color-image-row').forEach(row => {
+                const name = row.querySelector('.color-name');
+                const urlEl = row.querySelector('.color-url');
+                const videoEl = row.querySelector('.color-video-url');
+                const nameVal = name ? name.value.trim() : '';
+                const urlVal = urlEl ? urlEl.value.trim() : '';
+                const videoVal = videoEl ? videoEl.value.trim() : '';
+                if (nameVal && urlVal) colorImages[nameVal] = urlVal;
+                if (nameVal && videoVal) colorVideos[nameVal] = videoVal;
+            });
+
+            var imagesFlat = productImages.map(function(item) { return typeof item === 'string' ? item : (item.url || ''); });
+            var mediaForMain = productImages.map(function(item) {
+                var url = typeof item === 'string' ? item : (item.url || '');
+                var video = typeof item === 'string' ? '' : (item.video || '');
+                return { type: 'image', url: url, hover_video_url: video || undefined };
+            });
+
+            const productData = {
+                name: document.getElementById('productName').value,
+                category_id: document.getElementById('productCategory').value || null,
+                product_type: document.getElementById('productType').value || null,
+                fit: document.getElementById('productFit').value || null,
+                description: document.getElementById('productDescription').value,
+                price: document.getElementById('productPrice').value,
+                sale_price: document.getElementById('productSalePrice').value || null,
+                stock: document.getElementById('productStock').value,
+                colors,
+                sizes,
+                images: imagesFlat.length ? imagesFlat : undefined,
+                media: mediaForMain.length ? mediaForMain : undefined,
+                color_images: Object.keys(colorImages).length ? colorImages : undefined,
+                color_videos: Object.keys(colorVideos).length ? colorVideos : undefined,
+                size_guide_url: document.getElementById('productSizeGuideUrl').value || undefined,
+                featured: document.getElementById('productFeatured').checked,
+                status: document.getElementById('productStatus').value
+            };
+
+            try {
+                const url = (apiBase || '') + (id ? '/api/products/' + id : '/api/products');
+                const method = id ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(id ? 'Product updated!' : 'Product created!');
+                    closeModal();
+                    loadProducts();
+                } else {
+                    alert(data.error || 'Failed to save product');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        });
+
+        // Search and filter
+        document.getElementById('searchProducts').addEventListener('input', renderProducts);
+        document.getElementById('categoryFilter').addEventListener('change', renderProducts);
+        document.getElementById('statusFilter').addEventListener('change', renderProducts);
+
+        initColorSizeChips();
+        loadProducts();
+        loadCategories();
+    </script>
+</body>
+
+</html>

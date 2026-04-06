@@ -1,0 +1,2 @@
+-- Run this if you use MySQL and products table already exists without color_images column:
+-- ALTER TABLE products ADD COLUMN color_images JSON AFTER images;

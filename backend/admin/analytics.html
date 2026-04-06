@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .analytics-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .analytics-kpi .stat-card { min-width: 0; }
+        .analytics-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .analytics-toolbar label { font-size: 13px; color: var(--admin-muted, #718096); }
+        .analytics-toolbar input[type="date"] { padding: 8px 12px; border: 1px solid var(--admin-border, #e2e8f0); border-radius: 6px; }
+        .analytics-toolbar .btn-export { margin-left: auto; }
+        .analytics-section { margin-bottom: 32px; }
+        .analytics-section h2 { font-size: 18px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--admin-border, #e2e8f0); }
+        .chart-wrap { position: relative; height: 280px; margin-bottom: 16px; }
+        .chart-wrap canvas { max-width: 100%; }
+        .analytics-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+        .analytics-table { font-size: 13px; }
+        .analytics-table th, .analytics-table td { padding: 10px 12px; }
+        .theme-toggle-btn { background: var(--admin-card-bg); border: 1px solid var(--admin-border); color: var(--admin-text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .theme-toggle-btn:hover { opacity: 0.9; }
+        [data-theme="dark"] .stat-card, [data-theme="dark"] .card { background: var(--admin-card-bg); border-color: var(--admin-border); }
+        [data-theme="dark"] .stat-info p, [data-theme="dark"] .analytics-toolbar label { color: var(--admin-muted); }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html" class="active">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Analytics & Reports</h1>
+                <div class="user-info">
+                    <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle theme">🌓 Dark</button>
+                    <span id="adminUser">Admin</span>
+                </div>
+            </header>
+            <div class="dashboard content">
+                <div class="analytics-toolbar">
+                    <label>From</label>
+                    <input type="date" id="dateFrom">
+                    <label>To</label>
+                    <input type="date" id="dateTo">
+                    <button type="button" class="btn-secondary" id="applyRange">Apply</button>
+                    <a href="#" class="btn-secondary btn-export" id="exportCsv">Export CSV</a>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="analytics-kpi" id="kpiRow">
+                    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-info"><h3 id="kpiRevenue">—</h3><p>Revenue (period)</p></div></div>
+                    <div class="stat-card"><div class="stat-icon">🛒</div><div class="stat-info"><h3 id="kpiOrders">—</h3><p>Orders</p></div></div>
+                    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><h3 id="kpiAov">—</h3><p>AOV</p></div></div>
+                    <div class="stat-card"><div class="stat-icon">👁</div><div class="stat-info"><h3 id="kpiVisitors">—</h3><p>Live visitors</p></div></div>
+                </div>
+
+                <!-- Sales -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>Sales Analytics</h2></div>
+                    <div class="analytics-grid-2">
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Monthly trend</h3><div class="chart-wrap"><canvas id="chartMonthly"></canvas></div></div>
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Annual comparison</h3><div class="chart-wrap"><canvas id="chartAnnual"></canvas></div></div>
+                    </div>
+                    <div><h3 style="font-size:14px;margin-bottom:8px;">Revenue by category</h3><div class="chart-wrap"><canvas id="chartBreakdown"></canvas></div></div>
+                </section>
+
+                <!-- Product Performance -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>Product Performance</h2></div>
+                    <div class="analytics-grid-2">
+                        <div>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Top sold products</h3>
+                            <div class="table-container"><table class="analytics-table" id="tableTopSold"><thead><tr><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody><tr><td colspan="3">Loading...</td></tr></tbody></table></div>
+                        </div>
+                        <div>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Low stock alerts</h3>
+                            <div class="table-container"><table class="analytics-table" id="tableLowStock"><thead><tr><th>Product</th><th>Stock</th></tr></thead><tbody><tr><td colspan="2">Loading...</td></tr></tbody></table></div>
+                        </div>
+                    </div>
+                    <div><h3 style="font-size:14px;margin-bottom:8px;">Inventory value</h3><p id="inventoryValue">—</p></div>
+                </section>
+
+                <!-- Customer Analytics -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>Customer Analytics</h2></div>
+                    <div class="analytics-grid-2">
+                        <div><p><strong id="totalCustomers">—</strong> total customers</p><p id="newCustomers">—</p></div>
+                        <div>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Top customers (by spending)</h3>
+                            <div class="table-container"><table class="analytics-table" id="tableTopCustomers"><thead><tr><th>Customer</th><th>Orders</th><th>Spent</th></tr></thead><tbody><tr><td colspan="3">Loading...</td></tr></tbody></table></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- E-commerce Metrics -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>E-commerce Metrics</h2></div>
+                    <div class="analytics-grid-2">
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Orders by status</h3><div class="chart-wrap"><canvas id="chartOrdersStatus"></canvas></div></div>
+                        <div><p><strong id="refundRate">—</strong> refund rate</p><p id="aovDetail">—</p></div>
+                    </div>
+                </section>
+
+                <!-- Search & Behavior -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>Search & Behavior</h2></div>
+                    <div class="analytics-grid-2">
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Top search keywords</h3><div class="table-container"><table class="analytics-table" id="tableSearchTop"><thead><tr><th>Keyword</th><th>Count</th></tr></thead><tbody><tr><td colspan="2">Loading...</td></tr></tbody></table></div></div>
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">No-result searches</h3><div class="table-container"><table class="analytics-table" id="tableSearchNoResults"><thead><tr><th>Keyword</th><th>Count</th></tr></thead><tbody><tr><td colspan="2">Loading...</td></tr></tbody></table></div></div>
+                    </div>
+                </section>
+
+                <!-- Real-time -->
+                <section class="analytics-section card">
+                    <div class="card-header"><h2>Real-time</h2></div>
+                    <div class="analytics-grid-2">
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Recent orders</h3><div class="table-container"><table class="analytics-table" id="tableRecentOrders"><thead><tr><th>Order</th><th>Total</th><th>Status</th></tr></thead><tbody><tr><td colspan="3">Loading...</td></tr></tbody></table></div></div>
+                        <div><h3 style="font-size:14px;margin-bottom:8px;">Activity feed</h3><ul id="activityFeed" style="list-style:none;padding:0;margin:0;font-size:13px;"></ul></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="js/admin.js"></script>
+    <script src="js/analytics.js"></script>
+</body>
+</html>

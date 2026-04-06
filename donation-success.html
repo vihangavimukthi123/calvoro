@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Successful - CALVORO</title>
+    <script>(function(){var v=localStorage.getItem('calvoro_theme');var dark=v==='dark'||(!v&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();</script>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .donation-result { max-width: 760px; margin: 0 auto; padding: 64px 24px 80px; text-align:center; }
+        .donation-card { margin: 26px auto 0; max-width: 520px; padding: 24px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-card); }
+        .donation-card h2 { margin: 0 0 10px; font-size: 20px; }
+        .donation-muted { color: var(--color-text-muted); font-size: 13px; line-height: 1.5; }
+        .donation-kv { display:grid; gap:10px; margin-top:16px; text-align:left; }
+        .donation-kv div { display:flex; justify-content:space-between; gap:16px; font-size:14px; }
+        .donation-kv span:first-child { color: var(--color-text-muted); }
+        .donation-actions { margin-top: 20px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+        .btn { display:inline-block; padding: 12px 18px; border-radius: 12px; text-decoration:none; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; font-size:12px; }
+        .btn-primary { background: var(--color-btn-bg); color: var(--color-btn-text); }
+        .btn-secondary { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
+    </style>
+</head>
+<body>
+    <div class="promo">FREE SHIPPING ON ORDERS OVER LKR 15,000</div>
+    <header class="header">
+        <div class="container">
+            <div class="logo"><a href="index.html"><img src="logo.png" alt="CALVORO"></a></div>
+            <nav><a href="men.html">MEN</a><a href="women.html">WOMEN</a><a href="gifts.html">GIFT VOUCHERS</a></nav>
+            <div class="actions">
+                <a href="cart.html" class="cart-btn" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px;">
+                    <svg width="20" height="20"><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /><path d="M1 1h4l2 11h10l3-8H6" /></svg>
+                    <span class="badge" id="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="donation-result">
+        <h1>Thank you for your donation</h1>
+        <p class="donation-muted">Your payment was completed successfully via Stripe Checkout.</p>
+
+        <div class="donation-card" id="donationCard">
+            <h2>Donation details</h2>
+            <p class="donation-muted" id="donationStatus">Loading…</p>
+            <div class="donation-kv" id="donationKv" style="display:none;"></div>
+        </div>
+
+        <div class="donation-actions">
+            <a class="btn btn-primary" href="index.html">Back to home</a>
+            <a class="btn btn-secondary" href="return-exchange-policy.html">Support</a>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js?v=2"></script>
+    <script>
+        (function () {
+            var base = window.CalvoroAPIBase || '';
+            var params = new URLSearchParams(window.location.search);
+            var sessionId = params.get('session_id');
+            var statusEl = document.getElementById('donationStatus');
+            var kvEl = document.getElementById('donationKv');
+            if (!sessionId) {
+                statusEl.textContent = 'Missing Stripe session id.';
+                return;
+            }
+            fetch(base + '/api/donations/session/' + encodeURIComponent(sessionId)).then(function (r) {
+                return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+            }).then(function (x) {
+                if (!x.ok) throw new Error((x.d && x.d.error) ? x.d.error : 'Could not load donation.');
+                statusEl.textContent = 'Payment status: ' + (x.d.payment_status || 'paid');
+                kvEl.style.display = 'grid';
+                kvEl.innerHTML =
+                    '<div><span>Name</span><span>' + (x.d.name || '-') + '</span></div>' +
+                    '<div><span>Email</span><span>' + (x.d.email || '-') + '</span></div>' +
+                    '<div><span>Amount</span><span>' + (x.d.currency || 'LKR') + ' ' + (Number(x.d.amount || 0)).toLocaleString() + '</span></div>' +
+                    '<div><span>Date</span><span>' + (x.d.created_at ? new Date(x.d.created_at).toLocaleString() : '-') + '</span></div>';
+            }).catch(function (e) {
+                statusEl.textContent = e && e.message ? e.message : 'Could not load donation.';
+            });
+        })();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html" class="active">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Categories</h1>
+                <button class="btn-primary" onclick="showAddModal()">+ Add Category</button>
+            </header>
+
+            <div class="content">
+                <div class="card">
+                    <div class="table-container">
+                        <table id="categoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Slug</th>
+                                    <th>Products</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Category</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="categoryForm">
+                <input type="hidden" id="categoryId">
+
+                <div class="form-group">
+                    <label>Category Name *</label>
+                    <input type="text" id="categoryName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="categoryDescription" rows="3"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        checkAuth();
+
+        let categories = [];
+        let productCounts = {};
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                categories = await res.json();
+
+                // Load product counts
+                const productsRes = await fetch('/api/products?status=');
+                const products = await productsRes.json();
+
+                productCounts = {};
+                products.forEach(p => {
+                    if (p.category_id) {
+                        productCounts[p.category_id] = (productCounts[p.category_id] || 0) + 1;
+                    }
+                });
+
+                renderCategories();
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function renderCategories() {
+            const tbody = document.querySelector('#categoriesTable tbody');
+
+            if (categories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No categories found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td>${cat.id}</td>
+                    <td><strong>${cat.name}</strong></td>
+                    <td>${cat.slug}</td>
+                    <td>${productCounts[cat.id] || 0}</td>
+                    <td>${new Date(cat.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn-sm" onclick="editCategory(${cat.id})">Edit</button>
+                        <button class="btn-sm btn-danger" onclick="deleteCategory(${cat.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Category';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryModal').classList.add('active');
+        }
+
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;
+
+            document.getElementById('modalTitle').textContent = 'Edit Category';
+            document.getElementById('categoryId').value = category.id;
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryDescription').value = category.description || '';
+
+            document.getElementById('categoryModal').classList.add('active');
+        }
+
+        async function deleteCategory(id) {
+            const count = productCounts[id] || 0;
+            if (count > 0) {
+                if (!confirm(`This category has ${count} products. Delete anyway?`)) return;
+            } else {
+                if (!confirm('Are you sure you want to delete this category?')) return;
+            }
+
+            try {
+                const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('Category deleted successfully');
+                    loadCategories();
+                } else {
+                    alert(data.error || 'Failed to delete category');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+        }
+
+        document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('categoryId').value;
+            const categoryData = {
+                name: document.getElementById('categoryName').value,
+                description: document.getElementById('categoryDescription').value
+            };
+
+            try {
+                const url = id ? `/api/categories/${id}` : '/api/categories';
+                const method = id ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(categoryData)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(id ? 'Category updated!' : 'Category created!');
+                    closeModal();
+                    loadCategories();
+                } else {
+                    alert(data.error || 'Failed to save category');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        });
+
+        loadCategories();
+    </script>
+</body>
+
+</html>

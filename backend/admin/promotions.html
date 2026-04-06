@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promo Popup - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script>
+        (function () {
+            if (typeof window.CalvoroAPIBase !== 'undefined') return;
+            try {
+                var port = (window.location.port || '');
+                var host = window.location.hostname || 'localhost';
+                var protocol = window.location.protocol || 'http:';
+                if (protocol === 'file:') {
+                    window.CalvoroAPIBase = 'http://localhost:3000';
+                } else if (port !== '3000') {
+                    window.CalvoroAPIBase = protocol + '//' + host + ':3000';
+                } else {
+                    window.CalvoroAPIBase = '';
+                }
+            } catch (e) {
+                window.CalvoroAPIBase = '';
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="/admin/dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html" class="active">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Scroll promo popup</h1>
+                <div class="user-info">
+                    <span id="adminUser">Admin</span>
+                </div>
+            </header>
+
+            <div class="content">
+                <div class="card" style="padding:24px;">
+                    <p style="color:#666;font-size:13px;margin-bottom:20px;max-width:720px;">
+                        Bottom-right floating ad on the storefront. It appears after the visitor scrolls ~300px. Only one promotion can be <strong>active</strong> at a time; activating a row deactivates the others.
+                        Closing the ad is remembered for the browser session (<code>sessionStorage</code>).
+                    </p>
+
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Add promotion</h2>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newImage">Image</label>
+                            <input type="file" id="newImage" accept="image/jpeg,image/png,image/gif,image/webp">
+                        </div>
+                        <div class="form-group">
+                            <label for="newLink">Redirect URL</label>
+                            <input type="url" id="newLink" placeholder="https://example.com/sale or women.html">
+                        </div>
+                        <div class="form-group">
+                            <label style="display:flex;align-items:center;gap:8px;">
+                                <input type="checkbox" id="newActive">
+                                Set active (only one active)
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <button type="button" class="btn-primary" id="createBtn">Create</button>
+                        <span id="createStatus" style="font-size:13px;color:#666;"></span>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:24px;margin-top:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Existing promotions</h2>
+                    </div>
+                    <div id="listStatus" style="font-size:13px;color:#666;margin-bottom:12px;"></div>
+                    <div id="promoList"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        function apiUrl(path) {
+            return (window.CalvoroAPIBase || '') + path;
+        }
+
+        function escHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function imgSrc(path) {
+            if (!path) return '';
+            var p = String(path);
+            if (p.indexOf('http://') === 0 || p.indexOf('https://') === 0) return p;
+            return apiUrl(p);
+        }
+
+        async function loadList() {
+            const status = document.getElementById('listStatus');
+            const root = document.getElementById('promoList');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/admin/promotions'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = (d && d.error) ? d.error : 'Failed to load';
+                root.innerHTML = '';
+                return;
+            }
+            status.textContent = '';
+            const promotions = Array.isArray(d.promotions) ? d.promotions : [];
+            if (promotions.length === 0) {
+                root.innerHTML = '<p style="color:#666;">No promotions yet.</p>';
+                return;
+            }
+            root.innerHTML = promotions.map(function (p) {
+                return (
+                    '<div class="promo-admin-row" data-id="' + p.id + '" style="border:1px solid #eee;border-radius:8px;padding:16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;">' +
+                    '  <div style="flex:0 0 120px;">' +
+                    (p.image_path
+                        ? '<img src="' + escHtml(imgSrc(p.image_path)) + '" alt="" style="width:120px;height:auto;border-radius:6px;border:1px solid #ddd;object-fit:cover;">'
+                        : '<div style="width:120px;height:80px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">No image</div>') +
+                    '  </div>' +
+                    '  <div style="flex:1;min-width:220px;">' +
+                    '    <div style="font-size:12px;color:#888;margin-bottom:6px;">ID ' + escHtml(String(p.id)) + (p.is_active ? ' · <span style="color:#0a0;font-weight:600;">ACTIVE</span>' : '') + '</div>' +
+                    '    <label style="display:block;font-size:12px;margin-bottom:4px;">Redirect URL</label>' +
+                    '    <input type="text" class="promo-link-input" data-id="' + p.id + '" value="' + escHtml(p.redirect_link || '') + '" style="width:100%;max-width:420px;padding:8px;border:1px solid #ddd;border-radius:6px;">' +
+                    '    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+                    '      <button type="button" class="btn-primary btn-save-link" data-id="' + p.id + '">Save link</button>' +
+                    '      <button type="button" class="btn-secondary btn-activate" data-id="' + p.id + '" ' + (p.is_active ? 'disabled' : '') + '>Activate</button>' +
+                    '      <label style="font-size:13px;display:flex;align-items:center;gap:6px;">Replace image' +
+                    '        <input type="file" class="promo-replace-file" data-id="' + p.id + '" accept="image/jpeg,image/png,image/gif,image/webp">' +
+                    '      </label>' +
+                    '      <button type="button" class="btn-secondary btn-delete" data-id="' + p.id + '" style="color:#b91c1c;">Delete</button>' +
+                    '    </div>' +
+                    '    <div class="promo-row-msg" data-id="' + p.id + '" style="font-size:12px;color:#666;margin-top:8px;"></div>' +
+                    '  </div>' +
+                    '</div>'
+                );
+            }).join('');
+
+            root.querySelectorAll('.btn-save-link').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    const id = parseInt(btn.getAttribute('data-id'), 10);
+                    const input = root.querySelector('.promo-link-input[data-id="' + id + '"]');
+                    const msg = root.querySelector('.promo-row-msg[data-id="' + id + '"]');
+                    if (!input) return;
+                    msg.textContent = 'Saving...';
+                    const r = await fetch(apiUrl('/api/admin/promotions/' + id), {
+                        method: 'PUT',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ redirect_link: input.value })
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    msg.textContent = r.ok ? 'Saved.' : ((d && d.error) ? d.error : 'Failed');
+                    if (r.ok) setTimeout(function () { msg.textContent = ''; }, 1500);
+                });
+            });
+
+            root.querySelectorAll('.btn-activate').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    const id = parseInt(btn.getAttribute('data-id'), 10);
+                    const msg = root.querySelector('.promo-row-msg[data-id="' + id + '"]');
+                    msg.textContent = 'Activating...';
+                    const r = await fetch(apiUrl('/api/admin/promotions/' + id), {
+                        method: 'PUT',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ is_active: true })
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok) {
+                        msg.textContent = (d && d.error) ? d.error : 'Failed';
+                        return;
+                    }
+                    await loadList();
+                });
+            });
+
+            root.querySelectorAll('.promo-replace-file').forEach(function (fileInput) {
+                fileInput.addEventListener('change', async function () {
+                    const id = parseInt(fileInput.getAttribute('data-id'), 10);
+                    const file = fileInput.files && fileInput.files[0];
+                    const msg = root.querySelector('.promo-row-msg[data-id="' + id + '"]');
+                    if (!file) return;
+                    msg.textContent = 'Uploading...';
+                    const fd = new FormData();
+                    fd.append('image', file);
+                    const r = await fetch(apiUrl('/api/admin/promotions/' + id + '/image'), {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: fd
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    fileInput.value = '';
+                    if (!r.ok) {
+                        msg.textContent = (d && d.error) ? d.error : 'Upload failed';
+                        return;
+                    }
+                    msg.textContent = 'Image updated.';
+                    await loadList();
+                    setTimeout(function () { msg.textContent = ''; }, 1500);
+                });
+            });
+
+            root.querySelectorAll('.btn-delete').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    const id = parseInt(btn.getAttribute('data-id'), 10);
+                    if (!confirm('Delete this promotion?')) return;
+                    const r = await fetch(apiUrl('/api/admin/promotions/' + id), {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok) {
+                        alert((d && d.error) ? d.error : 'Delete failed');
+                        return;
+                    }
+                    await loadList();
+                });
+            });
+        }
+
+        document.getElementById('createBtn').addEventListener('click', async function () {
+            const status = document.getElementById('createStatus');
+            const fileInput = document.getElementById('newImage');
+            const link = document.getElementById('newLink').value || '';
+            const active = document.getElementById('newActive').checked;
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                status.textContent = 'Choose an image.';
+                return;
+            }
+            status.textContent = 'Creating...';
+            const fd = new FormData();
+            fd.append('image', file);
+            fd.append('redirect_link', link);
+            fd.append('is_active', active ? '1' : '0');
+            const r = await fetch(apiUrl('/api/admin/promotions'), {
+                method: 'POST',
+                credentials: 'include',
+                body: fd
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = (d && d.error) ? d.error : 'Failed';
+                return;
+            }
+            status.textContent = 'Created.';
+            fileInput.value = '';
+            document.getElementById('newLink').value = '';
+            document.getElementById('newActive').checked = false;
+            setTimeout(function () { status.textContent = ''; }, 1500);
+            await loadList();
+        });
+
+        (async function () {
+            const ok = await checkAuth();
+            if (!ok) return;
+            await loadList();
+        })();
+    </script>
+</body>
+
+</html>

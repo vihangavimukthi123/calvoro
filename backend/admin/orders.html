@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html" class="active">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Orders</h1>
+                <div style="display:flex; gap:12px; align-items:center; background:#fff; padding:12px 20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <label style="font-weight:600; color:#475569; font-size:14px;">🚚 Default Courier:</label>
+                    <input type="text" id="courierSetting" placeholder="e.g. Fedex, DHL" style="padding:8px 12px; border:1px solid #e2e8f0; border-radius:6px; font-size:14px; width:200px;">
+                    <button class="btn-primary" onclick="saveCourier()" style="padding:8px 20px; font-size:14px; border-radius:6px;">Update Courier</button>
+                    <p id="courierStatus" style="font-size:12px; margin:0; color:#10b981;"></p>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- Filters -->
+                <div class="filters">
+                    <input type="search" id="searchOrders" placeholder="Search orders..." class="search-input">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="card">
+                    <div class="table-container">
+                        <table id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Email</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Tracking</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Order Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="orderDetails" style="padding: 24px;">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        checkAuth();
+
+        let orders = [];
+
+        async function loadOrders() {
+            try {
+                const res = await fetch('/api/orders');
+                orders = await res.json();
+                renderOrders();
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        function renderOrders() {
+            const tbody = document.querySelector('#ordersTable tbody');
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = orders;
+            if (statusFilter) {
+                filtered = orders.filter(o => o.status === statusFilter);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No orders found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(order => `
+                <tr>
+                    <td><strong>${order.order_number}</strong></td>
+                    <td>${order.customer_name}</td>
+                    <td>${order.customer_email}</td>
+                    <td>LKR ${order.total.toLocaleString()}</td>
+                    <td><span class="badge badge-${order.status}">${order.status}</span></td>
+                    <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:4px; min-width:150px;">
+                            <input type="text" id="inlineTracking${order.id}" value="${order.tracking_number || ''}" placeholder="Enter Tracking #" style="width:100%; padding:6px; font-size:13px; border:1px solid #cbd5e0; border-radius:4px;" />
+                            <button class="btn-primary" style="padding:6px 10px; font-size:12px; white-space:nowrap;" onclick="sendTrackingInline(${order.id})">Update Tracking</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-sm" onclick="viewOrder(${order.id})">View</button>
+                        <select onchange="updateStatus(${order.id}, this.value)" class="btn-sm">
+                            <option value="">Change Status</option>
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function sendTrackingInline(id) {
+            const trackingNumber = document.getElementById('inlineTracking' + id).value;
+            if (!trackingNumber) {
+                alert('Please enter a tracking number');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/orders/${id}/tracking`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tracking_number: trackingNumber })
+                });
+
+                if (res.ok) {
+                    alert('Tracking updated and email sent successfully!');
+                    loadOrders();
+                } else {
+                    const json = await res.json();
+                    alert(json.error || 'Failed to update tracking');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        }
+
+        async function viewOrder(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+
+            const itemsHtml = order.items.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>LKR ${item.price.toLocaleString()}</td>
+                    <td>LKR ${(item.quantity * item.price).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('orderDetails').innerHTML = `
+                <div>
+                    <h3>Order ${order.order_number}</h3>
+                    <p><strong>Status:</strong> <span class="badge badge-${order.status}">${order.status}</span></p>
+                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                    
+                    <h4 style="margin-top: 24px;">Customer Information</h4>
+                    <p><strong>Name:</strong> ${order.customer_name}</p>
+                    <p><strong>Email:</strong> ${order.customer_email}</p>
+                    <p><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</p>
+                    <p><strong>Address:</strong> ${order.customer_address || 'N/A'}</p>
+                    
+                    <h4 style="margin-top: 24px;">Items</h4>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    
+                    <div style="margin-top: 24px; text-align: right;">
+                        <p><strong>Subtotal:</strong> LKR ${order.subtotal.toLocaleString()}</p>
+                        <p><strong>Shipping:</strong> LKR ${order.shipping.toLocaleString()}</p>
+                        <h3><strong>Total:</strong> LKR ${order.total.toLocaleString()}</h3>
+                    </div>
+                    
+                     <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0 0 12px 0;">📦 Shipping & Tracking</h4>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <input type="text" id="trackingInput" placeholder="Enter tracking number..." 
+                                   value="${order.tracking_number || ''}" 
+                                   style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                            <button class="btn-primary" onclick="sendTracking(${order.id})" style="padding: 8px 20px;">Send Tracking Email</button>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 8px 0 0 0;">This will update the order tracking and notify the customer immediately.</p>
+                    </div>
+
+                    ${order.notes ? `<p style="margin-top: 16px;"><strong>Notes:</strong> ${order.notes}</p>` : ''}
+                </div>
+            `;
+
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        async function updateStatus(id, status) {
+            if (!status) return;
+
+            if (!confirm('Update order status to ' + status + '?')) {
+                loadOrders();
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/orders/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+
+                if (res.ok) {
+                    alert('Order status updated successfully');
+                    loadOrders();
+                } else {
+                    alert('Failed to update status');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        }
+
+        async function sendTracking(id) {
+            const trackingNumber = document.getElementById('trackingInput').value;
+            if (!trackingNumber) {
+                alert('Please enter a tracking number');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/orders/${id}/tracking`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tracking_number: trackingNumber })
+                });
+
+                if (res.ok) {
+                    alert('Tracking updated and email sent successfully!');
+                    closeModal();
+                    loadOrders();
+                } else {
+                    const json = await res.json();
+                    alert(json.error || 'Failed to update tracking');
+                }
+            } catch (error) {
+                alert('Connection error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        document.getElementById('statusFilter').addEventListener('change', renderOrders);
+
+        loadOrders();
+        loadCourier();
+
+        async function loadCourier() {
+            try {
+                const res = await fetch('/api/orders/settings/courier');
+                const data = await res.json();
+                document.getElementById('courierSetting').value = data.name || '';
+            } catch (error) {
+                console.error('Failed to load courier:', error);
+            }
+        }
+
+        async function saveCourier() {
+            const name = document.getElementById('courierSetting').value;
+            const statusLabel = document.getElementById('courierStatus');
+            if(!name) { alert('Please enter a courier name'); return; }
+
+            try {
+                const res = await fetch('/api/orders/settings/courier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if(res.ok) {
+                    statusLabel.innerText = 'Saved!';
+                    setTimeout(() => statusLabel.innerText = '', 2000);
+                    loadOrders(); // Refresh table to show updated courier logic in tooltips/etc if any
+                } else {
+                    alert('Failed to update courier');
+                }
+            } catch (error) {
+                console.error('Failed to save courier:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,10 @@
+.logo img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+.logo a {
+    display: block;
+    line-height: 0;
+}

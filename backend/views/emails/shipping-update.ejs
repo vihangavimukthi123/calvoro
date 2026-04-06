@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Great news! Your order has shipped!</title>
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; }
+        .header { text-align: center; padding: 20px 0; background: #fafafa; }
+        .content { padding: 30px 20px; text-align: center; }
+        .btn { display: inline-block; padding: 12px 24px; color: #fff; background: #000; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+        .footer { text-align: center; font-size: 12px; color: #777; padding: 20px; border-top: 1px solid #eee; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin:0;font-size:24px;">CALVORO</h1>
+        </div>
+        <div class="content">
+            <h2>Your Order is on the way!</h2>
+            <p>Hey <%= username %>,</p>
+            <p>Exciting news! Your order #<%= orderNumber %> has been shipped and is heading your way.</p>
+            <p>You can track its progress by clicking the button below:</p>
+            <a href="<%= trackUrl %>" class="btn">Track Package</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 Calvoro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

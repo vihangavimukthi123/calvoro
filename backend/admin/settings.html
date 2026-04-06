@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script>
+        /* Same logic as storefront js/config.js: call API on :3000 when admin UI is on another port */
+        (function () {
+            if (typeof window.CalvoroAPIBase !== 'undefined') return;
+            try {
+                var port = (window.location.port || '');
+                var host = window.location.hostname || 'localhost';
+                var protocol = window.location.protocol || 'http:';
+                if (protocol === 'file:') {
+                    window.CalvoroAPIBase = 'http://localhost:3000';
+                } else if (port !== '3000') {
+                    window.CalvoroAPIBase = protocol + '//' + host + ':3000';
+                } else {
+                    window.CalvoroAPIBase = '';
+                }
+            } catch (e) {
+                window.CalvoroAPIBase = '';
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="/admin/dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="settings.html" class="active">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Settings</h1>
+                <div class="user-info">
+                    <span id="adminUser">Admin</span>
+                </div>
+            </header>
+
+            <div class="content">
+                <div class="card" style="padding:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Top Promo Ticker</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="promoLines">Tag lines (one per line)</label>
+                        <textarea id="promoLines" rows="6"
+                            placeholder="FREE SHIPPING ON ORDERS OVER LKR 15,000&#10;NEW ARRIVALS DROPPING WEEKLY"></textarea>
+                        <p style="margin-top:8px;color:#666;font-size:12px;">
+                            These lines will scroll continuously on the very top bar of every page.
+                        </p>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="durationSeconds">Scroll speed</label>
+                            <input type="number" id="durationSeconds" min="8" max="120" step="1" value="22">
+                            <p style="margin-top:8px;color:#666;font-size:12px;">
+                                Lower number = faster. Recommended 18–28.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <button type="button" class="btn-primary" id="saveBtn">Save</button>
+                        <button type="button" class="btn-secondary" id="reloadBtn">Reload</button>
+                        <span id="statusText" style="font-size:13px;color:#666;"></span>
+                    </div>
+                </div>
+                <div class="card" style="padding:24px;margin-top:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Home Video Strip (3 videos)</h2>
+                    </div>
+
+                <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
+                    Update each item’s label and link. To change the video, select a new MP4/WebM file (leave empty to keep the current video). Changes show on the homepage after refresh.
+                </p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video1Label">Item 1 Label</label>
+                        <input type="text" id="video1Label" placeholder="SHOP WOMEN">
+                    </div>
+                    <div class="form-group">
+                        <label for="video1Href">Item 1 Link</label>
+                        <input type="text" id="video1Href" placeholder="women.html">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video1File">Item 1 Video File (MP4/WebM)</label>
+                        <input type="file" id="video1File" accept="video/mp4,video/webm,video/quicktime">
+                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video2Label">Item 2 Label</label>
+                        <input type="text" id="video2Label" placeholder="SHOP MEN">
+                    </div>
+                    <div class="form-group">
+                        <label for="video2Href">Item 2 Link</label>
+                        <input type="text" id="video2Href" placeholder="men.html">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video2File">Item 2 Video File (MP4/WebM)</label>
+                        <input type="file" id="video2File" accept="video/mp4,video/webm,video/quicktime">
+                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video3Label">Item 3 Label</label>
+                        <input type="text" id="video3Label" placeholder="GIFT VOUCHERS">
+                    </div>
+                    <div class="form-group">
+                        <label for="video3Href">Item 3 Link</label>
+                        <input type="text" id="video3Href" placeholder="gifts.html">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="video3File">Item 3 Video File (MP4/WebM)</label>
+                        <input type="file" id="video3File" accept="video/mp4,video/webm,video/quicktime">
+                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                    <button type="button" class="btn-primary" id="saveVideoStripBtn">Save Video Strip</button>
+                    <button type="button" class="btn-secondary" id="reloadVideoStripBtn">Reload</button>
+                    <span id="videoStatusText" style="font-size:13px;color:#666;"></span>
+                </div>
+                </div>
+
+                <div class="card" style="padding:24px;margin-top:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Home Hero Carousel</h2>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
+                        Add up to 5 hero slides. Upload an image file or provide an image URL for each slide. Active slides appear in the homepage hero carousel.
+                    </p>
+
+                    <div id="carouselSlidesEditor"></div>
+
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                        <button type="button" class="btn-primary" id="saveCarouselBtn">Save Hero Carousel</button>
+                        <button type="button" class="btn-secondary" id="reloadCarouselBtn">Reload</button>
+                        <span id="carouselStatusText" style="font-size:13px;color:#666;"></span>
+                    </div>
+                <div class="card" style="padding:24px;margin-top:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Shipping &amp; Tracking Options</h2>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
+                        Set the default Courier Name for your order shipments. This name will automatically be included in tracking assignment emails securely dispatched to your customers.
+                    </p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="defaultCourierInput">Default Courier Name</label>
+                            <input type="text" id="defaultCourierInput" placeholder="e.g. DHL, FedEx, Aramex, PromptXpress" value="Standard Courier">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                        <button type="button" class="btn-primary" id="saveShippingBtn">Save Shipping Settings</button>
+                        <span id="shippingStatusText" style="font-size:13px;color:#666;"></span>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+    <script>
+        function apiUrl(path) {
+            return (window.CalvoroAPIBase || '') + path;
+        }
+
+        function splitLines(text) {
+            return String(text || '')
+                .split(/\r?\n/)
+                .map(s => s.replace(/\s+/g, ' ').trim())
+                .filter(Boolean);
+        }
+
+        async function loadSettings() {
+            const status = document.getElementById('statusText');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/admin/promo-ticker'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                if (r.status === 404) {
+                    status.textContent = 'API 404 — restart backend from calvoro-final/backend (npm start) and use http://localhost:3000/admin/settings.html';
+                } else {
+                    status.textContent = (d && d.error) ? d.error : 'Failed to load';
+                }
+                return;
+            }
+            document.getElementById('promoLines').value = Array.isArray(d.lines) ? d.lines.join('\n') : '';
+            document.getElementById('durationSeconds').value = Number(d.durationSeconds) || 22;
+            status.textContent = '';
+        }
+
+        async function saveSettings() {
+            const status = document.getElementById('statusText');
+            status.textContent = 'Saving...';
+            const payload = {
+                lines: splitLines(document.getElementById('promoLines').value),
+                durationSeconds: Number(document.getElementById('durationSeconds').value) || 22
+            };
+            const r = await fetch(apiUrl('/api/admin/promo-ticker'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                if (r.status === 404) {
+                    status.textContent = 'API 404 — restart backend (npm start in backend folder).';
+                } else {
+                    status.textContent = (d && d.error) ? d.error : 'Failed to save';
+                }
+                return;
+            }
+            status.textContent = 'Saved.';
+            setTimeout(() => { status.textContent = ''; }, 1500);
+        }
+
+        let currentVideoStripItems = [];
+        let currentCarouselSlides = [];
+        const CAROUSEL_MAX_SLIDES = 5;
+
+        function getTextVal(id) {
+            const el = document.getElementById(id);
+            return el ? String(el.value || '').trim() : '';
+        }
+
+        async function loadVideoStrip() {
+            const status = document.getElementById('videoStatusText');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/admin/video-strip'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = (d && d.error) ? d.error : 'Failed to load';
+                return;
+            }
+            const items = Array.isArray(d.items) ? d.items : [];
+            currentVideoStripItems = items;
+
+            var i1 = items[0] || {}; var i2 = items[1] || {}; var i3 = items[2] || {};
+            document.getElementById('video1Label').value = i1.label || '';
+            document.getElementById('video1Href').value = i1.href || '';
+            document.getElementById('video2Label').value = i2.label || '';
+            document.getElementById('video2Href').value = i2.href || '';
+            document.getElementById('video3Label').value = i3.label || '';
+            document.getElementById('video3Href').value = i3.href || '';
+            status.textContent = '';
+        }
+
+        async function saveVideoStrip() {
+            const status = document.getElementById('videoStatusText');
+            status.textContent = 'Saving...';
+            const fd = new FormData();
+
+            const i1 = currentVideoStripItems[0] || {};
+            const i2 = currentVideoStripItems[1] || {};
+            const i3 = currentVideoStripItems[2] || {};
+
+            fd.append('label1', getTextVal('video1Label'));
+            fd.append('href1', getTextVal('video1Href'));
+            fd.append('videoSrc1', i1.videoSrc || '');
+
+            fd.append('label2', getTextVal('video2Label'));
+            fd.append('href2', getTextVal('video2Href'));
+            fd.append('videoSrc2', i2.videoSrc || '');
+
+            fd.append('label3', getTextVal('video3Label'));
+            fd.append('href3', getTextVal('video3Href'));
+            fd.append('videoSrc3', i3.videoSrc || '');
+
+            const f1 = document.getElementById('video1File') && document.getElementById('video1File').files ? document.getElementById('video1File').files[0] : null;
+            const f2 = document.getElementById('video2File') && document.getElementById('video2File').files ? document.getElementById('video2File').files[0] : null;
+            const f3 = document.getElementById('video3File') && document.getElementById('video3File').files ? document.getElementById('video3File').files[0] : null;
+
+            if (f1) fd.append('video1', f1);
+            if (f2) fd.append('video2', f2);
+            if (f3) fd.append('video3', f3);
+
+            const r = await fetch(apiUrl('/api/admin/video-strip/videos'), {
+                method: 'POST',
+                credentials: 'include',
+                body: fd
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = (d && d.error) ? d.error : 'Failed to save';
+                return;
+            }
+            status.textContent = 'Saved.';
+            setTimeout(() => { status.textContent = ''; }, 1500);
+        }
+
+        function escHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderCarouselEditor() {
+            const root = document.getElementById('carouselSlidesEditor');
+            if (!root) return;
+
+            const slides = [];
+            for (let i = 0; i < CAROUSEL_MAX_SLIDES; i++) {
+                const s = currentCarouselSlides[i] || {};
+                slides.push({
+                    title: s.title || '',
+                    subtitle: s.subtitle || '',
+                    image_url: s.image_url || '',
+                    link_url: s.link_url || '',
+                    button_text: s.button_text || '',
+                    display_order: Number(s.display_order != null ? s.display_order : i) || i,
+                    is_active: s.is_active !== false
+                });
+            }
+
+            root.innerHTML = slides.map((s, i) => `
+                <div style="border:1px solid #eee;border-radius:8px;padding:16px;margin-bottom:14px;">
+                    <div style="font-weight:600;margin-bottom:12px;">Slide ${i + 1}</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="carouselTitle${i}" value="${escHtml(s.title)}" placeholder="NEW COLLECTION">
+                        </div>
+                        <div class="form-group">
+                            <label>Subtitle</label>
+                            <input type="text" id="carouselSubtitle${i}" value="${escHtml(s.subtitle)}" placeholder="PERFORMANCE MEETS STYLE">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Image URL (optional if uploading file)</label>
+                            <input type="text" id="carouselImage${i}" value="${escHtml(s.image_url)}" placeholder="/uploads/your-image.jpg or https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Image File</label>
+                            <input type="file" id="carouselImageFile${i}" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Button Link</label>
+                            <input type="text" id="carouselLink${i}" value="${escHtml(s.link_url)}" placeholder="/men.html">
+                        </div>
+                        <div class="form-group">
+                            <label>Button Text</label>
+                            <input type="text" id="carouselButton${i}" value="${escHtml(s.button_text)}" placeholder="SHOP NOW">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Display Order</label>
+                            <input type="number" id="carouselOrder${i}" value="${Number(s.display_order)}" min="0" step="1">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox" id="carouselActive${i}" ${s.is_active ? 'checked' : ''}>
+                            <label for="carouselActive${i}" style="margin:0;">Active</label>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadCarousel() {
+            const status = document.getElementById('carouselStatusText');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/admin/carousel'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                currentCarouselSlides = [];
+                renderCarouselEditor();
+                if (r.status === 404) {
+                    status.textContent = 'Carousel API not found. Restart backend server, then reload this page.';
+                } else {
+                    status.textContent = (d && d.error) ? d.error : 'Failed to load. You can still add slides and save.';
+                }
+                return;
+            }
+            currentCarouselSlides = Array.isArray(d.slides) ? d.slides : [];
+            renderCarouselEditor();
+            status.textContent = '';
+        }
+
+        async function uploadImageFromInput(fileInputId) {
+            const input = document.getElementById(fileInputId);
+            const file = input && input.files ? input.files[0] : null;
+            if (!file) return null;
+            const fd = new FormData();
+            fd.append('file', file);
+            const r = await fetch(apiUrl('/api/upload'), {
+                method: 'POST',
+                credentials: 'include',
+                body: fd
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.url) {
+                throw new Error((d && d.error) ? d.error : 'Image upload failed');
+            }
+            return d.url;
+        }
+
+        async function saveCarousel() {
+            const status = document.getElementById('carouselStatusText');
+            status.textContent = 'Saving...';
+            try {
+                const slides = [];
+                for (let i = 0; i < CAROUSEL_MAX_SLIDES; i++) {
+                    const uploaded = await uploadImageFromInput('carouselImageFile' + i);
+                    const image_url = uploaded || getTextVal('carouselImage' + i);
+                    const title = getTextVal('carouselTitle' + i);
+                    const subtitle = getTextVal('carouselSubtitle' + i);
+                    const link_url = getTextVal('carouselLink' + i);
+                    const button_text = getTextVal('carouselButton' + i);
+                    const display_order = Number(getTextVal('carouselOrder' + i)) || i;
+                    const activeEl = document.getElementById('carouselActive' + i);
+                    const is_active = !!(activeEl && activeEl.checked);
+
+                    if (!image_url) continue;
+
+                    slides.push({
+                        title,
+                        subtitle,
+                        image_url,
+                        link_url,
+                        button_text,
+                        display_order,
+                        is_active
+                    });
+                }
+
+                const r = await fetch(apiUrl('/api/admin/carousel'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slides })
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    status.textContent = (d && d.error) ? d.error : 'Failed to save';
+                    return;
+                }
+
+                currentCarouselSlides = Array.isArray(d.slides) ? d.slides : [];
+                renderCarouselEditor();
+                status.textContent = 'Saved.';
+                setTimeout(() => { status.textContent = ''; }, 1500);
+            } catch (e) {
+                status.textContent = e && e.message ? e.message : 'Failed to save';
+            }
+        }
+
+        async function loadShippingSettings() {
+            const status = document.getElementById('shippingStatusText');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/admin/shipping-settings'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = d.error || 'Failed to load';
+                return;
+            }
+            document.getElementById('defaultCourierInput').value = d.defaultCourier || '';
+            status.textContent = '';
+        }
+
+        async function saveShippingSettings() {
+            const status = document.getElementById('shippingStatusText');
+            status.textContent = 'Saving...';
+            const r = await fetch(apiUrl('/api/admin/shipping-settings'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ defaultCourier: document.getElementById('defaultCourierInput').value.trim() })
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = d.error || 'Failed to save';
+                return;
+            }
+            status.textContent = 'Saved.';
+            setTimeout(() => { status.textContent = ''; }, 1500);
+        }
+
+        (async function () {
+            const ok = await checkAuth();
+            if (!ok) return;
+            await loadSettings();
+            await loadVideoStrip();
+            await loadCarousel();
+            await loadShippingSettings();
+            document.getElementById('saveBtn').addEventListener('click', saveSettings);
+            document.getElementById('reloadBtn').addEventListener('click', loadSettings);
+            document.getElementById('saveVideoStripBtn').addEventListener('click', saveVideoStrip);
+            document.getElementById('reloadVideoStripBtn').addEventListener('click', loadVideoStrip);
+            document.getElementById('saveCarouselBtn').addEventListener('click', saveCarousel);
+            document.getElementById('reloadCarouselBtn').addEventListener('click', loadCarousel);
+            document.getElementById('saveShippingBtn').addEventListener('click', saveShippingSettings);
+        })();
+    </script>
+</body>
+
+</html>
+

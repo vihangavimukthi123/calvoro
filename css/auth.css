@@ -1,0 +1,295 @@
+/**
+ * Calvoro Auth – Premium login & navbar auth UI
+ * Matches theme tokens from styles.css (light/dark via data-theme).
+ */
+
+/* ---------- Login page layout ---------- */
+.auth-page {
+    max-width: 420px;
+    margin: 60px auto 80px;
+    padding: 0 24px;
+}
+
+.auth-page h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.auth-page .auth-subtitle {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    margin-bottom: 32px;
+}
+
+.auth-page .form-group {
+    margin-bottom: 20px;
+}
+
+.auth-page label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.auth-page input[type="email"],
+.auth-page input[type="password"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--color-input-border);
+    border-radius: 6px;
+    font-size: 15px;
+    background: var(--color-input-bg);
+    color: var(--color-text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-page input:focus {
+    outline: none;
+    border-color: var(--color-text);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .auth-page input:focus {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+.auth-page .btn-primary {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--color-btn-bg);
+    color: var(--color-btn-text);
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: opacity 0.2s ease;
+}
+
+.auth-page .btn-primary:hover {
+    opacity: 0.9;
+}
+
+.auth-page .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Divider: "or" between form and Google */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 28px 0 24px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+/* Google Sign-In container – let GIS render button inside */
+#google-signin-container {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+#google-signin-container iframe {
+    max-width: 100%;
+}
+
+/* Loading state for Google button */
+.auth-loading {
+    display: none;
+    text-align: center;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.auth-loading[style*="block"] {
+    display: block;
+}
+
+.auth-google-error {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--color-sale);
+    background: rgba(220, 38, 38, 0.08);
+    border-radius: 6px;
+}
+
+[data-theme="dark"] .auth-google-error {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* Links below form */
+.auth-links {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+
+.auth-links a {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.auth-links a:hover {
+    opacity: 0.85;
+}
+
+.auth-links .auth-link-block {
+    margin-top: 12px;
+}
+
+/* ---------- Navbar: logged-in user pill & dropdown ---------- */
+.auth-user-wrap {
+    position: relative;
+}
+
+.auth-user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 6px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 13px;
+    font-weight: 500;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.auth-user-pill:hover {
+    background: var(--color-card);
+    border-color: var(--color-text-muted);
+}
+
+.auth-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.auth-user-avatar-placeholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-card);
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.auth-user-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.auth-user-chevron {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.auth-user-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 180px;
+    padding: 8px 0;
+    background: var(--color-modal-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+}
+
+[data-theme="dark"] .auth-user-dropdown {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.auth-user-dropdown a,
+.auth-user-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 14px;
+    color: var(--color-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.auth-user-dropdown a:hover,
+.auth-user-dropdown button:hover {
+    background: var(--color-card);
+}
+
+.auth-login-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.auth-nav-placeholder {
+    display: inline-block;
+    width: 1px;
+    height: 1px;
+}
+
+/* Success/error messages on login page */
+.auth-success {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    background: #d1fae5;
+    color: #065f46;
+}
+
+[data-theme="dark"] .auth-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.auth-error {
+    color: var(--color-sale);
+    font-size: 13px;
+    margin-top: 8px;
+}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - CALVORO</title>
+    <script src="js/config.js"></script>
+    <script>(function(){var v=localStorage.getItem('calvoro_theme');var dark=v==='dark'||(!v&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();</script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        .wishlist-page { max-width: 1200px; margin: 40px auto; padding: 0 24px; }
+        .wishlist-page h1 { font-size: 32px; margin-bottom: 32px; }
+        .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+        .wishlist-card { position: relative; }
+        .wishlist-card .card { display: block; text-decoration: none; color: inherit; }
+        .wishlist-card .remove-wishlist { position: absolute; top: 8px; right: 8px; z-index: 2; width: 36px; height: 36px; border: none; background: rgba(255,255,255,0.9); border-radius: 50%; cursor: pointer; font-size: 18px; color: #dc2626; display: flex; align-items: center; justify-content: center; }
+        .wishlist-card .remove-wishlist:hover { background: #fff; }
+        .empty-wishlist { text-align: center; padding: 80px 24px; }
+        .empty-wishlist h2 { font-size: 24px; margin-bottom: 12px; }
+        .empty-wishlist p { color: #666; margin-bottom: 24px; }
+        .empty-wishlist a { display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="promo">FREE SHIPPING ON ORDERS OVER LKR 15,000</div>
+    <header class="header">
+        <div class="container">
+            <div class="logo"><a href="index.html"><img src="logo.png" alt="CALVORO"></a></div>
+            <nav>
+                <a href="men.html">MEN</a>
+                <a href="women.html">WOMEN</a>
+                <a href="gifts.html">GIFT VOUCHERS</a>
+            </nav>
+            <div class="actions">
+                <button class="search-trigger"><svg width="18" height="18"><circle cx="8" cy="8" r="6" /><path d="M16 16l-4-4" /></svg><span>Search</span></button>
+                <button class="locale-btn">LK ▼</button>
+                <div id="auth-navbar-slot"><button class="account-btn"><svg width="20" height="20"><circle cx="10" cy="7" r="3" /><path d="M3 18a7 7 0 0114 0" /></svg></button></div>
+                <a href="cart.html" class="cart-btn" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px;"><svg width="20" height="20"><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /><path d="M1 1h4l2 11h10l3-8H6" /></svg><span class="badge" id="cart-count">0</span></a>
+            </div>
+        </div>
+    </header>
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-content">
+            <input type="search" id="searchInput" placeholder="Search for products...">
+            <button class="close-search" onclick="closeSearch()">✕</button>
+            <div class="search-results" style="display:none;max-height:60vh;overflow:auto;margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <div class="wishlist-page container">
+        <h1>My Wishlist</h1>
+        <div id="wishlistContent">
+            <p class="loading">Loading...</p>
+        </div>
+    </div>
+
+        <section class="footer-trust" aria-label="Why shop with Calvoro">
+        <div class="container footer-trust__inner">
+            <article class="footer-trust__item">
+                <div class="footer-trust__icon" aria-hidden="true">
+                    <img src="images/made-in-sri-lanka-icon.png" alt="Made in Sri Lanka" width="80" height="80">
+                </div>
+                <h3 class="footer-trust__title">Made in Sri Lanka</h3>
+                <p class="footer-trust__text">Sustainably Sourced</p>
+            </article>
+            <article class="footer-trust__item">
+                <div class="footer-trust__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3 class="footer-trust__title">Free Shipping</h3>
+                <p class="footer-trust__text">On orders over LKR 15,000</p>
+            </article>
+            <article class="footer-trust__item">
+                <div class="footer-trust__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+                </div>
+                <h3 class="footer-trust__title">Free Returns</h3>
+                <p class="footer-trust__text">Easy exchanges &amp; returns</p>
+            </article>
+            <article class="footer-trust__item">
+                <div class="footer-trust__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                <h3 class="footer-trust__title">Secure Checkout</h3>
+                <p class="footer-trust__text">100% protected payments</p>
+            </article>
+        </div>
+    </section>
+
+
+    <footer>
+        <div class="container footer-grid">
+            <div><h4>MENU</h4><a href="index.html">Home</a><a href="men.html">Men</a><a href="women.html">Women</a><a href="gifts.html">Gift Vouchers</a></div>
+            <div><h4>SUPPORT</h4><a href="faq.html">FAQ</a><a href="return-exchange-policy.html">Returns &amp; Exchange</a><a href="contact.html">Contact Us</a></div>
+            <div><h4>MY ACCOUNT</h4><a href="login.html">Login</a><a href="register.html">Register</a><a href="account.html">My Account</a><a href="wishlist.html">Wishlist</a></div>
+            <div><h4>LEGAL</h4><a href="privacy-policy.html">Privacy Policy</a><a href="terms-and-conditions.html">Terms & Conditions</a><a href="return-exchange-policy.html">Return &amp; Exchange Policy</a></div>
+        </div>
+            <div class="container footer-follow-row">
+        <div class="footer-social footer-social--connect">
+                    <a href="https://www.instagram.com/calvoro_sl?igsh=MWphc2ozMzV6bnA5Ng==" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <img src="images/social-instagram.png" alt="" class="footer-social__img footer-social__img--ig" width="32" height="32" loading="lazy" decoding="async">
+                    </a>
+                    <a href="https://www.facebook.com/share/1N3FAQwgDZ/?mibextid=wwXIfr" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <img src="images/social-facebook.png" alt="" class="footer-social__img footer-social__img--fb" width="32" height="32" loading="lazy" decoding="async">
+                    </a>
+                    <a href="https://www.tiktok.com/@calvoro.clothing?_r=1&amp;_t=ZS-946fy7SrlVB" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                        <img src="images/social-tiktok.png" alt="" class="footer-social__img" width="32" height="32" loading="lazy" decoding="async">
+                    </a>
+                </div>
+    </div>
+
+        <div class="footer-bar">
+            <div class="container footer-bar__row footer-bar__row--emblem-only">
+                <div class="footer-emblem">
+                    <img src="images/made-in-sri-lanka-icon.png" alt="Made in Sri Lanka" width="100" height="100" loading="lazy" decoding="async" class="footer-emblem__img">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 | CALVORO | All Rights Reserved | <a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-and-conditions.html">Terms &amp; Conditions</a> | <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a> | <a href="return-refund-policy.html">Return &amp; Refund Policy</a></p>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js?v=2"></script>
+    <script>
+(function() {
+    var container = document.getElementById('wishlistContent');
+    var base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : (window.location.origin || '');
+    var noImg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="550" viewBox="0 0 400 550"%3E%3Crect fill="%23eee" width="400" height="550"/%3E%3Ctext x="200" y="275" fill="%23999" font-size="16" text-anchor="middle" dy=".3em"%3ENo image%3C/text%3E%3C/svg%3E';
+
+    function getWishlistIds() {
+        try { return JSON.parse(localStorage.getItem('calvoro_wishlist') || '[]'); } catch(e) { return []; }
+    }
+
+    async function removeFromWishlist(productId, fromApi) {
+        if (fromApi) {
+            try {
+                await fetch(base + '/api/wishlist/' + productId, { method: 'DELETE', credentials: 'include' });
+                if (window.CalvoroWishlist) window.CalvoroWishlist._apiIds = null;
+                render();
+            } catch (e) { alert('Failed to remove'); }
+        } else {
+            var ids = getWishlistIds().filter(function(x) { return x !== String(productId); });
+            localStorage.setItem('calvoro_wishlist', JSON.stringify(ids));
+            render();
+        }
+    }
+
+    async function render() {
+        try {
+            var meRes = await fetch(base + '/api/users/me', { credentials: 'include' });
+            var meData = await meRes.json();
+            var allProducts = [];
+            var fromApi = !!(meData && meData.user);
+
+            if (fromApi) {
+                var wlRes = await fetch(base + '/api/wishlist', { credentials: 'include' });
+                allProducts = await wlRes.json();
+                allProducts = Array.isArray(allProducts) ? allProducts : [];
+            } else {
+                var ids = getWishlistIds();
+                for (var i = 0; i < ids.length; i++) {
+                    var res = await fetch(base + '/api/products/' + ids[i]);
+                    if (res.ok) allProducts.push(await res.json());
+                }
+            }
+
+            if (allProducts.length === 0) {
+                var msg = fromApi ? 'Save items you love by clicking the heart icon on any product.' : 'Log in to add items to your wishlist.';
+                var links = fromApi ? '<a href="index.html">CONTINUE SHOPPING</a>' : '<a href="login.html?redirect=' + encodeURIComponent('wishlist.html') + '">LOG IN</a> <a href="index.html" style="margin-left:12px;">CONTINUE SHOPPING</a>';
+                container.innerHTML = '<div class="empty-wishlist"><h2>Your wishlist is empty</h2><p>' + msg + '</p>' + links + '</div>';
+                return;
+            }
+
+            var currency = (window.CalvoroCurrency && window.CalvoroCurrency.get()) || 'LKR';
+            var rate = (window.CalvoroCurrency && window.CalvoroCurrency.rate()) || 320;
+            var fmt = function(n) { return currency === 'USD' ? '$' + (n / rate).toFixed(2) : 'LKR ' + Number(n).toLocaleString(); };
+            var link = function(id) { return 'products/product.html?id=' + id + (id ? '' : '&slug='); };
+
+            container.innerHTML = '<div class="wishlist-grid">' + allProducts.map(function(p) {
+                var price = (p.sale_price != null && p.sale_price < (p.price || 0)) ? p.sale_price : (p.price || 0);
+                var img = (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || noImg;
+                return '<div class="wishlist-card"><a href="' + link(p.id) + '" class="card"><div class="img"><img src="' + img + '" alt="' + (p.name || '').replace(/"/g, '&quot;') + '"></div><h3>' + (p.name || '').replace(/</g, '&lt;') + '</h3><p>' + (p.category_name || '') + '</p><p class="price">' + fmt(price) + '</p></a><button type="button" class="remove-wishlist" onclick="event.preventDefault();window.removeWishlistItem(' + p.id + ',' + fromApi + ')">♥</button></div>';
+            }).join('') + '</div>';
+        } catch (e) {
+            container.innerHTML = '<p>Error loading wishlist. <a href="index.html">Go back</a></p>';
+        }
+    }
+
+    window.removeWishlistItem = function(id, fromApi) { removeFromWishlist(id, fromApi); };
+
+    render();
+})();
+    </script>
+</body>
+</html>

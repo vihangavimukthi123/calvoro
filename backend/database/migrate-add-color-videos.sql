@@ -1,0 +1,3 @@
+-- Optional variant video (hover/lookbook) per color
+-- Run if using MySQL and products table exists without color_videos:
+-- ALTER TABLE products ADD COLUMN color_videos JSON AFTER color_images;

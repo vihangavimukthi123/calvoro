@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation #<%= order.order_number %></title>
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; }
+        .header { text-align: center; padding: 20px 0; background: #fafafa; }
+        .content { padding: 30px 20px; }
+        .order-summary { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .order-summary th, .order-summary td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        .btn { display: inline-block; padding: 12px 24px; color: #fff; background: #000; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+        .footer { text-align: center; font-size: 12px; color: #777; padding: 20px; border-top: 1px solid #eee; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin:0;font-size:24px;">CALVORO</h1>
+        </div>
+        <div class="content">
+            <h2>Order Confirmation</h2>
+            <p>Thank you for your order, <%= order.customer_name %>!</p>
+            <p>We've received your order and are getting it ready for shipment. Your order number is <strong>#<%= order.order_number %></strong>.</p>
+            
+            <table class="order-summary">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% items.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.name %></td>
+                            <td><%= item.quantity %></td>
+                            <td>LKR <%= Number(item.price).toLocaleString() %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">Total</th>
+                        <th>LKR <%= Number(order.total).toLocaleString() %></th>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <p>We'll notify you when your package is on its way!</p>
+            <a href="<%= trackUrl %>" class="btn">Track Your Order</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 Calvoro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
