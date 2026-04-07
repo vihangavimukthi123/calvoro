@@ -10,25 +10,26 @@
     <script>
         (function () {
             // සජීවී වෙබ් අඩවියේදී සාපේක්ෂ ලිපින (Relative paths) භාවිත කිරීම සඳහා මෙය හිස්ව තබන්න
+            if (typeof window.CalvoroAPIBase !== 'undefined') return;
             window.CalvoroAPIBase = '';
         })();
     </script>
 
     <style>
         .trending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
-        .product-card { border: 1px solid #ddd; padding: 10px; border-radius: 8px; position: relative; cursor: pointer; transition: all 0.2s; background: #fff; }
+        .product-card { border: 1px solid #ddd; padding: 10px; border-radius: 8px; position: relative; cursor: pointer; transition: all 0.2s; background: #fff; height: 100%; display: flex; flex-direction: column; }
         .product-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .product-card.selected { border-color: #000; background: #fdfdfd; box-shadow: 0 0 0 2px #000; }
-        .product-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
+        .product-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; background: #f5f5f5; }
         .product-card h4 { margin: 10px 0 5px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
-        .product-card .price { font-weight: bold; font-size: 13px; color: #000; }
+        .product-card .price { font-weight: bold; font-size: 13px; color: #000; margin-top: auto; }
         .selection-badge { position: absolute; top: 10px; right: 10px; background: #000; color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; opacity: 0; transform: scale(0.5); transition: all 0.2s; z-index: 2; }
         .selected .selection-badge { opacity: 1; transform: scale(1); }
-        .controls { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .controls { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
         .btn-save { background: #000; color: #fff; border: none; padding: 12px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
         .btn-save:hover { background: #222; }
         .btn-save:disabled { background: #ccc; cursor: not-allowed; }
-        .status-msg { margin-top: 10px; font-size: 14px; font-weight: 500; }
+        .status-msg { margin-top: 5px; font-size: 14px; font-weight: 500; min-height: 20px; }
         .search-box { padding: 12px 16px; width: 320px; border: 1px solid #eee; border-radius: 8px; background: #f8f9fa; font-size: 14px; outline: none; transition: border-color 0.2s; }
         .search-box:focus { border-color: #000; }
         #selectionCount { font-weight: 600; color: #666; margin-left:15px; font-size: 14px; }
@@ -70,8 +71,8 @@
 
             <div class="content">
                 <div class="controls">
-                    <div style="display:flex; align-items:center;">
-                        <input type="text" id="productSearch" class="search-box" placeholder="Search products by name or category...">
+                    <div style="display:flex; align-items:center; flex-wrap: wrap; gap: 10px;">
+                        <input type="text" id="productSearch" class="search-box" placeholder="Search products by name...">
                         <span id="selectionCount">0/12 Selected</span>
                     </div>
                     <div style="text-align:right;">
@@ -81,7 +82,7 @@
                 </div>
 
                 <div id="productGrid" class="trending-grid">
-                    <p style="text-align:center; padding:40px; color:#999;">Loading products...</p>
+                    <p style="text-align:center; grid-column: 1/-1; padding:40px; color:#999;">Loading products...</p>
                 </div>
             </div>
         </main>
@@ -91,31 +92,37 @@
     <script>
         let allProducts = [];
         let selectedIds = [];
+        const apiBase = window.CalvoroAPIBase || '';
 
         async function init() {
-            // Check auth using admin.js function
+            // මුලින්ම ලොග් වෙලාද බලනවා
             if (typeof checkAuth === 'function') {
                 const ok = await checkAuth();
                 if (!ok) return;
             }
 
-            try {
-                // Fetch current trending selection
-                const trendRes = await fetch('/api/admin/trending-products', { credentials: 'include' });
-                if (!trendRes.ok) throw new Error('Failed to load trending data');
-                const trendData = await trendRes.json();
-                selectedIds = (trendData.productIds || []).map(id => parseInt(id));
+            const grid = document.getElementById('productGrid');
 
-                // Fetch all products
-                const prodRes = await fetch('/api/admin/products', { credentials: 'include' });
+            try {
+                // සියලුම products ගේනවා
+                const prodRes = await fetch(apiBase + '/api/admin/products', { credentials: 'include' });
                 if (!prodRes.ok) throw new Error('Failed to load products');
+                
                 allProducts = await prodRes.json();
+
+                // දැනටමත් Featured (Trending) ලෙස පවතින අයිතම හඳුනා ගන්නවා
+                // DB එකේ featured = 1 හෝ true ලෙස ඇති ඒවා selectedIds වලට එක් කරයි
+                selectedIds = allProducts
+                    .filter(p => p.featured === 1 || p.featured === true)
+                    .map(p => parseInt(p.id));
 
                 renderProducts();
                 updateCount();
             } catch (err) {
-                console.error(err);
-                document.getElementById('productGrid').innerHTML = '<p style="text-align:center; padding:40px; color:red;">Error loading content. Please check your connection.</p>';
+                console.error('Trending Init Error:', err);
+                grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:red;">
+                    Error loading content. <br> <small>${err.message}</small>
+                </p>`;
             }
         }
 
@@ -134,14 +141,17 @@
             }
 
             grid.innerHTML = filtered.map(p => {
-                const isSelected = selectedIds.includes(parseInt(p.id));
-                const order = selectedIds.indexOf(parseInt(p.id)) + 1;
+                const pid = parseInt(p.id);
+                const isSelected = selectedIds.includes(pid);
+                const order = selectedIds.indexOf(pid) + 1;
+                const imgUrl = (p.images && p.images[0]) ? p.images[0] : '/placeholder.png';
+
                 return `
-                    <div class="product-card ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${p.id})">
-                        <div class="selection-badge">${order}</div>
-                        <img src="${(p.images && p.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"150\"%3E%3Crect width=\"100%\" height=\"100%\" fill=\"%23eee\"/%3E%3C/svg%3E'}" alt="${p.name}">
+                    <div class="product-card ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${pid})">
+                        <div class="selection-badge">${isSelected ? order : ''}</div>
+                        <img src="${imgUrl}" alt="${p.name}" onerror="this.src='/placeholder.png'">
                         <h4>${p.name}</h4>
-                        <div class="price">LKR ${Number(p.price).toLocaleString()}</div>
+                        <div class="price">LKR ${(Number(p.price) || 0).toLocaleString()}</div>
                     </div>
                 `;
             }).join('');
@@ -154,7 +164,7 @@
                 selectedIds.splice(idx, 1);
             } else {
                 if (selectedIds.length >= 12) {
-                    alert('You can feature up to 12 products. Please unselect another before adding a new one.');
+                    alert('You can only feature up to 12 products.');
                     return;
                 }
                 selectedIds.push(pid);
@@ -180,28 +190,28 @@
             msg.style.color = '#333';
 
             try {
-                const res = await fetch('/api/admin/trending-products', {
-                    method: 'POST',
+                // Backend එකේ Trending/Featured ලැයිස්තුව update කරන endpoint එක
+                const res = await fetch(apiBase + '/api/products/featured', {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ productIds: selectedIds })
                 });
 
                 if (res.ok) {
-                    msg.textContent = 'Featured list updated!';
+                    msg.textContent = 'Featured list updated successfully!';
                     msg.style.color = '#0ca678';
-                    if (typeof showNotification === 'function') {
-                        showNotification('Trending products updated successfully');
-                    }
                 } else {
-                    throw new Error('Failed to save');
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to save');
                 }
             } catch (err) {
-                msg.textContent = 'Failed to save changes.';
+                console.error('Save Error:', err);
+                msg.textContent = 'Failed to save changes: ' + err.message;
                 msg.style.color = '#f03e3e';
             } finally {
                 btn.disabled = false;
-                setTimeout(() => { msg.textContent = ''; }, 3000);
+                setTimeout(() => { msg.textContent = ''; }, 4000);
             }
         };
 
