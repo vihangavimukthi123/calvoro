@@ -8,9 +8,8 @@
     <link rel="stylesheet" href="css/admin.css">
     <script>
         (function () {
+            // Frontend සහ Backend එකම Domain එකක ඇති බැවින් Base URL හිස්ව තබන්න
             if (typeof window.CalvoroAPIBase !== 'undefined') return;
-            
-            // Frontend සහ Backend එකම සර්වර් එකේ ඇති බැවින් Base URL එක හිස්ව තබන්න
             window.CalvoroAPIBase = ''; 
         })();
     </script>
@@ -151,11 +150,15 @@
             try {
                 // 1. Fetch Stats
                 const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
-                
-                // Response එක JSON ද නැත්නම් HTML ද කියා පරීක්ෂා කිරීම
                 const contentType = statsRes.headers.get("content-type");
-                if (!statsRes.ok || !contentType || !contentType.includes("application/json")) {
-                    throw new Error("Backend returned non-JSON response. Check API URL.");
+                
+                if (!statsRes.ok) {
+                    if (contentType && contentType.includes("application/json")) {
+                        const errData = await statsRes.json();
+                        throw new Error(errData.error || `HTTP Error ${statsRes.status}`);
+                    } else {
+                        throw new Error(`Server returned HTML instead of JSON. Status: ${statsRes.status}`);
+                    }
                 }
 
                 const stats = await statsRes.json();
@@ -167,6 +170,8 @@
 
                 // 2. Fetch Recent Orders
                 const ordersRes = await fetch(base + '/api/orders', { credentials: 'include' });
+                if (!ordersRes.ok) throw new Error(`Orders fetch failed: ${ordersRes.status}`);
+                
                 const orders = await ordersRes.json();
 
                 if (!orders || orders.length === 0) {
