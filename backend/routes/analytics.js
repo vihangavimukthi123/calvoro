@@ -55,6 +55,40 @@ function parseRange(req) {
 
 router.use(requireAdmin);
 
+// ---- Dashboard General Stats (අලුතින් එකතු කළ කොටස) ----
+router.get('/stats', async (req, res) => {
+    try {
+        // db.js ෆයිල් එකේ getDashboardStats function එක තියෙනවද බලනවා
+        if (typeof db.getDashboardStats === 'function') {
+            const data = await db.getDashboardStats();
+            return res.json(data);
+        }
+
+        // Fallback: කෙලින්ම Database එකෙන් දත්ත ගැනීම
+        let stats = { totalProducts: 0, totalUsers: 0, totalOrders: 0, totalRevenue: 0, pendingOrders: 0 };
+        
+        if (typeof db.query === 'function') {
+            const prodRes = await db.query('SELECT COUNT(*) as count FROM products');
+            stats.totalProducts = prodRes[0][0]?.count || prodRes[0]?.count || 0;
+
+            const userRes = await db.query('SELECT COUNT(*) as count FROM users');
+            stats.totalUsers = userRes[0][0]?.count || userRes[0]?.count || 0;
+
+            const orderRes = await db.query('SELECT COUNT(*) as count, SUM(total) as revenue FROM orders');
+            stats.totalOrders = orderRes[0][0]?.count || orderRes[0]?.count || 0;
+            stats.totalRevenue = orderRes[0][0]?.revenue || orderRes[0]?.revenue || 0;
+
+            const pendRes = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
+            stats.pendingOrders = pendRes[0][0]?.count || pendRes[0]?.count || 0;
+        }
+
+        res.json(stats);
+    } catch (e) {
+        console.error('Stats API Error:', e);
+        res.status(500).json({ error: 'Database error fetching stats' });
+    }
+});
+
 // ---- Sales ----
 router.get('/sales/monthly', async (req, res) => {
     try {
