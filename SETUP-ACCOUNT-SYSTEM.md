@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS admin_activity_logs (
 | GET | /api/admin/stats | Dashboard stats (admin) |
 
 ## 4. Default Admin
-- URL: http://localhost:3000/admin
+- URL: /api/admin
 - Username: `admin`
 - Password: `admin123`
 

@@ -276,7 +276,7 @@
                             }
                             showError(data.error || 'Could not sign in with Google.');
                         } catch (e) {
-                            showError('Connection error. Use the site via the server (e.g. http://localhost:3000) to enable full account features.');
+                            showError('Connection error. Use the site via the server (e.g. /api) to enable full account features.');
                         }
                         showLoading(false);
                     },

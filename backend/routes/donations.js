@@ -6,7 +6,7 @@ const emailService = require('../services/emailService');
 const router = express.Router();
 
 function getBaseUrl(req) {
-    return process.env.BASE_URL || (req && req.protocol && req.get ? (req.protocol + '://' + req.get('host')) : 'http://localhost:3000');
+    return process.env.BASE_URL || (req && req.protocol && req.get ? (req.protocol + '://' + req.get('host')) : '/api');
 }
 
 function isValidEmail(email) {

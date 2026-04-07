@@ -14,7 +14,7 @@ const PAYHERE_LIVE_URL = 'https://www.payhere.lk/pay/checkout';
 const PAYHERE_URL = PAYHERE_MODE === 'live' ? PAYHERE_LIVE_URL : PAYHERE_SANDBOX_URL;
 
 // Base URL - adjust this based on your deployment
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || '/api';
 
 /**
  * Generate PayHere security hash

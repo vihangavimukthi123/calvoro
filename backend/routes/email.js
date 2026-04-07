@@ -99,7 +99,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
 
 /**
  * Quick Test Route for Resend Integration
- * URL: http://localhost:3000/api/email/test-resend
+ * URL: /api/api/email/test-resend
  */
 router.get('/test-resend', async (req, res) => {
     try {

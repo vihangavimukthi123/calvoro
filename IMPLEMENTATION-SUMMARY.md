@@ -33,7 +33,7 @@
 - **Products:** List, search, category filter, sort (price_asc, price_desc, newest).
 - **Carousel:** `/api/carousel` returns hero slides.
 - **Cart/Orders/Auth:** Routes exist; cart is currently driven by `localStorage` on the front end.
-- **Admin:** Served at `http://localhost:3000/admin` (login: admin / admin123).
+- **Admin:** Served at `/api/admin` (login: admin / admin123).
 
 ### MySQL
 - **Schema:** `backend/database/schema.sql` (products, categories, orders, users, gift_vouchers, hero_carousel, etc.).
@@ -49,13 +49,13 @@
 
 1. **Backend:**  
    `cd backend` then `npm install` and `node server.js`  
-   Server: `http://localhost:3000`
+   Server: `/api`
 
 2. **Frontend:**  
-   Open `http://localhost:3000` (not `file://`) so the API, cart count, search, and filters work.
+   Open `/api` (not `file://`) so the API, cart count, search, and filters work.
 
 3. **Admin:**  
-   `http://localhost:3000/admin` — manage products, categories, orders (backed by JSON until you switch to MySQL).
+   `/api/admin` — manage products, categories, orders (backed by JSON until you switch to MySQL).
 
 ---
 

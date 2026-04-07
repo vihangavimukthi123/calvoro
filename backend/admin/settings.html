@@ -15,7 +15,7 @@
                 var host = window.location.hostname || 'localhost';
                 var protocol = window.location.protocol || 'http:';
                 if (protocol === 'file:') {
-                    window.CalvoroAPIBase = 'http://localhost:3000';
+                    window.CalvoroAPIBase = '/api';
                 } else if (port !== '3000') {
                     window.CalvoroAPIBase = protocol + '//' + host + ':3000';
                 } else {
@@ -225,7 +225,7 @@
             const d = await r.json().catch(() => ({}));
             if (!r.ok) {
                 if (r.status === 404) {
-                    status.textContent = 'API 404 — restart backend from calvoro-final/backend (npm start) and use http://localhost:3000/admin/settings.html';
+                    status.textContent = 'API 404 — restart backend from calvoro-final/backend (npm start) and use /api/admin/settings.html';
                 } else {
                     status.textContent = (d && d.error) ? d.error : 'Failed to load';
                 }

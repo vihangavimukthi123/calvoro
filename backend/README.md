@@ -47,7 +47,7 @@ copy .env.example .env
 npm start
 ```
 
-The server will start on `http://localhost:3000`
+The server will start on `/api`
 
 ## Default Admin Credentials
 
@@ -91,7 +91,7 @@ The server will start on `http://localhost:3000`
 
 ## Admin Panel
 
-Access the admin panel at: `http://localhost:3000/admin`
+Access the admin panel at: `/api/admin`
 
 ### Pages
 - **Dashboard** - Overview stats and recent orders

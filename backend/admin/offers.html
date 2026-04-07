@@ -14,7 +14,7 @@
                 var port = (window.location.port || '');
                 var host = window.location.hostname || 'localhost';
                 var protocol = window.location.protocol || 'http:';
-                if (protocol === 'file:') window.CalvoroAPIBase = 'http://localhost:3000';
+                if (protocol === 'file:') window.CalvoroAPIBase = '/api';
                 else if (port !== '3000') window.CalvoroAPIBase = protocol + '//' + host + ':3000';
                 else window.CalvoroAPIBase = '';
             } catch (e) { window.CalvoroAPIBase = ''; }

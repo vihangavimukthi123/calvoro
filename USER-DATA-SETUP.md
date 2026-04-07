@@ -70,6 +70,6 @@ mysql -u root -p calvoro_db < backend/database/user-data-schema.sql
 1. Ensure `.env` has `USE_MYSQL=true`
 2. Start backend: `cd backend && npm start`
 3. Tables created automatically
-4. **Open the site via the backend**: `http://localhost:3000` (not Live Server)
+4. **Open the site via the backend**: `/api` (not Live Server)
 
-**If using Live Server (e.g. port 5500):** `js/config.js` auto-detects and points API calls to `http://localhost:3000`. Ensure the backend is running on port 3000.
+**If using Live Server (e.g. port 5500):** `js/config.js` auto-detects and points API calls to `/api`. Ensure the backend is running on port 3000.

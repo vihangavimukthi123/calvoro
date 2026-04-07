@@ -1141,7 +1141,7 @@ if (newsletterForm) {
             }
         } catch (err) {
             if (button) { button.disabled = false; button.textContent = origText; }
-            alert('Connection error. Use the site via the server (e.g. http://localhost:3000).');
+            alert('Connection error. Use the site via the server (e.g. /api).');
         }
     });
 }
