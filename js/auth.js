@@ -1,23 +1,17 @@
 /**
  * Calvoro – Google Sign-In (Google Identity Services)
  * ---------------------------------------------------
- * Production-style auth for frontend-only flow. Uses GIS (accounts.google.com/gsi/client).
- * SECURITY: Client-side JWT decode is for UI only; backend MUST verify the token.
  */
 (function () {
     'use strict';
 
-    // -------------------------------------------------------------------------
-    // Storage keys (namespaced to avoid collisions; easy to clear on logout)
-    // -------------------------------------------------------------------------
+    if (typeof window.CalvoroGoogleClientId === 'undefined') {
+        window.CalvoroGoogleClientId = '681900223997-vm81gpia68ed2chs750lith3a7mo0896.apps.googleusercontent.com';
+    }
+
     var STORAGE_KEY_TOKEN = 'calvoro_google_id_token';
     var STORAGE_KEY_USER = 'calvoro_google_user';
 
-    /**
-     * Decode a JWT payload without verification (client-side only, for display).
-     * SECURITY: Do not trust this for authorization. Backend must verify signature
-     * and issuer using Google's public keys (e.g. JWKS).
-     */
     function decodeJwtPayload(token) {
         if (!token || typeof token !== 'string') return null;
         try {
@@ -26,12 +20,9 @@
             var payload = parts[1];
             var base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
             var json = decodeURIComponent(
-                atob(base64)
-                    .split('')
-                    .map(function (c) {
-                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                    })
-                    .join('')
+                atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join('')
             );
             return JSON.parse(json);
         } catch (e) {
@@ -39,10 +30,6 @@
         }
     }
 
-    /**
-     * Persist session in localStorage. We store minimal data; token is for future
-     * backend verification; user object is decoded payload for UI only.
-     */
     function saveSession(idToken, decoded) {
         try {
             var user = {
@@ -67,9 +54,6 @@
         } catch (e) {}
     }
 
-    /**
-     * Get current user from storage (does not validate token expiry; for UI only).
-     */
     function getCurrentUser() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY_USER);
@@ -79,16 +63,10 @@
         }
     }
 
-    /**
-     * Check if we have a stored session (quick check for navbar).
-     */
     function isLoggedIn() {
         return !!getCurrentUser();
     }
 
-    // -------------------------------------------------------------------------
-    // Navbar: render account slot (profile pill + dropdown or login link)
-    // -------------------------------------------------------------------------
     function renderNavbarAuth() {
         var slot = document.getElementById('auth-navbar-slot');
         if (!slot) return;
@@ -134,7 +112,6 @@
                 });
             }
         } else {
-            // Not logged in: show login/account button (or nothing on login page)
             if (isLoginPage) {
                 slot.innerHTML = '<span class="auth-nav-placeholder"></span>';
             } else {
@@ -153,12 +130,9 @@
         return div.innerHTML;
     }
 
-    /**
-     * Logout: call backend to clear server session, clear storage, refresh navbar. Optionally redirect to login.
-     */
     function handleLogout(redirectToLogin) {
-        var apiBase = window.CalvoroAPIBase || '';
-        fetch(apiBase + '/api/users/logout', { method: 'POST', credentials: 'include' }).catch(function () {}).finally(function () {
+        // Changed from apiBase to relative path
+        fetch('/api/users/logout', { method: 'POST', credentials: 'include' }).catch(function () {}).finally(function () {
             clearSession();
             renderNavbarAuth();
             if (redirectToLogin && !/login\.html/i.test(window.location.pathname)) {
@@ -167,23 +141,15 @@
         });
     }
 
-    // Expose for other scripts (e.g. cart, wishlist) and for logout from account page
     window.CalvoroAuth = {
         getCurrentUser: getCurrentUser,
         isLoggedIn: isLoggedIn,
-        logout: function () {
-            handleLogout(false);
-        },
-        logoutAndRedirect: function () {
-            handleLogout(true);
-        },
+        logout: function () { handleLogout(false); },
+        logoutAndRedirect: function () { handleLogout(true); },
         renderNavbar: renderNavbarAuth,
         decodeJwtPayload: decodeJwtPayload
     };
 
-    // -------------------------------------------------------------------------
-    // Google Sign-In (GIS) – initialize and render button on login page
-    // -------------------------------------------------------------------------
     function loadGoogleScript() {
         return new Promise(function (resolve, reject) {
             if (window.google && window.google.accounts) {
@@ -193,12 +159,8 @@
             var script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.async = true;
-            script.onload = function () {
-                resolve();
-            };
-            script.onerror = function () {
-                reject(new Error('Google Sign-In script failed to load'));
-            };
+            script.onload = function () { resolve(); };
+            script.onerror = function () { reject(new Error('Google Sign-In script failed to load')); };
             document.head.appendChild(script);
         });
     }
@@ -211,10 +173,7 @@
 
         if (!container) return;
 
-        function showLoading(show) {
-            if (loadingEl) loadingEl.style.display = show ? 'block' : 'none';
-        }
-
+        function showLoading(show) { if (loadingEl) loadingEl.style.display = show ? 'block' : 'none'; }
         function showError(msg) {
             if (errorEl) {
                 errorEl.textContent = msg || 'Something went wrong.';
@@ -260,9 +219,10 @@
                             showLoading(false);
                             return;
                         }
-                        var apiBase = window.CalvoroAPIBase || '';
+                        
                         try {
-                            var res = await fetch(apiBase + '/api/users/google-login', {
+                            // Changed from apiBase to relative path
+                            var res = await fetch('/api/users/google-login', {
                                 method: 'POST',
                                 credentials: 'include',
                                 headers: { 'Content-Type': 'application/json' },
@@ -276,7 +236,7 @@
                             }
                             showError(data.error || 'Could not sign in with Google.');
                         } catch (e) {
-                            showError('Connection error. Use the site via the server (e.g. /api) to enable full account features.');
+                            showError('Connection error. Please try again later.');
                         }
                         showLoading(false);
                     },
@@ -284,7 +244,6 @@
                     cancel_on_tap_outside: true
                 });
 
-                // Render the Google button into the container
                 try {
                     window.google.accounts.id.renderButton(container, {
                         type: 'standard',
@@ -312,7 +271,7 @@
             var redirect = params.get('redirect');
             if (!redirect) return '';
             redirect = decodeURIComponent(redirect);
-            if (/^https?:\/\//i.test(redirect)) return ''; // external not allowed
+            if (/^https?:\/\//i.test(redirect)) return ''; 
             if (redirect.indexOf('..') !== -1) return '';
             return redirect || '';
         } catch (e) {
@@ -320,9 +279,6 @@
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Run on DOM ready
-    // -------------------------------------------------------------------------
     function init() {
         renderNavbarAuth();
         initLoginPage();
