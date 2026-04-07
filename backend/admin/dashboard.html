@@ -9,21 +9,9 @@
     <script>
         (function () {
             if (typeof window.CalvoroAPIBase !== 'undefined') return;
-            try {
-                var hostname = window.location.hostname;
-                var protocol = window.location.protocol;
-                
-                // Live server එකේදී port 3000 වෙනුවට direct domain එක හරහා /api භාවිතා කරයි.
-                // Local development වලදී පමණක් localhost:3000 භාවිතා කරයි.
-                if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                    window.CalvoroAPIBase = 'http://localhost:3000';
-                } else {
-                    // සජීවී සයිට් එකේදී domain එකට පසුව /api භාවිතා වන ලෙස සකසයි
-                    window.CalvoroAPIBase = protocol + '//' + hostname;
-                }
-            } catch (e) {
-                window.CalvoroAPIBase = '';
-            }
+            
+            // Railway Backend URL එක මෙතනට දාන්න (අගට / ලකුණ නොමැතිව)
+            window.CalvoroAPIBase = 'https://backend-production-xxxx.up.railway.app'; 
         })();
     </script>
 </head>
@@ -167,7 +155,7 @@
                 // Response එක JSON ද නැත්නම් HTML ද කියා පරීක්ෂා කිරීම
                 const contentType = statsRes.headers.get("content-type");
                 if (!statsRes.ok || !contentType || !contentType.includes("application/json")) {
-                    throw new Error("Backend returned non-JSON response. Check Nginx Proxy.");
+                    throw new Error("Backend returned non-JSON response. Check API URL.");
                 }
 
                 const stats = await statsRes.json();
