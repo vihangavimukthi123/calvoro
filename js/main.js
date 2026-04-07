@@ -1,6 +1,16 @@
 // Enhanced main.js with full e-commerce functionality
 
 // ======================
+// HELPER: API Base URL (Production-safe)
+// ======================
+// Returns CalvoroAPIBase if explicitly set, otherwise '' (relative path).
+// This ensures all fetch() calls use relative URLs in production,
+// so the browser sends requests to the same origin the site is served from.
+function _calvoroApiBase() {
+    return (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : '';
+}
+
+// ======================
 // CART MANAGEMENT (user-specific when logged in)
 // Supports both backend session (API cart) and Google Sign-In (localStorage cart).
 // ======================
@@ -31,7 +41,7 @@ class ShoppingCart {
     async hasBackendSession() {
         if (this._backendSession !== null) return this._backendSession;
         try {
-            const r = await fetch((window.CalvoroAPIBase || '') + '/api/users/me', { credentials: 'include' });
+            const r = await fetch(_calvoroApiBase() + '/api/users/me', { credentials: 'include' });
             const d = await r.json().catch(function() { return {}; });
             this._backendSession = !!(d && d.user);
             return this._backendSession;
@@ -69,7 +79,7 @@ class ShoppingCart {
         const useApi = await this.hasBackendSession();
         if (useApi) {
             try {
-                const r = await fetch((window.CalvoroAPIBase || '') + '/api/cart', { credentials: 'include' });
+                const r = await fetch(_calvoroApiBase() + '/api/cart', { credentials: 'include' });
                 const d = await r.json();
                 const count = (d && d.itemCount) || 0;
                 const badge = document.getElementById('cart-count');
@@ -108,7 +118,7 @@ class ShoppingCart {
         const useApi = await this.hasBackendSession();
         if (useApi) {
             try {
-                const res = await fetch((window.CalvoroAPIBase || '') + '/api/cart/add', {
+                const res = await fetch(_calvoroApiBase() + '/api/cart/add', {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
@@ -206,7 +216,7 @@ window.CartDrawer = {
     drawer: null,
     FREE_SHIPPING_THRESHOLD: 15000,
     SHIPPING_FEE: 500,
-    base() { return (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : (window.location && window.location.origin) || ''; },
+    base() { return _calvoroApiBase(); },
     currency() { return (window.CalvoroCurrency && window.CalvoroCurrency.get()) || 'LKR'; },
     rate() { return (window.CalvoroCurrency && window.CalvoroCurrency.rate()) || 320; },
     fmt(n) { return this.currency() === 'USD' ? '$' + (n / this.rate()).toFixed(2) : 'LKR ' + Number(n).toLocaleString(); },
@@ -474,7 +484,7 @@ class ProductSearch {
         if (query.length < 2) return;
 
         try {
-            const response = await fetch(`/api/products?search=${encodeURIComponent(query)}`);
+            const response = await fetch(`${_calvoroApiBase()}/api/products?search=${encodeURIComponent(query)}`);
             const products = await response.json();
             this.displayResults(products);
         } catch (error) {
@@ -641,8 +651,7 @@ class ProductFilters {
             if (pr.max != null && pr.max < Infinity) params.append('max_price', String(pr.max));
             params.append('pricing', '1');
 
-            const apiBase = (window.CalvoroAPIBase !== undefined) ? window.CalvoroAPIBase : (window.location.origin || '');
-            const apiUrl = apiBase + '/api/products?' + params.toString();
+            const apiUrl = _calvoroApiBase() + '/api/products?' + params.toString();
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error('Server returned ' + response.status);
             const data = await response.json();
@@ -864,8 +873,7 @@ class HeroCarousel {
 
     async initialize() {
         try {
-            const base = (typeof window !== 'undefined' && window.CalvoroAPIBase !== undefined) ? window.CalvoroAPIBase : '';
-            const response = await fetch(base + '/api/carousel');
+            const response = await fetch(_calvoroApiBase() + '/api/carousel');
             if (!response.ok) return;
             const data = await response.json();
             this.slides = Array.isArray(data) ? data : [];
@@ -944,7 +952,7 @@ class UserAccount {
 
         // Check if user is logged in
         try {
-            const response = await fetch((window.CalvoroAPIBase || '') + '/api/users/me');
+            const response = await fetch(_calvoroApiBase() + '/api/users/me');
             if (response.ok) {
                 const data = await response.json();
                 this.user = (data && data.user !== undefined) ? data.user : (data && data.id ? data : null);
@@ -982,7 +990,7 @@ class UserAccount {
 
     async login(email, password) {
         try {
-            const response = await fetch((window.CalvoroAPIBase || '') + '/api/users/login', {
+            const response = await fetch(_calvoroApiBase() + '/api/users/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -1003,7 +1011,7 @@ class UserAccount {
 
     async logout() {
         try {
-            await fetch((window.CalvoroAPIBase || '') + '/api/users/logout', { method: 'POST' });
+            await fetch(_calvoroApiBase() + '/api/users/logout', { method: 'POST' });
             this.user = null;
             window.location.href = '/';
         } catch (error) {
@@ -1100,12 +1108,9 @@ if (newsletterForm) {
         const button = this.querySelector('button');
         if (!email) return;
 
-        var apiBase = window.CalvoroAPIBase;
-        if (apiBase === undefined || apiBase === null || apiBase === '') {
-            var loc = window.location;
-            var p = (loc.port || (loc.protocol === 'https:' ? '443' : '80'));
-            apiBase = p === '3000' ? (loc.origin || '') : (loc.protocol + '//' + (loc.hostname || 'localhost') + ':3000');
-        }
+        // PRODUCTION FIX: use relative path or CalvoroAPIBase, no localhost fallback
+        var apiBase = _calvoroApiBase();
+
         var origText = button ? button.textContent : '';
         if (button) { button.disabled = true; button.textContent = '…'; }
         try {
@@ -1263,7 +1268,7 @@ window.CalvoroWishlist = {
     get() { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); },
     async isLoggedIn() {
         try {
-            const r = await fetch((window.CalvoroAPIBase || '') + '/api/users/me', { credentials: 'include' });
+            const r = await fetch(_calvoroApiBase() + '/api/users/me', { credentials: 'include' });
             const d = await r.json();
             return !!(d && d.user);
         } catch (e) { return false; }
@@ -1271,7 +1276,7 @@ window.CalvoroWishlist = {
     async getApiIds() {
         if (this._apiIds) return this._apiIds;
         try {
-            const r = await fetch((window.CalvoroAPIBase || '') + '/api/wishlist', { credentials: 'include' });
+            const r = await fetch(_calvoroApiBase() + '/api/wishlist', { credentials: 'include' });
             const list = await r.json();
             this._apiIds = Array.isArray(list) ? list.map(p => String(p.id)) : [];
             return this._apiIds;
@@ -1300,10 +1305,10 @@ window.CalvoroWishlist = {
             const id = String(productId);
             const inList = ids.includes(id);
             if (inList) {
-                const r = await fetch((window.CalvoroAPIBase || '') + '/api/wishlist/' + productId, { method: 'DELETE', credentials: 'include' });
+                const r = await fetch(_calvoroApiBase() + '/api/wishlist/' + productId, { method: 'DELETE', credentials: 'include' });
                 if (r.ok) this._apiIds = ids.filter(x => x !== id);
             } else {
-                const r = await fetch((window.CalvoroAPIBase || '') + '/api/wishlist/add', {
+                const r = await fetch(_calvoroApiBase() + '/api/wishlist/add', {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
@@ -1320,7 +1325,7 @@ window.CalvoroWishlist = {
     async refreshButtonStates() {
         if (!await this.isLoggedIn()) return;
         try {
-            const r = await fetch((window.CalvoroAPIBase || '') + '/api/wishlist', { credentials: 'include' });
+            const r = await fetch(_calvoroApiBase() + '/api/wishlist', { credentials: 'include' });
             const list = await r.json();
             this._apiIds = Array.isArray(list) ? list.map(p => String(p.id)) : [];
             document.querySelectorAll('.wishlist-btn[data-product-id]').forEach(btn => {
@@ -1444,7 +1449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var promoEl = document.querySelector('.promo');
         if (!promoEl) return;
 
-        var base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : '';
+        var base = _calvoroApiBase();
         try {
             var r = await fetch(base + '/api/promo-ticker', { credentials: 'include' });
             var d = await r.json().catch(function () { return {}; });
@@ -1487,8 +1492,7 @@ class TrendingSlider {
 
     async fetchProducts() {
         try {
-            const apiBase = (window.CalvoroAPIBase !== undefined) ? window.CalvoroAPIBase : (window.location.origin || '');
-            const res = await fetch(`${apiBase}/api/products?trending=1`);
+            const res = await fetch(`${_calvoroApiBase()}/api/products?trending=1`);
             const products = await res.json();
             
             if (!products || products.length === 0) {
