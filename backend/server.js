@@ -134,12 +134,17 @@ app.get('/api', (req, res) => {
 // --- FRONTEND SERVING LOGIC (වැදගත්ම කොටස) ---
 
 // 1. Static ෆයිල්ස් (CSS, JS, Images) ලබා දීම
-// backend ෆෝල්ඩරයට පිටත ඇති ප්‍රධාන ෆෝල්ඩරය පාවිච්චි කරයි
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-// 2. ඕනෑම ලින්ක් එකකට ගියහොත් (API හැර) index.html පෙන්වීම
+// 2. API Routes වලට අදාළ 404 Error Handler එක (අනිවාර්යයි)
+// මෙයින් සහතික කරන්නේ /api වලින් එන වැරදි රික්වෙස්ට් වලට HTML පිටුවක් වෙනුවට JSON error එකක් යවන බවයි.
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: "API endpoint not found or unauthorized" });
+});
+
+// 3. ඕනෑම ලින්ක් එකකට ගියහොත් (API හැර) index.html පෙන්වීම
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
