@@ -55,31 +55,36 @@ function parseRange(req) {
 
 router.use(requireAdmin);
 
-// ---- Dashboard General Stats (අලුතින් එකතු කළ කොටස) ----
+// ---- Dashboard General Stats (නිවැරදි කරන ලද කොටස) ----
 router.get('/stats', async (req, res) => {
     try {
-        // db.js ෆයිල් එකේ getDashboardStats function එක තියෙනවද බලනවා
         if (typeof db.getDashboardStats === 'function') {
             const data = await db.getDashboardStats();
             return res.json(data);
         }
 
-        // Fallback: කෙලින්ම Database එකෙන් දත්ත ගැනීම
         let stats = { totalProducts: 0, totalUsers: 0, totalOrders: 0, totalRevenue: 0, pendingOrders: 0 };
         
         if (typeof db.query === 'function') {
+            // Helper to get count from various DB result formats
+            const getCount = (result) => {
+                const row = Array.isArray(result[0]) ? result[0][0] : result[0];
+                return row ? (row.count || row['COUNT(*)'] || 0) : 0;
+            };
+
             const prodRes = await db.query('SELECT COUNT(*) as count FROM products');
-            stats.totalProducts = prodRes[0][0]?.count || prodRes[0]?.count || 0;
+            stats.totalProducts = getCount(prodRes);
 
             const userRes = await db.query('SELECT COUNT(*) as count FROM users');
-            stats.totalUsers = userRes[0][0]?.count || userRes[0]?.count || 0;
+            stats.totalUsers = getCount(userRes);
 
             const orderRes = await db.query('SELECT COUNT(*) as count, SUM(total) as revenue FROM orders');
-            stats.totalOrders = orderRes[0][0]?.count || orderRes[0]?.count || 0;
-            stats.totalRevenue = orderRes[0][0]?.revenue || orderRes[0]?.revenue || 0;
+            const oRow = Array.isArray(orderRes[0]) ? orderRes[0][0] : orderRes[0];
+            stats.totalOrders = oRow ? (oRow.count || 0) : 0;
+            stats.totalRevenue = oRow ? (oRow.revenue || 0) : 0;
 
-            const pendRes = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
-            stats.pendingOrders = pendRes[0][0]?.count || pendRes[0]?.count || 0;
+            const pendRes = await db.query('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"');
+            stats.pendingOrders = getCount(pendRes);
         }
 
         res.json(stats);
