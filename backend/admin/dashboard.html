@@ -6,11 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Calvoro Admin</title>
     <link rel="stylesheet" href="css/admin.css">
+    <script>
+        (function () {
+            // API base එක හිස්ව තැබීමෙන් සජීවී සර්වරයේ සාපේක්ෂ ලිපින (Relative paths) භාවිත කළ හැක
+            window.CalvoroAPIBase = '';
+        })();
+    </script>
 </head>
 
 <body>
     <div class="admin-layout">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <a href="/admin/dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
@@ -35,7 +40,6 @@
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
                 <h1>Dashboard</h1>
@@ -45,7 +49,6 @@
             </header>
 
             <div class="dashboard">
-                <!-- Stats Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">📦</div>
@@ -88,7 +91,6 @@
                     </div>
                 </div>
 
-                <!-- Recent Orders -->
                 <div class="card">
                     <div class="card-header">
                         <h2>Recent Orders</h2>
@@ -114,7 +116,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="card">
                     <div class="card-header">
                         <h2>Quick Actions</h2>
@@ -146,43 +147,50 @@
     <script>
         async function loadDashboard() {
             try {
-                // Load stats
-                const statsRes = await fetch('/api/admin/stats');
+                // Load stats - Using relative path for production
+                const statsRes = await fetch('/api/admin/stats', { credentials: 'include' });
                 const stats = await statsRes.json();
 
-                document.getElementById('totalProducts').textContent = stats.totalProducts;
+                document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
                 document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-                document.getElementById('totalOrders').textContent = stats.totalOrders;
-                document.getElementById('totalRevenue').textContent = stats.totalRevenue.toLocaleString();
-                document.getElementById('pendingOrders').textContent = stats.pendingOrders;
+                document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                document.getElementById('totalRevenue').textContent = (stats.totalRevenue || 0).toLocaleString();
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
 
-                // Load recent orders
-                const ordersRes = await fetch('/api/orders');
+                // Load recent orders - Using relative path for production
+                const ordersRes = await fetch('/api/orders', { credentials: 'include' });
                 const orders = await ordersRes.json();
 
                 const tbody = document.querySelector('#recentOrdersTable tbody');
 
-                if (orders.length === 0) {
+                if (!orders || orders.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center">No orders yet</td></tr>';
                 } else {
                     tbody.innerHTML = orders.slice(0, 5).map(order => `
                         <tr>
-                            <td>${order.order_number}</td>
-                            <td>${order.customer_name}</td>
-                            <td>LKR ${order.total.toLocaleString()}</td>
-                            <td><span class="badge badge-${order.status}">${order.status}</span></td>
-                            <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                            <td>${order.order_number || '#' + order.id}</td>
+                            <td>${order.customer_name || (order.first_name + ' ' + order.last_name) || 'Guest'}</td>
+                            <td>LKR ${(order.total || 0).toLocaleString()}</td>
+                            <td><span class="badge badge-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
+                            <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
                         </tr>
                     `).join('');
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                const tbody = document.querySelector('#recentOrdersTable tbody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:red;">Error loading data. Please check connection.</td></tr>';
             }
         }
 
         (async function() {
-            const ok = await checkAuth();
-            if (ok) loadDashboard();
+            // checkAuth() function එක js/admin.js ගොනුවේ තිබිය යුතුය
+            if (typeof checkAuth === 'function') {
+                const ok = await checkAuth();
+                if (ok) loadDashboard();
+            } else {
+                loadDashboard();
+            }
         })();
     </script>
 </body>
