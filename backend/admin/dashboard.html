@@ -7,21 +7,19 @@
     <title>Dashboard - Calvoro Admin</title>
     <link rel="stylesheet" href="css/admin.css">
     <script>
-        // API port එක සහ protocol එක අනුව base URL එක dynamic ලෙස සකස් කිරීම
         (function () {
             if (typeof window.CalvoroAPIBase !== 'undefined') return;
             try {
-                var port = window.location.port || '';
-                var host = window.location.hostname || 'localhost';
-                var protocol = window.location.protocol || 'http:';
+                var hostname = window.location.hostname;
+                var protocol = window.location.protocol;
                 
-                // Backend එක port 3000 හි run වන බව උපකල්පනය කෙරේ
-                if (protocol === 'file:') {
+                // Live server එකේදී port 3000 වෙනුවට direct domain එක හරහා /api භාවිතා කරයි.
+                // Local development වලදී පමණක් localhost:3000 භාවිතා කරයි.
+                if (hostname === 'localhost' || hostname === '127.0.0.1') {
                     window.CalvoroAPIBase = 'http://localhost:3000';
-                } else if (port !== '3000' && port !== '') {
-                    window.CalvoroAPIBase = protocol + '//' + host + ':3000';
                 } else {
-                    window.CalvoroAPIBase = '';
+                    // සජීවී සයිට් එකේදී domain එකට පසුව /api භාවිතා වන ලෙස සකසයි
+                    window.CalvoroAPIBase = protocol + '//' + hostname;
                 }
             } catch (e) {
                 window.CalvoroAPIBase = '';
@@ -73,7 +71,6 @@
                             <p>Total Products</p>
                         </div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-icon">👥</div>
                         <div class="stat-info">
@@ -81,7 +78,6 @@
                             <p>Total Users</p>
                         </div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-icon">🛒</div>
                         <div class="stat-info">
@@ -89,7 +85,6 @@
                             <p>Total Orders</p>
                         </div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-info">
@@ -97,7 +92,6 @@
                             <p>Total Revenue</p>
                         </div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-icon">⏳</div>
                         <div class="stat-info">
@@ -157,15 +151,9 @@
 
     <script src="js/admin.js"></script>
     <script>
-        // HTML Escaping function for XSS protection
         function esc(str) {
             if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         async function loadDashboard() {
@@ -175,14 +163,19 @@
             try {
                 // 1. Fetch Stats
                 const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
-                if (statsRes.ok) {
-                    const stats = await statsRes.json();
-                    document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
-                    document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-                    document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
-                    document.getElementById('totalRevenue').textContent = (stats.totalRevenue || 0).toLocaleString();
-                    document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
+                
+                // Response එක JSON ද නැත්නම් HTML ද කියා පරීක්ෂා කිරීම
+                const contentType = statsRes.headers.get("content-type");
+                if (!statsRes.ok || !contentType || !contentType.includes("application/json")) {
+                    throw new Error("Backend returned non-JSON response. Check Nginx Proxy.");
                 }
+
+                const stats = await statsRes.json();
+                document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                document.getElementById('totalRevenue').textContent = (stats.totalRevenue || 0).toLocaleString();
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
 
                 // 2. Fetch Recent Orders
                 const ordersRes = await fetch(base + '/api/orders', { credentials: 'include' });
@@ -191,38 +184,31 @@
                 if (!orders || orders.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center">No orders found.</td></tr>';
                 } else {
-                    // පළමු ඇණවුම් 5 පමණක් පෙන්වීම
                     tbody.innerHTML = orders.slice(0, 5).map(order => {
                         const orderNum = order.order_number || ('#' + order.id);
                         const customer = order.customer_name || (esc(order.first_name) + ' ' + esc(order.last_name)) || 'Guest';
-                        const total = (order.total || 0).toLocaleString();
-                        const status = order.status || 'pending';
-                        const date = order.created_at ? new Date(order.created_at).toLocaleDateString() : '—';
-
                         return `
                             <tr>
                                 <td>${esc(orderNum)}</td>
                                 <td>${esc(customer)}</td>
-                                <td>LKR ${total}</td>
-                                <td><span class="badge badge-${esc(status)}">${esc(status)}</span></td>
-                                <td>${esc(date)}</td>
+                                <td>LKR ${(order.total || 0).toLocaleString()}</td>
+                                <td><span class="badge badge-${esc(order.status || 'pending')}">${esc(order.status || 'pending')}</span></td>
+                                <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
                             </tr>
                         `;
                     }).join('');
                 }
             } catch (error) {
                 console.error('Dashboard Load Error:', error);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:var(--color-sale);">Failed to connect to API. Ensure the backend is running.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:var(--color-sale);">API Error: ${error.message}</td></tr>`;
             }
         }
 
-        // Authentication පරීක්ෂා කර Dashboard එක load කිරීම
         (async function init() {
             if (typeof checkAuth === 'function') {
                 const isAuthenticated = await checkAuth();
                 if (isAuthenticated) loadDashboard();
             } else {
-                // Testing purposes සඳහා checkAuth නැතිනම් කෙලින්ම load කරයි
                 loadDashboard();
             }
         })();
