@@ -1,9 +1,5 @@
 // Home page video-strip loader (admin-configurable)
 (function () {
-    function getApiBase() {
-        return (window.CalvoroAPIBase || '');
-    }
-
     function playStripVideos() {
         var videos = document.querySelectorAll('.video-strip video');
         videos.forEach(function (v) {
@@ -64,9 +60,9 @@
         var grid = document.getElementById('videoStripGrid');
         if (!grid) return;
 
-        var base = getApiBase();
         try {
-            var r = await fetch(base + '/api/video-strip', { credentials: 'include' });
+            // වෙනස් කළ කොටස: කෙලින්ම /api/... යොදා ඇත
+            var r = await fetch('/api/video-strip', { credentials: 'include' });
             var d = await r.json().catch(function () { return {}; });
             if (!r.ok) throw new Error((d && d.error) ? d.error : 'Failed to load');
 
@@ -90,4 +86,3 @@
         init();
     }
 })();
-
