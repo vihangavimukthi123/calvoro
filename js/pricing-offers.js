@@ -2,10 +2,6 @@
  * Seasonal offer strip + countdown (uses GET /api/offers/active).
  */
 (function () {
-    function apiBase() {
-        return (typeof window.CalvoroAPIBase !== 'undefined' && window.CalvoroAPIBase) ? window.CalvoroAPIBase : '';
-    }
-
     function pad(n) {
         return n < 10 ? '0' + n : String(n);
     }
@@ -38,7 +34,8 @@
         var wrap = document.getElementById('calvoro-seasonal-offer');
         if (!wrap) return;
 
-        fetch(apiBase() + '/api/offers/active', { credentials: 'include' })
+        // වෙනස් කළ කොටස: කෙලින්ම /api/... යොදා ඇත
+        fetch('/api/offers/active', { credentials: 'include' })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var list = (data && data.campaigns) || [];
