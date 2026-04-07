@@ -92,8 +92,8 @@
 
         setLoading(true);
         try {
-            var base = (window.CalvoroAPIBase || '');
-            var r = await fetch(base + '/api/donations/checkout-session', {
+            // වෙනස් කළ කොටස: කෙලින්ම /api/donations/... යොදා ඇත
+            var r = await fetch('/api/donations/checkout-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount: amount, name: name, email: email, reference_text: reference })
@@ -109,4 +109,3 @@
         }
     });
 })();
-
