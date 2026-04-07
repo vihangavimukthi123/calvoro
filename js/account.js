@@ -1,13 +1,14 @@
 (function() {
     'use strict';
 
-    var api = (window.CalvoroAPIBase || '') + '/api/account';
+    // නිවැරදි කළ ප්‍රධාන API ලිපිනය
+    var api = '/api/account';
+    var apiBase = ''; // දැන් අන්තර්ජාලයේ නිසා කෙළින්ම slash එකෙන් පටන් ගනී
     var noImg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"%3E%3Crect fill="%23ddd" width="400" height="400"/%3E%3Ctext x="200" y="200" fill="%23999" font-size="14" text-anchor="middle" dy=".3em"%3ENo image%3C/text%3E%3C/svg%3E';
 
     function fetchJson(url, opts) {
         return fetch(url, Object.assign({ credentials: 'include' }, opts || {})).then(function(r) {
             if (r.status === 401) {
-                // Backend session expired/cleared; clear frontend state and redirect
                 if (window.CalvoroAuth) {
                     try { window.CalvoroAuth.logout(); } catch(e) {}
                 }
@@ -28,13 +29,8 @@
         if (section) section.classList.add('active');
     }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
-    }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
 
     // ---- Profile ----
     function loadProfile() {
@@ -251,7 +247,7 @@
 
     // ---- Orders ----
     function loadOrders() {
-        fetchJson(api + '/orders').then(function(orders) {
+        fetchJson('/api/orders').then(function(orders) {
             var html = '';
             orders.sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
             if (orders.length === 0) {
@@ -272,7 +268,7 @@
 
     // ---- Wishlist ----
     function loadWishlist() {
-        fetchJson(api + '/wishlist').then(function(products) {
+        fetchJson('/api/wishlist').then(function(products) {
             var html = '';
             if (products.length === 0) {
                 html = '<p style="color:var(--color-text-muted);">Your wishlist is empty. <a href="index.html">Continue shopping</a></p>';
@@ -294,7 +290,7 @@
 
     // ---- Cart ----
     function loadCart() {
-        fetchJson(api + '/cart').then(function(data) {
+        fetchJson('/api/cart').then(function(data) {
             var html = '';
             if (!data.items || data.items.length === 0) {
                 html = '<p class="empty">Your cart is empty. <a href="index.html">Continue shopping</a></p>';
@@ -417,7 +413,6 @@
     }
 
     (async function init() {
-        // Prefer Google Sign-In session if present (no backend required)
         var googleUser = window.CalvoroAuth && window.CalvoroAuth.getCurrentUser();
         if (googleUser) {
             document.getElementById('accountLayout').style.display = 'flex';
@@ -430,7 +425,7 @@
             return;
         }
 
-        var userRes = await fetch((window.CalvoroAPIBase || '') + '/api/users/me', { credentials: 'include' });
+        var userRes = await fetch('/api/users/me', { credentials: 'include' });
         var data = await userRes.json().catch(function() { return {}; });
         if (!data.user) {
             document.getElementById('loginPrompt').style.display = 'block';
@@ -441,7 +436,7 @@
 
         document.getElementById('logoutBtn').addEventListener('click', function(e) {
             e.preventDefault();
-            fetch((window.CalvoroAPIBase || '') + '/api/users/logout', { method: 'POST', credentials: 'include' }).then(function() {
+            fetch('/api/users/logout', { method: 'POST', credentials: 'include' }).then(function() {
                 window.location.href = 'login.html';
             });
         });
