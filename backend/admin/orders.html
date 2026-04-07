@@ -6,11 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orders - Calvoro Admin</title>
     <link rel="stylesheet" href="css/admin.css">
+    <script>
+        (function () {
+            window.CalvoroAPIBase = '';
+        })();
+    </script>
 </head>
 
 <body>
     <div class="admin-layout">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
@@ -35,7 +39,6 @@
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
                 <h1>Orders</h1>
@@ -48,7 +51,6 @@
             </header>
 
             <div class="content">
-                <!-- Filters -->
                 <div class="filters">
                     <input type="search" id="searchOrders" placeholder="Search orders..." class="search-input">
                     <select id="statusFilter" class="filter-select">
@@ -60,7 +62,6 @@
                     </select>
                 </div>
 
-                <!-- Orders Table -->
                 <div class="card">
                     <div class="table-container">
                         <table id="ordersTable">
@@ -88,7 +89,6 @@
         </main>
     </div>
 
-    <!-- Order Details Modal -->
     <div id="orderModal" class="modal">
         <div class="modal-content large">
             <div class="modal-header">
@@ -103,13 +103,15 @@
 
     <script src="js/admin.js"></script>
     <script>
-        checkAuth();
+        // checkAuth() function එක js/admin.js ගොනුවේ තිබිය යුතුය
+        if (typeof checkAuth === 'function') checkAuth();
 
         let orders = [];
 
         async function loadOrders() {
             try {
-                const res = await fetch('/api/orders');
+                // Added credentials for production security
+                const res = await fetch('/api/orders', { credentials: 'include' });
                 orders = await res.json();
                 renderOrders();
             } catch (error) {
@@ -126,19 +128,19 @@
                 filtered = orders.filter(o => o.status === statusFilter);
             }
 
-            if (filtered.length === 0) {
+            if (!filtered || filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center">No orders found</td></tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.map(order => `
                 <tr>
-                    <td><strong>${order.order_number}</strong></td>
-                    <td>${order.customer_name}</td>
-                    <td>${order.customer_email}</td>
-                    <td>LKR ${order.total.toLocaleString()}</td>
-                    <td><span class="badge badge-${order.status}">${order.status}</span></td>
-                    <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                    <td><strong>${order.order_number || '#' + order.id}</strong></td>
+                    <td>${order.customer_name || 'Guest'}</td>
+                    <td>${order.customer_email || '—'}</td>
+                    <td>LKR ${(order.total || 0).toLocaleString()}</td>
+                    <td><span class="badge badge-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
+                    <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
                     <td>
                         <div style="display:flex; flex-direction:column; gap:4px; min-width:150px;">
                             <input type="text" id="inlineTracking${order.id}" value="${order.tracking_number || ''}" placeholder="Enter Tracking #" style="width:100%; padding:6px; font-size:13px; border:1px solid #cbd5e0; border-radius:4px;" />
@@ -169,6 +171,7 @@
             try {
                 const res = await fetch(`/api/orders/${id}/tracking`, {
                     method: 'POST',
+                    credentials: 'include', // Added credentials
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracking_number: trackingNumber })
                 });
@@ -189,18 +192,18 @@
             const order = orders.find(o => o.id === id);
             if (!order) return;
 
-            const itemsHtml = order.items.map(item => `
+            const itemsHtml = (order.items || []).map(item => `
                 <tr>
                     <td>${item.name}</td>
                     <td>${item.quantity}</td>
-                    <td>LKR ${item.price.toLocaleString()}</td>
+                    <td>LKR ${(item.price || 0).toLocaleString()}</td>
                     <td>LKR ${(item.quantity * item.price).toLocaleString()}</td>
                 </tr>
             `).join('');
 
             document.getElementById('orderDetails').innerHTML = `
                 <div>
-                    <h3>Order ${order.order_number}</h3>
+                    <h3>Order ${order.order_number || '#' + order.id}</h3>
                     <p><strong>Status:</strong> <span class="badge badge-${order.status}">${order.status}</span></p>
                     <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
                     
@@ -224,9 +227,9 @@
                     </table>
                     
                     <div style="margin-top: 24px; text-align: right;">
-                        <p><strong>Subtotal:</strong> LKR ${order.subtotal.toLocaleString()}</p>
-                        <p><strong>Shipping:</strong> LKR ${order.shipping.toLocaleString()}</p>
-                        <h3><strong>Total:</strong> LKR ${order.total.toLocaleString()}</h3>
+                        <p><strong>Subtotal:</strong> LKR ${(order.subtotal || 0).toLocaleString()}</p>
+                        <p><strong>Shipping:</strong> LKR ${(order.shipping || 0).toLocaleString()}</p>
+                        <h3><strong>Total:</strong> LKR ${(order.total || 0).toLocaleString()}</h3>
                     </div>
                     
                      <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -258,6 +261,7 @@
             try {
                 const res = await fetch(`/api/orders/${id}/status`, {
                     method: 'PUT',
+                    credentials: 'include', // Added credentials
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
                 });
@@ -283,6 +287,7 @@
             try {
                 const res = await fetch(`/api/orders/${id}/tracking`, {
                     method: 'POST',
+                    credentials: 'include', // Added credentials
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracking_number: trackingNumber })
                 });
@@ -311,7 +316,7 @@
 
         async function loadCourier() {
             try {
-                const res = await fetch('/api/orders/settings/courier');
+                const res = await fetch('/api/orders/settings/courier', { credentials: 'include' });
                 const data = await res.json();
                 document.getElementById('courierSetting').value = data.name || '';
             } catch (error) {
@@ -327,6 +332,7 @@
             try {
                 const res = await fetch('/api/orders/settings/courier', {
                     method: 'POST',
+                    credentials: 'include', // Added credentials
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
                 });
@@ -334,7 +340,7 @@
                 if(res.ok) {
                     statusLabel.innerText = 'Saved!';
                     setTimeout(() => statusLabel.innerText = '', 2000);
-                    loadOrders(); // Refresh table to show updated courier logic in tooltips/etc if any
+                    loadOrders();
                 } else {
                     alert('Failed to update courier');
                 }
