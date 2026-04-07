@@ -8,15 +8,8 @@
     <link rel="stylesheet" href="css/admin.css">
     <script>
         (function () {
-            if (typeof window.CalvoroAPIBase !== 'undefined') return;
-            try {
-                var port = (window.location.port || '');
-                var host = window.location.hostname || 'localhost';
-                var protocol = window.location.protocol || 'http:';
-                if (protocol === 'file:') window.CalvoroAPIBase = '/api';
-                else if (port !== '3000') window.CalvoroAPIBase = protocol + '//' + host + ':3000';
-                else window.CalvoroAPIBase = '';
-            } catch (e) { window.CalvoroAPIBase = ''; }
+            // Production website needs empty API base (same origin)
+            window.CalvoroAPIBase = '';
         })();
     </script>
 </head>
@@ -131,7 +124,7 @@
                             <option value="Leggings">Leggings</option>
                             <option value="Tops">Tops</option>
                         </select>
-                        <small>Shows in sidebar on Men’s and Women’s collection pages. Gift products are managed separately.</small>
+                        <small>Shows in sidebar on Men's and Women's collection pages. Gift products are managed separately.</small>
                     </div>
                     <div class="form-group">
                         <label>Fit</label>
@@ -265,10 +258,7 @@
         var products = [];
         var categories = [];
         function adminApiBase() {
-            if (typeof window.CalvoroAPIBase !== 'undefined' && window.CalvoroAPIBase !== null && String(window.CalvoroAPIBase).trim() !== '') {
-                return String(window.CalvoroAPIBase).replace(/\/$/, '');
-            }
-            return window.location.origin || '';
+            return '';
         }
         var apiBase = adminApiBase();
 
