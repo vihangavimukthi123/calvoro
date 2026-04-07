@@ -148,8 +148,8 @@
             const tbody = document.querySelector('#recentOrdersTable tbody');
 
             try {
-                // 1. Fetch Stats
-                const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
+                // 1. Fetch Stats (දත්ත ගේන්නේ analytics router එක හරහායි)
+                const statsRes = await fetch(base + '/api/admin/analytics/stats', { credentials: 'include' });
                 const contentType = statsRes.headers.get("content-type");
                 
                 if (!statsRes.ok) {
@@ -165,7 +165,7 @@
                 document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
                 document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
                 document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
-                document.getElementById('totalRevenue').textContent = (stats.totalRevenue || 0).toLocaleString();
+                document.getElementById('totalRevenue').textContent = (Number(stats.totalRevenue) || 0).toLocaleString();
                 document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
 
                 // 2. Fetch Recent Orders
@@ -184,7 +184,7 @@
                             <tr>
                                 <td>${esc(orderNum)}</td>
                                 <td>${esc(customer)}</td>
-                                <td>LKR ${(order.total || 0).toLocaleString()}</td>
+                                <td>LKR ${(Number(order.total) || 0).toLocaleString()}</td>
                                 <td><span class="badge badge-${esc(order.status || 'pending')}">${esc(order.status || 'pending')}</span></td>
                                 <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
                             </tr>
