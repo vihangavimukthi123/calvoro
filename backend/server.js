@@ -36,24 +36,21 @@ const {
 } = require('./routes/promotions');
 const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = require('./routes/discountEngine');
 const { createRateLimiter } = require('./lib/adminRateLimit');
-const discountAnalyticsLimiter = createRateLimiter({ windowMs: 60_000, max: 200 });
 
 const app = express();
 const PORT = process.env.PORT || 8080; 
 
-// View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ verify: function (req, res, buf) { try { req.rawBody = buf; } catch (_) { } } }));
+app.use(express.json({ verify: (req, res, buf) => { try { req.rawBody = buf; } catch (_) { } } }));
 app.use(express.urlencoded({ extended: true }));
 
-// Session
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'calvoro-secret-key-change-this',
-    resave: false, saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || 'calvoro-secret-key',
+    resave: false,
+    saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
@@ -62,101 +59,72 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-// API Routes
-app.get('/api/promo-ticker', async (req, res) => {
-    try {
-        if (typeof db.getPromoTicker === 'function') {
-            const d = await db.getPromoTicker();
-            return res.json(d || { lines: [], durationSeconds: 22 });
-        }
-        res.json({ lines: ['FREE SHIPPING ON ORDERS OVER LKR 15,000'], durationSeconds: 22 });
-    } catch (e) { res.json({ lines: ['FREE SHIPPING ON ORDERS OVER LKR 15,000'], durationSeconds: 22 }); }
-});
-
-app.get('/api/admin/promo-ticker', requireAdmin, async (req, res) => {
-    try {
-        const d = typeof db.getPromoTicker === 'function' ? await db.getPromoTicker() : { lines: [], durationSeconds: 22 };
-        res.json(d || { lines: [], durationSeconds: 22 });
-    } catch (e) { res.status(500).json({ error: 'Failed to load promo ticker' }); }
-});
-
-// =====================================================================
-// ---> Admin Dashboard Stats (දත්ත ලැබෙන තුරු බලා සිටින නිවැරදි ක්‍රමය)
-// =====================================================================
-
+// === Admin Stats API (ප්‍රධාන Dashboard කාඩ්පත් සඳහා) ===
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         const runQuery = (sql) => {
             return new Promise((resolve) => {
-                try {
-                    const cb = (err, results) => {
-                        if (err || !results) return resolve([]);
-                        const rows = (Array.isArray(results) && Array.isArray(results[0])) ? results[0] : results;
-                        resolve(Array.isArray(rows) ? rows : []);
-                    };
-                    const result = db.query(sql, cb);
-                    if (result && typeof result.then === 'function') {
-                        result.then(res => cb(null, res)).catch(cb);
-                    }
-                } catch (e) { resolve([]); }
+                const cb = (err, result) => {
+                    if (err) return resolve([]);
+                    // mysql සහ mysql2 ආකෘති දෙකම හඳුනාගනී
+                    const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
+                    resolve(Array.isArray(rows) ? rows : [rows]);
+                };
+                const q = db.query(sql, cb);
+                if (q && typeof q.then === 'function') q.then(r => cb(null, r)).catch(cb);
             });
         };
 
-        const prod = await runQuery('SELECT COUNT(*) as count FROM products');
-        const user = await runQuery('SELECT COUNT(*) as count FROM users');
-        const order = await runQuery('SELECT COUNT(*) as count FROM orders');
-        const pend = await runQuery('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"');
-        const rev = await runQuery('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"');
+        const [p, u, o, pend, rev] = await Promise.all([
+            runQuery('SELECT COUNT(*) as count FROM products'),
+            runQuery('SELECT COUNT(*) as count FROM users'),
+            runQuery('SELECT COUNT(*) as count FROM orders'),
+            runQuery('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"'),
+            runQuery('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"')
+        ]);
 
         res.json({
-            totalProducts: (prod[0] && prod[0].count) ? Number(prod[0].count) : 0,
-            totalUsers: (user[0] && user[0].count) ? Number(user[0].count) : 0,
-            totalOrders: (order[0] && order[0].count) ? Number(order[0].count) : 0,
-            pendingOrders: (pend[0] && pend[0].count) ? Number(pend[0].count) : 0,
-            totalRevenue: (rev[0] && rev[0].sum) ? Number(rev[0].sum) : 0
+            totalProducts: p[0]?.count || 0,
+            totalUsers: u[0]?.count || 0,
+            totalOrders: o[0]?.count || 0,
+            pendingOrders: pend[0]?.count || 0,
+            totalRevenue: rev[0]?.sum || 0
         });
     } catch (e) {
-        res.json({ totalProducts: 0, totalUsers: 0, totalOrders: 0, pendingOrders: 0, totalRevenue: 0 }); 
+        res.json({ totalProducts: 0, totalUsers: 0, totalOrders: 0, pendingOrders: 0, totalRevenue: 0 });
     }
 });
 
+// === Admin Products & Trending ===
 app.get('/api/admin/products', requireAdmin, async (req, res) => {
     try {
         const products = await db.getAllProducts(true);
         res.json(products);
-    } catch (e) { res.status(500).json({ error: 'Failed to load products' }); }
+    } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
 app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
-        const runQuery = (sql) => {
-            return new Promise((resolve) => {
-                const cb = (err, results) => resolve(Array.isArray(results) ? results : []);
-                const result = db.query(sql, cb);
-                if (result && typeof result.then === 'function') result.then(r=>cb(null,r)).catch(cb);
-            });
-        };
-        const trending = await runQuery('SELECT product_id FROM trending_products ORDER BY display_order ASC');
-        res.json({ productIds: trending.map(t => t.product_id) });
+        const result = await db.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
+        const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
+        res.json({ productIds: rows.map(t => t.product_id) });
     } catch (e) { res.json({ productIds: [] }); }
 });
 
 app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
         const { productIds } = req.body;
-        db.query('DELETE FROM trending_products', () => {
-            if (productIds && productIds.length > 0) {
-                productIds.forEach((id, i) => {
-                    db.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [id, i + 1]);
-                });
+        await db.query('DELETE FROM trending_products'); 
+        if (productIds && productIds.length > 0) {
+            for (let i = 0; i < productIds.length; i++) {
+                await db.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
             }
-        });
+        }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// =====================================================================
-
+// === Standard Routes ===
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/categories', categoriesRouter);
@@ -177,23 +145,19 @@ app.use('/api/delivery', deliveryRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/email', emailRouter);
 
-app.get('/api', (req, res) => {
-    res.json({ message: 'Calvoro API', version: '1.0.0' });
-});
-
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-app.use('/api/*', (req, res) => res.status(404).json({ error: "Not found" }));
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, '..', 'index.html')));
-
-app.use((err, req, res, next) => res.status(500).json({ error: 'Server error!' }));
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 (async () => {
     try {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
-    } catch (e) {}
-    app.listen(PORT, () => console.log(`Backend Running on Port: ${PORT}`));
+    } catch (e) { }
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 })();
