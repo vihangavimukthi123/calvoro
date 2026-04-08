@@ -97,34 +97,29 @@ app.get('/api/admin/promo-ticker', requireAdmin, async (req, res) => {
 });
 
 // =====================================================================
-// ---> Admin Dashboard Stats (නියම දත්ත නිවැරදිව ලබා ගැනීමට සකසා ඇත) <---
+// ---> Admin Dashboard Stats (අසාර්ථක නොවන ලෙස නිවැරදි කර ඇත) <---
 // =====================================================================
 
 // 1. Admin Dashboard Stats
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
-        let totalProducts = 0, totalUsers = 0, totalOrders = 0, pendingOrders = 0, totalRevenue = 0;
-
-        // දත්ත ලබාගැනීම සඳහා විශේෂිත Function එකක්
-        const getCount = async (sql) => {
+        // අසාර්ථක නොවන ලෙස දත්ත ලබාගන්නා ශ්‍රිතය (Bulletproof data extractor)
+        const getVal = async (sql, key) => {
             try {
-                const r = await db.query(sql);
-                // Array එකක් ආවත් නැතත් හරියටම count අගය ලබා ගනී
-                return (r && r.length > 0) ? r[0].count : 0;
+                const result = await db.query(sql);
+                // Array ඇතුළේ Array එකක් ආවත් එය නිවැරදිව හඳුනාගනී (mysql2 ගැටලුව විසඳීම)
+                const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
+                return (rows && rows.length > 0 && rows[0][key]) ? Number(rows[0][key]) : 0;
             } catch(e) { return 0; }
         };
 
-        totalProducts = await getCount('SELECT COUNT(*) as count FROM products');
-        totalUsers = await getCount('SELECT COUNT(*) as count FROM users');
-        totalOrders = await getCount('SELECT COUNT(*) as count FROM orders');
-        pendingOrders = await getCount('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"');
-        
-        try {
-            const r = await db.query('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"');
-            if (r && r.length > 0 && r[0].sum) totalRevenue = r[0].sum;
-        } catch(e) {}
-
-        res.json({ totalProducts, totalUsers, totalOrders, pendingOrders, totalRevenue });
+        res.json({
+            totalProducts: await getVal('SELECT COUNT(*) as count FROM products', 'count'),
+            totalUsers: await getVal('SELECT COUNT(*) as count FROM users', 'count'),
+            totalOrders: await getVal('SELECT COUNT(*) as count FROM orders', 'count'),
+            pendingOrders: await getVal('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"', 'count'),
+            totalRevenue: await getVal('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"', 'sum')
+        });
     } catch (e) {
         console.error('Master Stats Error:', e);
         res.json({ totalProducts: 0, totalUsers: 0, totalOrders: 0, pendingOrders: 0, totalRevenue: 0 }); 
