@@ -47,7 +47,7 @@ router.get('/metrics/orders', async (req, res) => {
             runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="completed"'),
             runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="pending"'),
             runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="cancelled"'),
-            runQuery('SELECT COALESCE(SUM(total),0) as r FROM orders WHERE LOWER(status)="completed"')
+            runQuery('SELECT COALESCE(SUM(total),0) as r FROM orders')
         ]);
         res.json({
             total: total[0]?.c || 0,
@@ -64,7 +64,7 @@ router.get('/metrics/orders', async (req, res) => {
 // Frontend expects: { aov, totalRevenue, orderCount }
 router.get('/metrics/aov', async (req, res) => {
     try {
-        const rows = await runQuery('SELECT AVG(total) as avg_val, SUM(total) as sum_val, COUNT(*) as cnt FROM orders WHERE LOWER(status)="completed"');
+        const rows = await runQuery('SELECT AVG(total) as avg_val, SUM(total) as sum_val, COUNT(*) as cnt FROM orders');
         res.json({
             aov: Math.round(rows[0]?.avg_val || 0),
             totalRevenue: rows[0]?.sum_val || 0,
