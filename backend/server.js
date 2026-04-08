@@ -80,7 +80,7 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
             runQuery('SELECT COUNT(*) as count FROM users'),
             runQuery('SELECT COUNT(*) as count FROM orders'),
             runQuery('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"'),
-            runQuery('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"')
+            runQuery('SELECT SUM(total) as sum FROM orders')
         ]);
 
         res.json({
