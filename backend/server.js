@@ -97,23 +97,25 @@ app.get('/api/admin/promo-ticker', requireAdmin, async (req, res) => {
 });
 
 // =====================================================================
-// ---> MISSING ADMIN ROUTES ADDED HERE (අලුතින් එකතු කළ කොටස) <---
+// ---> MISSING ADMIN ROUTES ADDED HERE (අලුතින් එකතු කළ සහ නිවැරදි කළ කොටස) <---
 // =====================================================================
 
-// 1. Admin Dashboard Stats
+// 1. Admin Dashboard Stats (දෝෂය නිවැරදි කරන ලදී)
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
-        const totalProducts = await db.query('SELECT COUNT(*) as count FROM products');
-        const totalUsers = await db.query('SELECT COUNT(*) as count FROM users');
-        const totalOrders = await db.query('SELECT COUNT(*) as count FROM orders');
-        const pendingOrders = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
-        const revenue = await db.query('SELECT SUM(total) as sum FROM orders WHERE status = "completed"');
+        // MySQL2 වලින් දත්ත එන්නේ [rows, fields] ලෙස බැවින් අපි [rows] පමණක් ලබා ගනිමු
+        const [totalProducts] = await db.query('SELECT COUNT(*) as count FROM products');
+        const [totalUsers] = await db.query('SELECT COUNT(*) as count FROM users');
+        const [totalOrders] = await db.query('SELECT COUNT(*) as count FROM orders');
+        const [pendingOrders] = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
+        const [revenue] = await db.query('SELECT SUM(total) as sum FROM orders WHERE status = "completed"');
 
         res.json({
-            totalProducts: totalProducts[0].count,
-            totalUsers: totalUsers[0].count,
-            totalOrders: totalOrders[0].count,
-            pendingOrders: pendingOrders[0].count,
+            // පළමු අයිතමයේ (index 0) count/sum අගය ලබා ගනී
+            totalProducts: totalProducts[0].count || 0,
+            totalUsers: totalUsers[0].count || 0,
+            totalOrders: totalOrders[0].count || 0,
+            pendingOrders: pendingOrders[0].count || 0,
             totalRevenue: revenue[0].sum || 0
         });
     } catch (e) {
