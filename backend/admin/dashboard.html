@@ -138,6 +138,7 @@
 
     <script src="js/admin.js"></script>
     <script>
+        // HTML characters escape කිරීම සඳහා
         function esc(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -148,7 +149,7 @@
             const tbody = document.querySelector('#recentOrdersTable tbody');
 
             try {
-                // 1. Fetch Stats (නිවැරදි API Endpoint එක)
+                // 1. Fetch Stats (නිවැරදි API Endpoint එක: /api/admin/stats)
                 const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
                 
                 if (!statsRes.ok) {
@@ -156,6 +157,8 @@
                 }
 
                 const stats = await statsRes.json();
+                
+                // දත්ත 0 වුවද එය නිවැරදිව පෙන්වීමට සකස් කර ඇත
                 document.getElementById('totalProducts').textContent = stats.totalProducts !== undefined ? stats.totalProducts : '0';
                 document.getElementById('totalUsers').textContent = stats.totalUsers !== undefined ? stats.totalUsers : '0';
                 document.getElementById('totalOrders').textContent = stats.totalOrders !== undefined ? stats.totalOrders : '0';
@@ -191,6 +194,7 @@
             }
         }
 
+        // Initialize Dashboard
         (async function init() {
             if (typeof checkAuth === 'function') {
                 const isAuthenticated = await checkAuth();
