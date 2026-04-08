@@ -39,7 +39,7 @@ const { createRateLimiter } = require('./lib/adminRateLimit');
 const discountAnalyticsLimiter = createRateLimiter({ windowMs: 60_000, max: 200 });
 
 const app = express();
-const PORT = process.env.PORT || 8080; // ලොග් වල පෙන්වන පරිදි 8080 භාවිතා කරයි
+const PORT = process.env.PORT || 8080; 
 
 // View engine setup for payment forms
 app.set('view engine', 'ejs');
@@ -96,6 +96,74 @@ app.get('/api/admin/promo-ticker', requireAdmin, async (req, res) => {
     }
 });
 
+// =====================================================================
+// ---> MISSING ADMIN ROUTES ADDED HERE (අලුතින් එකතු කළ කොටස) <---
+// =====================================================================
+
+// 1. Admin Dashboard Stats
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+    try {
+        const totalProducts = await db.query('SELECT COUNT(*) as count FROM products');
+        const totalUsers = await db.query('SELECT COUNT(*) as count FROM users');
+        const totalOrders = await db.query('SELECT COUNT(*) as count FROM orders');
+        const pendingOrders = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
+        const revenue = await db.query('SELECT SUM(total) as sum FROM orders WHERE status = "completed"');
+
+        res.json({
+            totalProducts: totalProducts[0].count,
+            totalUsers: totalUsers[0].count,
+            totalOrders: totalOrders[0].count,
+            pendingOrders: pendingOrders[0].count,
+            totalRevenue: revenue[0].sum || 0
+        });
+    } catch (e) {
+        console.error('Stats Error:', e);
+        res.status(500).json({ error: 'Failed to load stats' });
+    }
+});
+
+// 2. Admin Products (සියලුම භාණ්ඩ ලබාගැනීම)
+app.get('/api/admin/products', requireAdmin, async (req, res) => {
+    try {
+        const products = await db.getAllProducts(true); // true = get all including drafts/out of stock
+        res.json(products);
+    } catch (e) {
+        console.error('Admin Products Error:', e);
+        res.status(500).json({ error: 'Failed to load admin products' });
+    }
+});
+
+// 3. Admin Trending Products ලබාගැනීම
+app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
+    try {
+        const trending = await db.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
+        res.json({ productIds: trending.map(t => t.product_id) });
+    } catch (e) {
+        console.error('Trending Products Error:', e);
+        res.json({ productIds: [] }); // වගුව නැතිනම් හිස් array එකක් යවයි
+    }
+});
+
+// 4. Admin Trending Products අලුත් කිරීම
+app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
+    try {
+        const { productIds } = req.body;
+        await db.query('DELETE FROM trending_products'); 
+        
+        if (productIds && productIds.length > 0) {
+            for (let i = 0; i < productIds.length; i++) {
+                await db.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
+            }
+        }
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Update Trending Error:', e);
+        res.status(500).json({ error: 'Failed to update trending products' });
+    }
+});
+
+// =====================================================================
+
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/categories', categoriesRouter);
@@ -131,7 +199,7 @@ app.get('/api', (req, res) => {
     });
 });
 
-// --- FRONTEND SERVING LOGIC (වැදගත්ම කොටස) ---
+// --- FRONTEND SERVING LOGIC ---
 
 // 1. Static ෆයිල්ස් (CSS, JS, Images) ලබා දීම
 app.use(express.static(path.join(__dirname, '..')));
@@ -139,7 +207,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // 2. API Routes වලට අදාළ 404 Error Handler එක (අනිවාර්යයි)
-// මෙයින් සහතික කරන්නේ /api වලින් එන වැරදි රික්වෙස්ට් වලට HTML පිටුවක් වෙනුවට JSON error එකක් යවන බවයි.
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: "API endpoint not found or unauthorized" });
 });
@@ -161,7 +228,6 @@ app.use((err, req, res, next) => {
         // DB Initializations
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
-        // ... (අනෙකුත් DB init කොටස් මෙහි තිබිය හැක)
     } catch (e) {
         console.error('DB init warning:', e.message);
     }
