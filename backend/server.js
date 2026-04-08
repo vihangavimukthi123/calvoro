@@ -97,7 +97,7 @@ app.get('/api/admin/promo-ticker', requireAdmin, async (req, res) => {
 });
 
 // =====================================================================
-// ---> MISSING ADMIN ROUTES ADDED HERE (Fail-Safe ක්‍රමයට සකස් කර ඇත) <---
+// ---> Admin Dashboard Stats (නියම දත්ත නිවැරදිව ලබා ගැනීමට සකසා ඇත) <---
 // =====================================================================
 
 // 1. Admin Dashboard Stats
@@ -105,40 +105,26 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         let totalProducts = 0, totalUsers = 0, totalOrders = 0, pendingOrders = 0, totalRevenue = 0;
 
+        // දත්ත ලබාගැනීම සඳහා විශේෂිත Function එකක්
+        const getCount = async (sql) => {
+            try {
+                const r = await db.query(sql);
+                // Array එකක් ආවත් නැතත් හරියටම count අගය ලබා ගනී
+                return (r && r.length > 0) ? r[0].count : 0;
+            } catch(e) { return 0; }
+        };
+
+        totalProducts = await getCount('SELECT COUNT(*) as count FROM products');
+        totalUsers = await getCount('SELECT COUNT(*) as count FROM users');
+        totalOrders = await getCount('SELECT COUNT(*) as count FROM orders');
+        pendingOrders = await getCount('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"');
+        
         try {
-            const [p] = await db.query('SELECT COUNT(*) as count FROM products');
-            if (p && p[0]) totalProducts = p[0].count;
-        } catch (e) { console.error('Prod stat err:', e); }
+            const r = await db.query('SELECT SUM(total) as sum FROM orders WHERE LOWER(status) = "completed"');
+            if (r && r.length > 0 && r[0].sum) totalRevenue = r[0].sum;
+        } catch(e) {}
 
-        try {
-            const [u] = await db.query('SELECT COUNT(*) as count FROM users');
-            if (u && u[0]) totalUsers = u[0].count;
-        } catch (e) { console.error('User stat err:', e); }
-
-        try {
-            const [o] = await db.query('SELECT COUNT(*) as count FROM orders');
-            if (o && o[0]) totalOrders = o[0].count;
-        } catch (e) { console.error('Order stat err:', e); }
-
-        try {
-            const [po] = await db.query('SELECT COUNT(*) as count FROM orders WHERE status = "pending"');
-            if (po && po[0]) pendingOrders = po[0].count;
-        } catch (e) { console.error('Pending stat err:', e); }
-
-        try {
-            const [r] = await db.query('SELECT SUM(total) as sum FROM orders WHERE status = "completed"');
-            if (r && r[0] && r[0].sum) totalRevenue = r[0].sum;
-        } catch (e) { console.error('Rev stat err:', e); }
-
-        // සැමවිටම JSON එක යවයි (500 Error එකක් නොපෙන්වයි)
-        res.json({
-            totalProducts: totalProducts,
-            totalUsers: totalUsers,
-            totalOrders: totalOrders,
-            pendingOrders: pendingOrders,
-            totalRevenue: totalRevenue
-        });
-
+        res.json({ totalProducts, totalUsers, totalOrders, pendingOrders, totalRevenue });
     } catch (e) {
         console.error('Master Stats Error:', e);
         res.json({ totalProducts: 0, totalUsers: 0, totalOrders: 0, pendingOrders: 0, totalRevenue: 0 }); 
