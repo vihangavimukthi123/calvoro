@@ -7,30 +7,15 @@
     <title>Settings - Calvoro Admin</title>
     <link rel="stylesheet" href="css/admin.css">
     <script>
-        /* Same logic as storefront js/config.js: call API on :3000 when admin UI is on another port */
         (function () {
             if (typeof window.CalvoroAPIBase !== 'undefined') return;
-            try {
-                var port = (window.location.port || '');
-                var host = window.location.hostname || 'localhost';
-                var protocol = window.location.protocol || 'http:';
-                if (protocol === 'file:') {
-                    window.CalvoroAPIBase = '/api';
-                } else if (port !== '3000') {
-                    window.CalvoroAPIBase = protocol + '//' + host + ':3000';
-                } else {
-                    window.CalvoroAPIBase = '';
-                }
-            } catch (e) {
-                window.CalvoroAPIBase = '';
-            }
+            window.CalvoroAPIBase = '';
         })();
     </script>
 </head>
 
 <body>
     <div class="admin-layout">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <a href="/admin/dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
@@ -55,7 +40,6 @@
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
                 <h1>Settings</h1>
@@ -72,20 +56,15 @@
 
                     <div class="form-group">
                         <label for="promoLines">Tag lines (one per line)</label>
-                        <textarea id="promoLines" rows="6"
-                            placeholder="FREE SHIPPING ON ORDERS OVER LKR 15,000&#10;NEW ARRIVALS DROPPING WEEKLY"></textarea>
-                        <p style="margin-top:8px;color:#666;font-size:12px;">
-                            These lines will scroll continuously on the very top bar of every page.
-                        </p>
+                        <textarea id="promoLines" rows="6" placeholder="FREE SHIPPING ON ORDERS OVER LKR 15,000&#10;NEW ARRIVALS DROPPING WEEKLY"></textarea>
+                        <p style="margin-top:8px;color:#666;font-size:12px;">These lines will scroll continuously on the very top bar of every page.</p>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="durationSeconds">Scroll speed</label>
                             <input type="number" id="durationSeconds" min="8" max="120" step="1" value="22">
-                            <p style="margin-top:8px;color:#666;font-size:12px;">
-                                Lower number = faster. Recommended 18–28.
-                            </p>
+                            <p style="margin-top:8px;color:#666;font-size:12px;">Lower number = faster. Recommended 18–28.</p>
                         </div>
                     </div>
 
@@ -95,83 +74,74 @@
                         <span id="statusText" style="font-size:13px;color:#666;"></span>
                     </div>
                 </div>
+
                 <div class="card" style="padding:24px;margin-top:24px;">
                     <div class="card-header" style="margin-bottom:16px;">
                         <h2>Home Video Strip (3 videos)</h2>
                     </div>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">Update each item’s label and link. To change the video, select a new MP4/WebM file.</p>
 
-                <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
-                    Update each item’s label and link. To change the video, select a new MP4/WebM file (leave empty to keep the current video). Changes show on the homepage after refresh.
-                </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video1Label">Item 1 Label</label>
+                            <input type="text" id="video1Label" placeholder="SHOP WOMEN">
+                        </div>
+                        <div class="form-group">
+                            <label for="video1Href">Item 1 Link</label>
+                            <input type="text" id="video1Href" placeholder="women.html">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video1File">Item 1 Video File (MP4/WebM)</label>
+                            <input type="file" id="video1File" accept="video/mp4,video/webm,video/quicktime">
+                        </div>
+                    </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video1Label">Item 1 Label</label>
-                        <input type="text" id="video1Label" placeholder="SHOP WOMEN">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video2Label">Item 2 Label</label>
+                            <input type="text" id="video2Label" placeholder="SHOP MEN">
+                        </div>
+                        <div class="form-group">
+                            <label for="video2Href">Item 2 Link</label>
+                            <input type="text" id="video2Href" placeholder="men.html">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="video1Href">Item 1 Link</label>
-                        <input type="text" id="video1Href" placeholder="women.html">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video2File">Item 2 Video File (MP4/WebM)</label>
+                            <input type="file" id="video2File" accept="video/mp4,video/webm,video/quicktime">
+                        </div>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video1File">Item 1 Video File (MP4/WebM)</label>
-                        <input type="file" id="video1File" accept="video/mp4,video/webm,video/quicktime">
-                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video2Label">Item 2 Label</label>
-                        <input type="text" id="video2Label" placeholder="SHOP MEN">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video3Label">Item 3 Label</label>
+                            <input type="text" id="video3Label" placeholder="GIFT VOUCHERS">
+                        </div>
+                        <div class="form-group">
+                            <label for="video3Href">Item 3 Link</label>
+                            <input type="text" id="video3Href" placeholder="gifts.html">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="video2Href">Item 2 Link</label>
-                        <input type="text" id="video2Href" placeholder="men.html">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="video3File">Item 3 Video File (MP4/WebM)</label>
+                            <input type="file" id="video3File" accept="video/mp4,video/webm,video/quicktime">
+                        </div>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video2File">Item 2 Video File (MP4/WebM)</label>
-                        <input type="file" id="video2File" accept="video/mp4,video/webm,video/quicktime">
-                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video3Label">Item 3 Label</label>
-                        <input type="text" id="video3Label" placeholder="GIFT VOUCHERS">
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                        <button type="button" class="btn-primary" id="saveVideoStripBtn">Save Video Strip</button>
+                        <button type="button" class="btn-secondary" id="reloadVideoStripBtn">Reload</button>
+                        <span id="videoStatusText" style="font-size:13px;color:#666;"></span>
                     </div>
-                    <div class="form-group">
-                        <label for="video3Href">Item 3 Link</label>
-                        <input type="text" id="video3Href" placeholder="gifts.html">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="video3File">Item 3 Video File (MP4/WebM)</label>
-                        <input type="file" id="video3File" accept="video/mp4,video/webm,video/quicktime">
-                        <p style="margin-top:8px;color:#666;font-size:12px;">Leave empty to keep current video.</p>
-                    </div>
-                </div>
-
-                <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
-                    <button type="button" class="btn-primary" id="saveVideoStripBtn">Save Video Strip</button>
-                    <button type="button" class="btn-secondary" id="reloadVideoStripBtn">Reload</button>
-                    <span id="videoStatusText" style="font-size:13px;color:#666;"></span>
-                </div>
-                </div>
-
-                <div class="card" style="padding:24px;margin-top:24px;">
+                </div> <div class="card" style="padding:24px;margin-top:24px;">
                     <div class="card-header" style="margin-bottom:16px;">
                         <h2>Home Hero Carousel</h2>
                     </div>
-                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
-                        Add up to 5 hero slides. Upload an image file or provide an image URL for each slide. Active slides appear in the homepage hero carousel.
-                    </p>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">Add up to 5 hero slides. Upload an image file or provide an image URL for each slide. Active slides appear in the homepage hero carousel.</p>
 
                     <div id="carouselSlidesEditor"></div>
 
@@ -180,18 +150,16 @@
                         <button type="button" class="btn-secondary" id="reloadCarouselBtn">Reload</button>
                         <span id="carouselStatusText" style="font-size:13px;color:#666;"></span>
                     </div>
-                <div class="card" style="padding:24px;margin-top:24px;">
+                </div> <div class="card" style="padding:24px;margin-top:24px;">
                     <div class="card-header" style="margin-bottom:16px;">
                         <h2>Shipping &amp; Tracking Options</h2>
                     </div>
-                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">
-                        Set the default Courier Name for your order shipments. This name will automatically be included in tracking assignment emails securely dispatched to your customers.
-                    </p>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">Set the default Courier Name for your order shipments.</p>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="defaultCourierInput">Default Courier Name</label>
-                            <input type="text" id="defaultCourierInput" placeholder="e.g. DHL, FedEx, Aramex, PromptXpress" value="Standard Courier">
+                            <input type="text" id="defaultCourierInput" placeholder="e.g. DHL, FedEx, PromptXpress" value="Standard Courier">
                         </div>
                     </div>
 
@@ -212,10 +180,16 @@
         }
 
         function splitLines(text) {
-            return String(text || '')
-                .split(/\r?\n/)
-                .map(s => s.replace(/\s+/g, ' ').trim())
-                .filter(Boolean);
+            return String(text || '').split(/\r?\n/).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+        }
+
+        function escHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         async function loadSettings() {
@@ -224,11 +198,7 @@
             const r = await fetch(apiUrl('/api/admin/promo-ticker'), { credentials: 'include' });
             const d = await r.json().catch(() => ({}));
             if (!r.ok) {
-                if (r.status === 404) {
-                    status.textContent = 'API 404 — restart backend from calvoro-final/backend (npm start) and use /api/admin/settings.html';
-                } else {
-                    status.textContent = (d && d.error) ? d.error : 'Failed to load';
-                }
+                status.textContent = (d && d.error) ? d.error : 'Failed to load';
                 return;
             }
             document.getElementById('promoLines').value = Array.isArray(d.lines) ? d.lines.join('\n') : '';
@@ -249,13 +219,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const d = await r.json().catch(() => ({}));
             if (!r.ok) {
-                if (r.status === 404) {
-                    status.textContent = 'API 404 — restart backend (npm start in backend folder).';
-                } else {
-                    status.textContent = (d && d.error) ? d.error : 'Failed to save';
-                }
+                status.textContent = 'Failed to save';
                 return;
             }
             status.textContent = 'Saved.';
@@ -297,26 +262,17 @@
             const status = document.getElementById('videoStatusText');
             status.textContent = 'Saving...';
             const fd = new FormData();
-
-            const i1 = currentVideoStripItems[0] || {};
-            const i2 = currentVideoStripItems[1] || {};
-            const i3 = currentVideoStripItems[2] || {};
-
+            
             fd.append('label1', getTextVal('video1Label'));
             fd.append('href1', getTextVal('video1Href'));
-            fd.append('videoSrc1', i1.videoSrc || '');
-
             fd.append('label2', getTextVal('video2Label'));
             fd.append('href2', getTextVal('video2Href'));
-            fd.append('videoSrc2', i2.videoSrc || '');
-
             fd.append('label3', getTextVal('video3Label'));
             fd.append('href3', getTextVal('video3Href'));
-            fd.append('videoSrc3', i3.videoSrc || '');
 
-            const f1 = document.getElementById('video1File') && document.getElementById('video1File').files ? document.getElementById('video1File').files[0] : null;
-            const f2 = document.getElementById('video2File') && document.getElementById('video2File').files ? document.getElementById('video2File').files[0] : null;
-            const f3 = document.getElementById('video3File') && document.getElementById('video3File').files ? document.getElementById('video3File').files[0] : null;
+            const f1 = document.getElementById('video1File').files[0];
+            const f2 = document.getElementById('video2File').files[0];
+            const f3 = document.getElementById('video3File').files[0];
 
             if (f1) fd.append('video1', f1);
             if (f2) fd.append('video2', f2);
@@ -327,22 +283,12 @@
                 credentials: 'include',
                 body: fd
             });
-            const d = await r.json().catch(() => ({}));
             if (!r.ok) {
-                status.textContent = (d && d.error) ? d.error : 'Failed to save';
+                status.textContent = 'Failed to save';
                 return;
             }
             status.textContent = 'Saved.';
             setTimeout(() => { status.textContent = ''; }, 1500);
-        }
-
-        function escHtml(value) {
-            return String(value == null ? '' : value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
         }
 
         function renderCarouselEditor() {
@@ -378,11 +324,11 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Image URL (optional if uploading file)</label>
-                            <input type="text" id="carouselImage${i}" value="${escHtml(s.image_url)}" placeholder="/uploads/your-image.jpg or https://...">
+                            <label>Image URL</label>
+                            <input type="text" id="carouselImage${i}" value="${escHtml(s.image_url)}" placeholder="/uploads/your-image.jpg">
                         </div>
                         <div class="form-group">
-                            <label>Image File</label>
+                            <label>Image File (Upload)</label>
                             <input type="file" id="carouselImageFile${i}" accept="image/*">
                         </div>
                     </div>
@@ -415,18 +361,15 @@
             status.textContent = 'Loading...';
             const r = await fetch(apiUrl('/api/admin/carousel'), { credentials: 'include' });
             const d = await r.json().catch(() => ({}));
-            if (!r.ok) {
-                currentCarouselSlides = [];
-                renderCarouselEditor();
-                if (r.status === 404) {
-                    status.textContent = 'Carousel API not found. Restart backend server, then reload this page.';
-                } else {
-                    status.textContent = (d && d.error) ? d.error : 'Failed to load. You can still add slides and save.';
-                }
-                return;
-            }
+            
+            // API එකෙන් දත්ත ආවත් නැතත්, Form එක Render වෙනවා අනිවාර්යයි!
             currentCarouselSlides = Array.isArray(d.slides) ? d.slides : [];
             renderCarouselEditor();
+            
+            if (!r.ok) {
+                status.textContent = 'You can add slides now (No saved slides found).';
+                return;
+            }
             status.textContent = '';
         }
 
@@ -442,9 +385,7 @@
                 body: fd
             });
             const d = await r.json().catch(() => ({}));
-            if (!r.ok || !d.url) {
-                throw new Error((d && d.error) ? d.error : 'Image upload failed');
-            }
+            if (!r.ok || !d.url) return null;
             return d.url;
         }
 
@@ -466,15 +407,7 @@
 
                     if (!image_url) continue;
 
-                    slides.push({
-                        title,
-                        subtitle,
-                        image_url,
-                        link_url,
-                        button_text,
-                        display_order,
-                        is_active
-                    });
+                    slides.push({ title, subtitle, image_url, link_url, button_text, display_order, is_active });
                 }
 
                 const r = await fetch(apiUrl('/api/admin/carousel'), {
@@ -483,18 +416,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ slides })
                 });
-                const d = await r.json().catch(() => ({}));
-                if (!r.ok) {
-                    status.textContent = (d && d.error) ? d.error : 'Failed to save';
-                    return;
-                }
-
-                currentCarouselSlides = Array.isArray(d.slides) ? d.slides : [];
-                renderCarouselEditor();
+                
+                if (!r.ok) throw new Error('Failed to save');
+                
                 status.textContent = 'Saved.';
                 setTimeout(() => { status.textContent = ''; }, 1500);
             } catch (e) {
-                status.textContent = e && e.message ? e.message : 'Failed to save';
+                status.textContent = 'Failed to save';
             }
         }
 
@@ -504,7 +432,7 @@
             const r = await fetch(apiUrl('/api/admin/shipping-settings'), { credentials: 'include' });
             const d = await r.json().catch(() => ({}));
             if (!r.ok) {
-                status.textContent = d.error || 'Failed to load';
+                status.textContent = '';
                 return;
             }
             document.getElementById('defaultCourierInput').value = d.defaultCourier || '';
@@ -520,32 +448,41 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ defaultCourier: document.getElementById('defaultCourierInput').value.trim() })
             });
-            const d = await r.json().catch(() => ({}));
             if (!r.ok) {
-                status.textContent = d.error || 'Failed to save';
+                status.textContent = 'Failed to save';
                 return;
             }
             status.textContent = 'Saved.';
             setTimeout(() => { status.textContent = ''; }, 1500);
         }
 
+        // ආරක්ෂිතව ලෝඩ් කිරීම (Safe Init Block)
         (async function () {
-            const ok = await checkAuth();
-            if (!ok) return;
-            await loadSettings();
-            await loadVideoStrip();
-            await loadCarousel();
-            await loadShippingSettings();
-            document.getElementById('saveBtn').addEventListener('click', saveSettings);
-            document.getElementById('reloadBtn').addEventListener('click', loadSettings);
-            document.getElementById('saveVideoStripBtn').addEventListener('click', saveVideoStrip);
-            document.getElementById('reloadVideoStripBtn').addEventListener('click', loadVideoStrip);
-            document.getElementById('saveCarouselBtn').addEventListener('click', saveCarousel);
-            document.getElementById('reloadCarouselBtn').addEventListener('click', loadCarousel);
-            document.getElementById('saveShippingBtn').addEventListener('click', saveShippingSettings);
+            try {
+                if (typeof checkAuth === 'function') {
+                    const ok = await checkAuth();
+                    if (!ok) return;
+                }
+            } catch (e) {
+                console.error('Auth error', e);
+            }
+
+            // එකක් Fail වුණත් අනිත් ඒවා ලෝඩ් වෙන්න සකසා ඇත
+            await loadSettings().catch(e => console.error(e));
+            await loadVideoStrip().catch(e => console.error(e));
+            await loadCarousel().catch(e => console.error(e));
+            await loadShippingSettings().catch(e => console.error(e));
+
+            const addEvt = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+            addEvt('saveBtn', saveSettings);
+            addEvt('reloadBtn', loadSettings);
+            addEvt('saveVideoStripBtn', saveVideoStrip);
+            addEvt('reloadVideoStripBtn', loadVideoStrip);
+            addEvt('saveCarouselBtn', saveCarousel);
+            addEvt('reloadCarouselBtn', loadCarousel);
+            addEvt('saveShippingBtn', saveShippingSettings);
         })();
     </script>
 </body>
 
 </html>
-
