@@ -94,6 +94,14 @@ router.get('/realtime/orders', async (req, res) => {
 });
 
 // --- SALES ---
+router.get('/sales/monthly', async (req, res) => {
+    try {
+        // අදාළ මාසයේ දත්ත නොමැති වුවද හිස් Array එකක් යවයි
+        res.json([]);
+    } catch (e) { 
+        res.json([]); 
+    }
+});
 router.get('/sales/annual', (req, res) => res.json([]));
 router.get('/sales/breakdown', (req, res) => res.json([]));
 
