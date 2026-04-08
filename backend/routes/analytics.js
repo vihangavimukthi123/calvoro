@@ -2,7 +2,8 @@
  * Admin Analytics (BI & Reporting) API
  * Calvoro E-commerce System
  * 
- * FIXED: Backend responses now match what frontend js/analytics.js expects.
+ * FIXED: Uses mysql2/promise pool.query() directly (no callbacks).
+ * db.pool.query() returns [rows, fields] - we destructure rows.
  */
 const express = require('express');
 const router = express.Router();
@@ -15,26 +16,19 @@ function requireAdmin(req, res, next) {
 
 router.use(requireAdmin);
 
-const runQuery = (sql, params = []) => {
-    return new Promise((resolve) => {
-        try {
-            const callback = (err, result) => {
-                if (err) {
-                    console.error("Analytics DB Error:", err);
-                    return resolve([]);
-                }
-                const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
-                resolve(Array.isArray(rows) ? rows : (rows ? [rows] : []));
-            };
-            const q = db.query(sql, params, callback);
-            if (q && typeof q.then === 'function') {
-                q.then(r => callback(null, r)).catch(e => callback(e, null));
-            }
-        } catch (e) {
-            resolve([]);
-        }
-    });
-};
+/**
+ * Safe query runner using db.pool (mysql2/promise).
+ * Always returns an array of rows.
+ */
+async function runQuery(sql, params = []) {
+    try {
+        const [rows] = await db.pool.query(sql, params);
+        return Array.isArray(rows) ? rows : [];
+    } catch (e) {
+        console.error("Analytics DB Error:", e.message);
+        return [];
+    }
+}
 
 // =============================================
 // METRICS
@@ -42,19 +36,17 @@ const runQuery = (sql, params = []) => {
 // =============================================
 router.get('/metrics/orders', async (req, res) => {
     try {
-        const [total, completed, pending, cancelled, revenue] = await Promise.all([
-            runQuery('SELECT COUNT(*) as c FROM orders'),
-            runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="completed"'),
-            runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="pending"'),
-            runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="cancelled"'),
-            runQuery('SELECT COALESCE(SUM(total),0) as r FROM orders')
-        ]);
+        const [total] = await runQuery('SELECT COUNT(*) as c FROM orders');
+        const [completed] = await runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="completed"');
+        const [pending] = await runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="pending"');
+        const [cancelled] = await runQuery('SELECT COUNT(*) as c FROM orders WHERE LOWER(status)="cancelled"');
+        const [revenue] = await runQuery('SELECT COALESCE(SUM(total),0) as r FROM orders');
         res.json({
-            total: total[0]?.c || 0,
-            revenue: revenue[0]?.r || 0,
-            completed: completed[0]?.c || 0,
-            pending: pending[0]?.c || 0,
-            cancelled: cancelled[0]?.c || 0
+            total: total?.c || 0,
+            revenue: revenue?.r || 0,
+            completed: completed?.c || 0,
+            pending: pending?.c || 0,
+            cancelled: cancelled?.c || 0
         });
     } catch (e) {
         res.json({ total: 0, revenue: 0, completed: 0, pending: 0, cancelled: 0 });
@@ -65,10 +57,11 @@ router.get('/metrics/orders', async (req, res) => {
 router.get('/metrics/aov', async (req, res) => {
     try {
         const rows = await runQuery('SELECT AVG(total) as avg_val, SUM(total) as sum_val, COUNT(*) as cnt FROM orders');
+        const r = rows[0] || {};
         res.json({
-            aov: Math.round(rows[0]?.avg_val || 0),
-            totalRevenue: rows[0]?.sum_val || 0,
-            orderCount: rows[0]?.cnt || 0
+            aov: Math.round(r.avg_val || 0),
+            totalRevenue: r.sum_val || 0,
+            orderCount: r.cnt || 0
         });
     } catch (e) {
         res.json({ aov: 0, totalRevenue: 0, orderCount: 0 });
@@ -151,7 +144,6 @@ router.get('/sales/annual', async (req, res) => {
 // Frontend expects breakdown: { data: [{ category_name, revenue }] }
 router.get('/sales/breakdown', async (req, res) => {
     try {
-        // Try with categories join first
         const rows = await runQuery(
             `SELECT COALESCE(c.name, 'Uncategorized') as category_name, 
                     COALESCE(SUM(oi.price * oi.quantity),0) as revenue
@@ -182,7 +174,7 @@ router.get('/sales/breakdown', async (req, res) => {
 router.get('/sales/export', async (req, res) => {
     try {
         const rows = await runQuery(
-            `SELECT order_id, order_number, total, status, created_at FROM orders ORDER BY created_at DESC`
+            'SELECT order_id, order_number, total, status, created_at FROM orders ORDER BY created_at DESC'
         );
         let csv = 'Order ID,Order Number,Total,Status,Date\n';
         rows.forEach(r => {
@@ -222,9 +214,10 @@ router.get('/products/top-sold', async (req, res) => {
 router.get('/products/inventory-value', async (req, res) => {
     try {
         const rows = await runQuery('SELECT COALESCE(SUM(price * stock),0) as total_value, COUNT(*) as product_count FROM products');
+        const r = rows[0] || {};
         res.json({
-            total_value: rows[0]?.total_value || 0,
-            product_count: rows[0]?.product_count || 0
+            total_value: r.total_value || 0,
+            product_count: r.product_count || 0
         });
     } catch (e) {
         res.json({ total_value: 0, product_count: 0 });
@@ -234,8 +227,8 @@ router.get('/products/inventory-value', async (req, res) => {
 // Frontend expects: array of { name, stock }
 router.get('/products/low-stock', async (req, res) => {
     try {
-        const threshold = req.query.threshold || 10;
-        const rows = await runQuery(`SELECT name, stock FROM products WHERE stock <= ${parseInt(threshold)} ORDER BY stock ASC`);
+        const threshold = parseInt(req.query.threshold) || 10;
+        const rows = await runQuery('SELECT name, stock FROM products WHERE stock <= ? ORDER BY stock ASC', [threshold]);
         res.json(rows);
     } catch (e) {
         res.json([]);
@@ -265,7 +258,7 @@ router.get('/customers/new', async (req, res) => {
     }
 });
 
-// Frontend expects: array or { data: [...] } of { first_name, last_name, email, order_count, total_spent }
+// Frontend expects: array of { first_name, last_name, email, order_count, total_spent }
 router.get('/customers/top', async (req, res) => {
     try {
         const rows = await runQuery(
@@ -291,15 +284,10 @@ router.get('/customers/top', async (req, res) => {
 router.get('/behavior/search-top', async (req, res) => {
     try {
         const rows = await runQuery(
-            `SELECT query as keyword, COUNT(*) as search_count 
-             FROM searches 
-             GROUP BY query 
-             ORDER BY search_count DESC 
-             LIMIT 10`
+            'SELECT query as keyword, COUNT(*) as search_count FROM searches GROUP BY query ORDER BY search_count DESC LIMIT 10'
         );
         res.json(rows);
     } catch (e) {
-        // searches table එක නැත්නම් empty return කරනවා
         res.json([]);
     }
 });
