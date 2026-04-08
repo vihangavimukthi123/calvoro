@@ -148,25 +148,19 @@
             const tbody = document.querySelector('#recentOrdersTable tbody');
 
             try {
-                // 1. Fetch Stats (දත්ත ගේන්නේ analytics router එක හරහායි)
-                const statsRes = await fetch(base + '/api/admin/analytics/stats', { credentials: 'include' });
-                const contentType = statsRes.headers.get("content-type");
+                // 1. Fetch Stats (නිවැරදි API Endpoint එක)
+                const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
                 
                 if (!statsRes.ok) {
-                    if (contentType && contentType.includes("application/json")) {
-                        const errData = await statsRes.json();
-                        throw new Error(errData.error || `HTTP Error ${statsRes.status}`);
-                    } else {
-                        throw new Error(`Server returned HTML instead of JSON. Status: ${statsRes.status}`);
-                    }
+                    throw new Error(`Failed to load stats: HTTP ${statsRes.status}`);
                 }
 
                 const stats = await statsRes.json();
-                document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
-                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-                document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
-                document.getElementById('totalRevenue').textContent = (Number(stats.totalRevenue) || 0).toLocaleString();
-                document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
+                document.getElementById('totalProducts').textContent = stats.totalProducts !== undefined ? stats.totalProducts : '0';
+                document.getElementById('totalUsers').textContent = stats.totalUsers !== undefined ? stats.totalUsers : '0';
+                document.getElementById('totalOrders').textContent = stats.totalOrders !== undefined ? stats.totalOrders : '0';
+                document.getElementById('totalRevenue').textContent = stats.totalRevenue !== undefined ? Number(stats.totalRevenue).toLocaleString() : '0';
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders !== undefined ? stats.pendingOrders : '0';
 
                 // 2. Fetch Recent Orders
                 const ordersRes = await fetch(base + '/api/orders', { credentials: 'include' });
@@ -185,7 +179,7 @@
                                 <td>${esc(orderNum)}</td>
                                 <td>${esc(customer)}</td>
                                 <td>LKR ${(Number(order.total) || 0).toLocaleString()}</td>
-                                <td><span class="badge badge-${esc(order.status || 'pending')}">${esc(order.status || 'pending')}</span></td>
+                                <td><span class="badge badge-${esc(order.status || 'pending').toLowerCase()}">${esc(order.status || 'Pending')}</span></td>
                                 <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
                             </tr>
                         `;
@@ -193,7 +187,7 @@
                 }
             } catch (error) {
                 console.error('Dashboard Load Error:', error);
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:var(--color-sale);">API Error: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">API Error: ${error.message}</td></tr>`;
             }
         }
 
