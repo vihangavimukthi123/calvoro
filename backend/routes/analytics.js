@@ -52,25 +52,24 @@ router.get('/stats', async (req, res) => {
 // 2. MISSING ANALYTICS ROUTES (404 දෝෂය මගහැරීමට)
 // =========================================================
 
+const getSafeRows = async (sql) => {
+    try {
+        const result = await db.query(sql);
+        return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
+    } catch(e) { return []; }
+};
+
 // --- METRICS ---
 router.get('/metrics/orders', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT COUNT(*) as count FROM orders');
+        const rows = await getSafeRows('SELECT COUNT(*) as count FROM orders');
         res.json({ value: (rows[0] && rows[0].count) ? rows[0].count : 0 });
     } catch (e) { res.json({ value: 0 }); }
 });
 
 router.get('/metrics/aov', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT AVG(total) as val FROM orders WHERE status="completed"');
+        const rows = await getSafeRows('SELECT AVG(total) as val FROM orders WHERE LOWER(status)="completed"');
         res.json({ value: Math.round((rows[0] && rows[0].val) ? rows[0].val : 0) });
     } catch (e) { res.json({ value: 0 }); }
 });
@@ -82,48 +81,40 @@ router.get('/realtime/visitors', (req, res) => {
     res.json({ value: Math.floor(Math.random() * 5) + 1 }); 
 });
 router.get('/realtime/activity', (req, res) => res.json([]));
+
+// නියම Orders ටික ලබා ගැනීම
 router.get('/realtime/orders', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT * FROM orders ORDER BY created_at DESC LIMIT 5');
+        const rows = await getSafeRows('SELECT * FROM orders ORDER BY created_at DESC LIMIT 10');
         res.json(rows || []);
     } catch (e) { res.json([]); }
 });
 
 // --- SALES ---
 router.get('/sales/monthly', async (req, res) => {
-    try {
-        // අදාළ මාසයේ දත්ත නොමැති වුවද හිස් Array එකක් යවයි
-        res.json([]);
-    } catch (e) { 
-        res.json([]); 
-    }
+    try { res.json([]); } catch (e) { res.json([]); }
 });
 router.get('/sales/annual', (req, res) => res.json([]));
-router.get('/sales/breakdown', (req, res) => res.json([]));
+
+// Chart එක සඳහා Orders By Status දත්ත ලබාදීම
+router.get('/sales/breakdown', async (req, res) => {
+    try {
+        const rows = await getSafeRows('SELECT status, COUNT(*) as count FROM orders GROUP BY status');
+        res.json(rows || []);
+    } catch (e) { res.json([]); }
+});
 
 // --- PRODUCTS ---
 router.get('/products/top-sold', (req, res) => res.json([]));
 router.get('/products/inventory-value', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT SUM(price * stock) as val FROM products');
+        const rows = await getSafeRows('SELECT SUM(price * stock) as val FROM products');
         res.json({ value: (rows[0] && rows[0].val) ? rows[0].val : 0 });
     } catch (e) { res.json({ value: 0 }); }
 });
 router.get('/products/low-stock', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT * FROM products WHERE stock <= 5');
+        const rows = await getSafeRows('SELECT * FROM products WHERE stock <= 5');
         res.json(rows || []);
     } catch (e) { res.json([]); }
 });
@@ -133,11 +124,7 @@ router.get('/customers/top', (req, res) => res.json([]));
 router.get('/customers/new', (req, res) => res.json({ value: 0 }));
 router.get('/customers/total', async (req, res) => {
     try {
-        const runQuery = async (sql) => {
-            const result = await db.query(sql);
-            return Array.isArray(result) && Array.isArray(result[0]) ? result[0] : (Array.isArray(result) ? result : [result]);
-        };
-        const rows = await runQuery('SELECT COUNT(*) as count FROM users');
+        const rows = await getSafeRows('SELECT COUNT(*) as count FROM users');
         res.json({ value: (rows[0] && rows[0].count) ? rows[0].count : 0 });
     } catch (e) { res.json({ value: 0 }); }
 });
