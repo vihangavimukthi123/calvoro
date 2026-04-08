@@ -62,25 +62,22 @@ function requireAdmin(req, res, next) {
 // === Admin Stats API (ප්‍රධාන Dashboard කාඩ්පත් සඳහා) ===
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
-        const runQuery = (sql) => {
-            return new Promise((resolve) => {
-                const cb = (err, result) => {
-                    if (err) return resolve([]);
-                    // mysql සහ mysql2 ආකෘති දෙකම හඳුනාගනී
-                    const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
-                    resolve(Array.isArray(rows) ? rows : [rows]);
-                };
-                const q = db.query(sql, cb);
-                if (q && typeof q.then === 'function') q.then(r => cb(null, r)).catch(cb);
-            });
+        const runQ = async (sql) => {
+            try {
+                const [rows] = await db.pool.query(sql);
+                return Array.isArray(rows) ? rows : [];
+            } catch (e) {
+                console.error('Stats query error:', e.message);
+                return [];
+            }
         };
 
         const [p, u, o, pend, rev] = await Promise.all([
-            runQuery('SELECT COUNT(*) as count FROM products'),
-            runQuery('SELECT COUNT(*) as count FROM users'),
-            runQuery('SELECT COUNT(*) as count FROM orders'),
-            runQuery('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"'),
-            runQuery('SELECT SUM(total) as sum FROM orders')
+            runQ('SELECT COUNT(*) as count FROM products'),
+            runQ('SELECT COUNT(*) as count FROM users'),
+            runQ('SELECT COUNT(*) as count FROM orders'),
+            runQ('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"'),
+            runQ('SELECT COALESCE(SUM(total),0) as sum FROM orders')
         ]);
 
         res.json({
