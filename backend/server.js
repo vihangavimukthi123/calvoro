@@ -25,6 +25,8 @@ const analyticsRouter = require('./routes/analytics');
 const deliveryRouter = require('./routes/delivery');
 const donationsRouter = require('./routes/donations');
 const emailRouter = require('./routes/email');
+const promoTickerRouter = require('./routes/promoTicker');
+const videoStripRouter = require('./routes/videoStrip');
 const {
     publicRouter: promotionsPublicRouter,
     uploadPromoImage,
@@ -156,7 +158,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/carousel', carouselRouter);
-app.use('/api/admin/carousel', requireAdmin, carouselRouter); // FIX: settings.html uses /api/admin/carousel
+app.use('/api/admin/carousel', requireAdmin, carouselRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/admin/users', adminUsersRouter);
@@ -168,6 +170,8 @@ app.use('/api/admin/analytics', analyticsRouter);
 app.use('/api/delivery', deliveryRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/email', emailRouter);
+app.use('/api/admin/promo-ticker', promoTickerRouter);
+app.use('/api/admin/video-strip', videoStripRouter);
 
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -183,7 +187,7 @@ app.get('*', (req, res) => {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
 
-        // FIX: site_settings table එක නැත්නම් හදනවා
+        // site_settings table auto-create
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS site_settings (
                 setting_key VARCHAR(100) PRIMARY KEY,
