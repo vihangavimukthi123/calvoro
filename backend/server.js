@@ -94,6 +94,46 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     }
 });
 
+// === Admin Password Change ===
+app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
+    try {
+        const bcrypt = require('bcrypt');
+        const { currentPassword, newUsername, newPassword } = req.body;
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters' });
+        }
+        // Verify current password
+        const admin = req.session.admin;
+        const [rows] = await db.pool.query('SELECT * FROM admin_users WHERE id = ?', [admin.id || 1]);
+        if (!rows || !rows[0]) return res.status(404).json({ error: 'Admin not found' });
+
+        const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+        if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+        const newHash = await bcrypt.hash(newPassword, 10);
+        const updates = ['password_hash = ?'];
+        const values = [newHash];
+
+        if (newUsername && newUsername.trim()) {
+            updates.push('username = ?');
+            values.push(newUsername.trim());
+        }
+
+        values.push(rows[0].id);
+        await db.pool.query(`UPDATE admin_users SET ${updates.join(', ')} WHERE id = ?`, values);
+
+        // Update session
+        if (newUsername && newUsername.trim()) {
+            req.session.admin.username = newUsername.trim();
+        }
+
+        res.json({ success: true, message: 'Credentials updated successfully' });
+    } catch (e) {
+        console.error('Password change error:', e.message);
+        res.status(500).json({ error: 'Failed to update credentials' });
+    }
+});
+
 // === Admin Products & Trending ===
 app.get('/api/admin/products', requireAdmin, async (req, res) => {
     try {
