@@ -480,15 +480,17 @@ class CalvoroMySQLDatabase {
         }
     }
 
-    async getAllProducts() {
+    async getAllProducts(includeDeleted = false) {
         await this.ensureProductsColorImages();
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+        const whereClause = includeDeleted ? '' : "WHERE p.status != 'deleted'";
         const [rows] = await this.pool.query(`
             SELECT p.*, c.name as category_name
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
+            ${whereClause}
             ORDER BY p.created_at DESC
         `);
         return rows.map(row => ({
@@ -618,7 +620,8 @@ class CalvoroMySQLDatabase {
     }
 
     async deleteProduct(id) {
-        const [result] = await this.pool.query('DELETE FROM products WHERE id = ?', [id]);
+        // Soft delete: mark as deleted instead of removing row (keeps order history intact)
+        const [result] = await this.pool.query("UPDATE products SET status = 'deleted' WHERE id = ?", [id]);
         return { changes: result.affectedRows };
     }
 
