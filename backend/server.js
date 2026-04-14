@@ -146,11 +146,53 @@ app.use('/api/email', emailRouter);
 app.use('/api/admin/promo-ticker', promoTickerRouter);
 app.use('/api/admin/video-strip', videoStripRouter);
 
-// Public routes (storefront calls these without /admin prefix)
-app.use('/api/promo-ticker', promoTickerRouter);
-app.use('/api/video-strip', videoStripRouter);
-app.use('/api/offers', discountEnginePublic);
-app.use('/api/admin/offers', discountEngineAdmin);
+// Public routes (storefront - no admin auth required)
+app.get('/api/promo-ticker', async (req, res) => {
+    try {
+        const [rows] = await db.pool.query(
+            "SELECT setting_value FROM site_settings WHERE setting_key = 'promo_ticker' LIMIT 1"
+        );
+        if (rows && rows[0]) {
+            try { return res.json(JSON.parse(rows[0].setting_value)); } catch (_) {}
+        }
+        res.json({ lines: [], durationSeconds: 22 });
+    } catch (e) {
+        res.json({ lines: [], durationSeconds: 22 });
+    }
+});
+
+app.get('/api/video-strip', async (req, res) => {
+    try {
+        const [rows] = await db.pool.query(
+            "SELECT setting_value FROM site_settings WHERE setting_key = 'video_strip' LIMIT 1"
+        );
+        if (rows && rows[0]) {
+            try { return res.json(JSON.parse(rows[0].setting_value)); } catch (_) {}
+        }
+        res.json({ items: [] });
+    } catch (e) {
+        res.json({ items: [] });
+    }
+});
+
+app.get('/api/offers/active', async (req, res) => {
+    try {
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const [campaigns] = await db.pool.query(
+            'SELECT * FROM seasonal_campaigns WHERE is_active = 1 AND starts_at <= ? AND ends_at >= ? ORDER BY display_priority DESC',
+            [now, now]
+        );
+        const [rules] = await db.pool.query(
+            'SELECT * FROM discount_rules WHERE is_active = 1 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?)',
+            [now, now]
+        );
+        res.json({ campaigns: campaigns || [], rules: rules || [] });
+    } catch (e) {
+        res.json({ campaigns: [], rules: [] });
+    }
+});
+
+app.use('/api/admin/offers', requireAdmin, discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
