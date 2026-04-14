@@ -206,6 +206,24 @@ app.get('*', (req, res) => {
     try {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
-    } catch (e) { }
+
+        // Ensure trending_products table exists
+        await db.pool.query(`
+            CREATE TABLE IF NOT EXISTS trending_products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                product_id INT NOT NULL,
+                display_order INT NOT NULL DEFAULT 0,
+                INDEX idx_product_id (product_id)
+            )
+        `);
+
+        // Ensure site_settings table exists
+        await db.pool.query(`
+            CREATE TABLE IF NOT EXISTS site_settings (
+                setting_key VARCHAR(100) PRIMARY KEY,
+                setting_value TEXT NOT NULL DEFAULT ''
+            )
+        `);
+    } catch (e) { console.error('Startup table init error:', e.message); }
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 })();
