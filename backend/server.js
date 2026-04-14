@@ -104,19 +104,18 @@ app.get('/api/admin/products', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
-        const result = await db.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
-        const rows = (Array.isArray(result) && Array.isArray(result[0])) ? result[0] : result;
-        res.json({ productIds: rows.map(t => t.product_id) });
+        const [rows] = await db.pool.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
+        res.json({ productIds: (rows || []).map(t => t.product_id) });
     } catch (e) { res.json({ productIds: [] }); }
 });
 
 app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
         const { productIds } = req.body;
-        await db.query('DELETE FROM trending_products'); 
+        await db.pool.query('DELETE FROM trending_products'); 
         if (productIds && productIds.length > 0) {
             for (let i = 0; i < productIds.length; i++) {
-                await db.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
+                await db.pool.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
             }
         }
         res.json({ success: true });
