@@ -1,0 +1,21 @@
+{
+  "name": "CALVORO - Sri Lanka's #1 Active & Lifestyle Brand",
+  "short_name": "CALVORO",
+  "description": "Premium activewear and lifestyle clothing crafted in Sri Lanka. Shop men's and women's collections.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
