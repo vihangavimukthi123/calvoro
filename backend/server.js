@@ -232,7 +232,8 @@ app.get('/api/offers/active', async (req, res) => {
     }
 });
 
-app.use('/api/admin/offers', requireAdmin, discountEngineAdmin);
+// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine (offers.html routes match කරන්ට)
+app.use('/api/admin/discount-engine', requireAdmin, discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
