@@ -40,7 +40,7 @@ const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = requ
 const { createRateLimiter } = require('./lib/adminRateLimit');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080; 
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -61,7 +61,7 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-// === Admin Stats API ===
+// === Admin Stats API (ප්‍රධාන Dashboard කාඩ්පත් සඳහා) ===
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         const runQ = async (sql) => {
@@ -113,7 +113,7 @@ app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
 app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
         const { productIds } = req.body;
-        await db.query('DELETE FROM trending_products');
+        await db.query('DELETE FROM trending_products'); 
         if (productIds && productIds.length > 0) {
             for (let i = 0; i < productIds.length; i++) {
                 await db.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
@@ -121,32 +121,6 @@ app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
         }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
-});
-
-// === Shipping Settings ===
-app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
-    try {
-        const [rows] = await db.pool.query(
-            "SELECT setting_value FROM site_settings WHERE setting_key = 'default_courier' LIMIT 1"
-        );
-        const val = rows && rows[0] ? rows[0].setting_value : 'Standard Courier';
-        res.json({ defaultCourier: val });
-    } catch (e) {
-        res.json({ defaultCourier: 'Standard Courier' });
-    }
-});
-
-app.post('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
-    try {
-        const { defaultCourier } = req.body;
-        await db.pool.query(
-            "INSERT INTO site_settings (setting_key, setting_value) VALUES ('default_courier', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-            [defaultCourier || '', defaultCourier || '']
-        );
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ error: 'Failed to save' });
-    }
 });
 
 // === Standard Routes ===
@@ -158,7 +132,6 @@ app.use('/api/cart', cartRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/carousel', carouselRouter);
-app.use('/api/admin/carousel', requireAdmin, carouselRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/admin/users', adminUsersRouter);
@@ -173,6 +146,12 @@ app.use('/api/email', emailRouter);
 app.use('/api/admin/promo-ticker', promoTickerRouter);
 app.use('/api/admin/video-strip', videoStripRouter);
 
+// Public routes (storefront calls these without /admin prefix)
+app.use('/api/promo-ticker', promoTickerRouter);
+app.use('/api/video-strip', videoStripRouter);
+app.use('/api/offers', discountEnginePublic);
+app.use('/api/admin/offers', discountEngineAdmin);
+
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
@@ -186,14 +165,6 @@ app.get('*', (req, res) => {
     try {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
-
-        // site_settings table auto-create
-        await db.pool.query(`
-            CREATE TABLE IF NOT EXISTS site_settings (
-                setting_key VARCHAR(100) PRIMARY KEY,
-                setting_value TEXT NOT NULL DEFAULT ''
-            )
-        `);
     } catch (e) { }
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 })();
