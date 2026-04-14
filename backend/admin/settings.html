@@ -169,9 +169,48 @@
                     </div>
                 </div>
 
+                <div class="card credentials-card">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Admin Credentials</h2>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">Change your admin username and password.</p>
+
+                    <div class="form-group">
+                        <label for="currentPasswordInput">Current Password</label>
+                        <input type="password" id="currentPasswordInput" placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="newUsernameInput">New Username (optional)</label>
+                        <input type="text" id="newUsernameInput" placeholder="Leave blank to keep current">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPasswordInput">New Password</label>
+                        <input type="password" id="newPasswordInput" placeholder="Minimum 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPasswordInput">Confirm New Password</label>
+                        <input type="password" id="confirmPasswordInput" placeholder="Re-enter new password">
+                    </div>
+
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                        <button type="button" class="btn-danger" id="changeCredentialsBtn">Change Credentials</button>
+                        <span id="credentialsStatusText" style="font-size:13px;color:#666;"></span>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
+
+    <!-- Admin Credentials Change Section -->
+    <style>
+        .credentials-card { padding: 24px; margin-top: 24px; }
+        .credentials-card .form-group { margin-bottom: 16px; }
+        .credentials-card input[type="text"],
+        .credentials-card input[type="password"] { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .credentials-card .btn-danger { background: #dc2626; color: #fff; border: none; padding: 12px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .credentials-card .btn-danger:hover { background: #b91c1c; }
+    </style>
 
     <script src="js/admin.js"></script>
     <script>
@@ -481,6 +520,52 @@
             addEvt('saveCarouselBtn', saveCarousel);
             addEvt('reloadCarouselBtn', loadCarousel);
             addEvt('saveShippingBtn', saveShippingSettings);
+
+            // Admin credentials change
+            addEvt('changeCredentialsBtn', async function() {
+                var status = document.getElementById('credentialsStatusText');
+                var currentPw = document.getElementById('currentPasswordInput').value;
+                var newUser = document.getElementById('newUsernameInput').value.trim();
+                var newPw = document.getElementById('newPasswordInput').value;
+                var confirmPw = document.getElementById('confirmPasswordInput').value;
+
+                if (!currentPw) { status.textContent = 'Enter current password.'; status.style.color = '#dc2626'; return; }
+                if (!newPw) { status.textContent = 'Enter new password.'; status.style.color = '#dc2626'; return; }
+                if (newPw.length < 6) { status.textContent = 'Password must be at least 6 characters.'; status.style.color = '#dc2626'; return; }
+                if (newPw !== confirmPw) { status.textContent = 'Passwords do not match.'; status.style.color = '#dc2626'; return; }
+
+                status.textContent = 'Updating...';
+                status.style.color = '#666';
+
+                try {
+                    var r = await fetch(apiUrl('/api/admin/change-password'), {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            currentPassword: currentPw,
+                            newUsername: newUser || undefined,
+                            newPassword: newPw
+                        })
+                    });
+                    var d = await r.json().catch(function() { return {}; });
+                    if (!r.ok) {
+                        status.textContent = d.error || 'Failed to update.';
+                        status.style.color = '#dc2626';
+                        return;
+                    }
+                    status.textContent = 'Credentials updated! Please login again.';
+                    status.style.color = '#16a34a';
+                    document.getElementById('currentPasswordInput').value = '';
+                    document.getElementById('newUsernameInput').value = '';
+                    document.getElementById('newPasswordInput').value = '';
+                    document.getElementById('confirmPasswordInput').value = '';
+                    setTimeout(function() { window.location.href = '/admin/index.html'; }, 2000);
+                } catch (e) {
+                    status.textContent = 'Network error.';
+                    status.style.color = '#dc2626';
+                }
+            });
         })();
     </script>
 </body>
