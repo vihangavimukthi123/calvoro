@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /backend/
+Disallow: /api/
+Disallow: /tmp/
+Disallow: /tools/
+Disallow: /docs/
+
+Sitemap: https://calvorosl.com/sitemap.xml
