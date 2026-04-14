@@ -10,7 +10,6 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-// Video upload storage
 let VIDEO_DIR;
 try {
     VIDEO_DIR = require('../storagePaths').VIDEO_DIR;
@@ -43,25 +42,15 @@ const upload = multer({
     }
 });
 
-// GET /api/admin/video-strip
 router.get('/', requireAdmin, async (req, res) => {
     try {
-        const [rows] = await db.pool.query(
-            "SELECT setting_value FROM site_settings WHERE setting_key = 'video_strip' LIMIT 1"
-        );
-        if (rows && rows[0]) {
-            try {
-                const data = JSON.parse(rows[0].setting_value);
-                return res.json(data);
-            } catch (_) {}
-        }
-        res.json({ items: [] });
+        const items = await db.getVideoStrip();
+        res.json({ items });
     } catch (e) {
         res.json({ items: [] });
     }
 });
 
-// POST /api/admin/video-strip/videos  (labels + optional video file uploads)
 router.post('/videos', requireAdmin, (req, res, next) => {
     upload.fields([
         { name: 'video1', maxCount: 1 },
@@ -73,42 +62,32 @@ router.post('/videos', requireAdmin, (req, res, next) => {
     });
 }, async (req, res) => {
     try {
-        // Load existing items first so we keep old video_url if no new file uploaded
         let existingItems = [];
         try {
-            const [rows] = await db.pool.query(
-                "SELECT setting_value FROM site_settings WHERE setting_key = 'video_strip' LIMIT 1"
-            );
-            if (rows && rows[0]) {
-                const d = JSON.parse(rows[0].setting_value);
-                existingItems = Array.isArray(d.items) ? d.items : [];
-            }
+            existingItems = await db.getVideoStrip();
         } catch (_) {}
 
         const files = req.files || {};
         const items = [1, 2, 3].map((n, i) => {
             const existing = existingItems[i] || {};
-            let video_url = existing.video_url || '';
+            let videoSrc = existing.videoSrc || '';
             const uploaded = files['video' + n] && files['video' + n][0];
             if (uploaded) {
                 const ext = (path.extname(uploaded.filename) || '').toLowerCase();
                 const isVideo = ext.match(/^\.(mp4|webm|mov)$/);
-                video_url = (isVideo ? '/storage/videos/' : '/uploads/') + uploaded.filename;
+                videoSrc = (isVideo ? '/storage/videos/' : '/uploads/') + uploaded.filename;
             }
             return {
                 label: String(req.body['label' + n] || '').trim(),
                 href: String(req.body['href' + n] || '').trim(),
-                video_url
+                videoSrc
             };
         });
 
-        const value = JSON.stringify({ items });
-        await db.pool.query(
-            "INSERT INTO site_settings (setting_key, setting_value) VALUES ('video_strip', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-            [value, value]
-        );
+        await db.setVideoStrip({ items });
         res.json({ success: true, items });
     } catch (e) {
+        console.error('Video strip save error:', e.message);
         res.status(500).json({ error: 'Failed to save' });
     }
 });
