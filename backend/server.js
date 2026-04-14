@@ -40,7 +40,7 @@ const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = requ
 const { createRateLimiter } = require('./lib/adminRateLimit');
 
 const app = express();
-const PORT = process.env.PORT || 8080; 
+const PORT = process.env.PORT || 8080;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -61,7 +61,7 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-// === Admin Stats API (ප්‍රධාන Dashboard කාඩ්පත් සඳහා) ===
+// === Admin Stats API ===
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         const runQ = async (sql) => {
@@ -102,7 +102,6 @@ app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
         if (!newPassword || newPassword.length < 6) {
             return res.status(400).json({ error: 'New password must be at least 6 characters' });
         }
-        // Verify current password
         const admin = req.session.admin;
         const [rows] = await db.pool.query('SELECT * FROM admin_users WHERE id = ?', [admin.id || 1]);
         if (!rows || !rows[0]) return res.status(404).json({ error: 'Admin not found' });
@@ -122,7 +121,6 @@ app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
         values.push(rows[0].id);
         await db.pool.query(`UPDATE admin_users SET ${updates.join(', ')} WHERE id = ?`, values);
 
-        // Update session
         if (newUsername && newUsername.trim()) {
             req.session.admin.username = newUsername.trim();
         }
@@ -152,7 +150,7 @@ app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
 app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
     try {
         const { productIds } = req.body;
-        await db.pool.query('DELETE FROM trending_products'); 
+        await db.pool.query('DELETE FROM trending_products');
         if (productIds && productIds.length > 0) {
             for (let i = 0; i < productIds.length; i++) {
                 await db.pool.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
@@ -160,6 +158,32 @@ app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
         }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// === Shipping Settings ===
+app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
+    try {
+        const [rows] = await db.pool.query(
+            "SELECT setting_value FROM site_settings WHERE setting_key = 'default_courier' LIMIT 1"
+        );
+        const val = rows && rows[0] ? rows[0].setting_value : 'Standard Courier';
+        res.json({ defaultCourier: val });
+    } catch (e) {
+        res.json({ defaultCourier: 'Standard Courier' });
+    }
+});
+
+app.post('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
+    try {
+        const { defaultCourier } = req.body;
+        await db.pool.query(
+            "INSERT INTO site_settings (setting_key, setting_value) VALUES ('default_courier', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
+            [defaultCourier || '', defaultCourier || '']
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to save' });
+    }
 });
 
 // === Standard Routes ===
@@ -171,6 +195,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/carousel', carouselRouter);
+app.use('/api/admin/carousel', requireAdmin, carouselRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/admin/users', adminUsersRouter);
@@ -247,7 +272,6 @@ app.get('*', (req, res) => {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
 
-        // Ensure trending_products table exists
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS trending_products (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -257,7 +281,6 @@ app.get('*', (req, res) => {
             )
         `);
 
-        // Ensure site_settings table exists
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS site_settings (
                 setting_key VARCHAR(100) PRIMARY KEY,
