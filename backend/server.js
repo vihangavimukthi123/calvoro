@@ -204,6 +204,16 @@ app.use('/api/email', emailRouter);
 app.use('/api/admin/promo-ticker', promoTickerRouter);
 app.use('/api/admin/video-strip', videoStripRouter);
 
+// === Promotions (Public - Storefront) ===
+app.use('/api/promotions', promotionsPublicRouter);
+
+// === Promotions (Admin) ===
+app.get('/api/admin/promotions', requireAdmin, promotionsAdminList);
+app.post('/api/admin/promotions', requireAdmin, uploadPromoImage, promotionsAdminCreate);
+app.put('/api/admin/promotions/:id', requireAdmin, promotionsAdminUpdate);
+app.post('/api/admin/promotions/:id/image', requireAdmin, uploadPromoImage, promotionsAdminReplaceImage);
+app.delete('/api/admin/promotions/:id', requireAdmin, promotionsAdminDelete);
+
 // Public routes (storefront - no admin auth required)
 app.get('/api/promo-ticker', async (req, res) => {
     try {
@@ -232,7 +242,7 @@ app.get('/api/offers/active', async (req, res) => {
     }
 });
 
-// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine (offers.html routes match කරන්ට)
+// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine
 app.use('/api/admin/discount-engine', requireAdmin, discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
