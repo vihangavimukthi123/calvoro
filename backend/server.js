@@ -163,11 +163,8 @@ app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
 // === Shipping Settings ===
 app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
     try {
-        const [rows] = await db.pool.query(
-            "SELECT setting_value FROM site_settings WHERE setting_key = 'default_courier' LIMIT 1"
-        );
-        const val = rows && rows[0] ? rows[0].setting_value : 'Standard Courier';
-        res.json({ defaultCourier: val });
+        const val = await db.getSiteSetting('default_courier');
+        res.json({ defaultCourier: val || 'Standard Courier' });
     } catch (e) {
         res.json({ defaultCourier: 'Standard Courier' });
     }
@@ -176,10 +173,7 @@ app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
 app.post('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
     try {
         const { defaultCourier } = req.body;
-        await db.pool.query(
-            "INSERT INTO site_settings (setting_key, setting_value) VALUES ('default_courier', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-            [defaultCourier || '', defaultCourier || '']
-        );
+        await db.setSiteSetting('default_courier', defaultCourier || '');
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Failed to save' });
@@ -213,13 +207,8 @@ app.use('/api/admin/video-strip', videoStripRouter);
 // Public routes (storefront - no admin auth required)
 app.get('/api/promo-ticker', async (req, res) => {
     try {
-        const [rows] = await db.pool.query(
-            "SELECT setting_value FROM site_settings WHERE setting_key = 'promo_ticker' LIMIT 1"
-        );
-        if (rows && rows[0]) {
-            try { return res.json(JSON.parse(rows[0].setting_value)); } catch (_) {}
-        }
-        res.json({ lines: [], durationSeconds: 22 });
+        const data = await db.getPromoTicker();
+        res.json(data);
     } catch (e) {
         res.json({ lines: [], durationSeconds: 22 });
     }
@@ -227,13 +216,8 @@ app.get('/api/promo-ticker', async (req, res) => {
 
 app.get('/api/video-strip', async (req, res) => {
     try {
-        const [rows] = await db.pool.query(
-            "SELECT setting_value FROM site_settings WHERE setting_key = 'video_strip' LIMIT 1"
-        );
-        if (rows && rows[0]) {
-            try { return res.json(JSON.parse(rows[0].setting_value)); } catch (_) {}
-        }
-        res.json({ items: [] });
+        const data = await db.getVideoStrip();
+        res.json({ items: data });
     } catch (e) {
         res.json({ items: [] });
     }
@@ -241,16 +225,8 @@ app.get('/api/video-strip', async (req, res) => {
 
 app.get('/api/offers/active', async (req, res) => {
     try {
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        const [campaigns] = await db.pool.query(
-            'SELECT * FROM seasonal_campaigns WHERE is_active = 1 AND starts_at <= ? AND ends_at >= ? ORDER BY display_priority DESC',
-            [now, now]
-        );
-        const [rules] = await db.pool.query(
-            'SELECT * FROM discount_rules WHERE is_active = 1 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?)',
-            [now, now]
-        );
-        res.json({ campaigns: campaigns || [], rules: rules || [] });
+        const data = await db.getActiveOffersForStorefront();
+        res.json(data);
     } catch (e) {
         res.json({ campaigns: [], rules: [] });
     }
@@ -271,6 +247,7 @@ app.get('*', (req, res) => {
     try {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
+        if (typeof db.ensureSiteSettingsTable === 'function') await db.ensureSiteSettingsTable();
 
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS trending_products (
@@ -278,13 +255,6 @@ app.get('*', (req, res) => {
                 product_id INT NOT NULL,
                 display_order INT NOT NULL DEFAULT 0,
                 INDEX idx_product_id (product_id)
-            )
-        `);
-
-        await db.pool.query(`
-            CREATE TABLE IF NOT EXISTS site_settings (
-                setting_key VARCHAR(100) PRIMARY KEY,
-                setting_value TEXT NOT NULL DEFAULT ''
             )
         `);
     } catch (e) { console.error('Startup table init error:', e.message); }
