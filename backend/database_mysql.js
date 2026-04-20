@@ -1457,6 +1457,7 @@ class CalvoroMySQLDatabase {
     }
 
     // ---- Gift Vouchers ----
+    async ensureGiftVoucherTables() {
         await this.pool.query(`
             CREATE TABLE IF NOT EXISTS gift_vouchers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
