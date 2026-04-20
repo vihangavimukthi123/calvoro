@@ -1371,8 +1371,92 @@ class CalvoroMySQLDatabase {
         return { changes: r.affectedRows };
     }
 
+    // ---- Chat Tables ----
+    async ensureChatTables() {
+        await this.pool.query(`
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                session_uuid VARCHAR(100) NOT NULL UNIQUE,
+                customer_name VARCHAR(100) NULL,
+                customer_email VARCHAR(100) NULL,
+                status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
+                unread_admin INT NOT NULL DEFAULT 0,
+                unread_customer INT NOT NULL DEFAULT 0,
+                last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_status (status),
+                INDEX idx_session_uuid (session_uuid)
+            )
+        `);
+        await this.pool.query(`
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                session_id INT NOT NULL,
+                sender_type ENUM('customer', 'admin') NOT NULL,
+                content TEXT NOT NULL,
+                is_read TINYINT(1) NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE,
+                INDEX idx_session_id (session_id),
+                INDEX idx_created_at (created_at)
+            )
+        `);
+    }
+
+    async getChatSessions() {
+        await this.ensureChatTables();
+        const [rows] = await this.pool.query('SELECT * FROM chat_sessions ORDER BY last_message_at DESC');
+        return rows;
+    }
+
+    async getChatSessionByUuid(uuid) {
+        await this.ensureChatTables();
+        const [rows] = await this.pool.query('SELECT * FROM chat_sessions WHERE session_uuid = ?', [uuid]);
+        return rows[0] || null;
+    }
+
+    async createChatSession(uuid, name, email) {
+        await this.ensureChatTables();
+        const [result] = await this.pool.query(
+            'INSERT INTO chat_sessions (session_uuid, customer_name, customer_email) VALUES (?, ?, ?)',
+            [uuid, name || null, email || null]
+        );
+        return result.insertId;
+    }
+
+    async getChatMessages(sessionId) {
+        await this.ensureChatTables();
+        const [rows] = await this.pool.query('SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC', [sessionId]);
+        return rows;
+    }
+
+    async saveChatMessage(sessionId, senderType, content) {
+        await this.ensureChatTables();
+        const [result] = await this.pool.query(
+            'INSERT INTO chat_messages (session_id, sender_type, content) VALUES (?, ?, ?)',
+            [sessionId, senderType, content]
+        );
+        await this.pool.query('UPDATE chat_sessions SET last_message_at = CURRENT_TIMESTAMP WHERE id = ?', [sessionId]);
+        
+        if (senderType === 'customer') {
+            await this.pool.query('UPDATE chat_sessions SET unread_admin = unread_admin + 1 WHERE id = ?', [sessionId]);
+        } else {
+            await this.pool.query('UPDATE chat_sessions SET unread_customer = unread_customer + 1 WHERE id = ?', [sessionId]);
+        }
+        
+        return { messageId: result.insertId, createdAt: new Date() };
+    }
+    
+    async markChatAsRead(sessionId, readerType) {
+        await this.ensureChatTables();
+        if (readerType === 'admin') {
+            await this.pool.query('UPDATE chat_sessions SET unread_admin = 0 WHERE id = ?', [sessionId]);
+        } else {
+            await this.pool.query('UPDATE chat_sessions SET unread_customer = 0 WHERE id = ?', [sessionId]);
+        }
+    }
+
     // ---- Gift Vouchers ----
-    async ensureGiftVoucherTables() {
         await this.pool.query(`
             CREATE TABLE IF NOT EXISTS gift_vouchers (
                 id INT AUTO_INCREMENT PRIMARY KEY,

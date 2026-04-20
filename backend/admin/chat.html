@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat - Calvoro Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <script>
+        (function () {
+            if (typeof window.CalvoroAPIBase !== 'undefined') return;
+            window.CalvoroAPIBase = ''; 
+        })();
+    </script>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="/logo.png" alt="CALVORO" style="height:36px;width:auto;object-fit:contain;">
+                </a>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html">📊 Dashboard</a>
+                <a href="analytics.html">📈 Analytics</a>
+                <a href="products.html">📦 Products</a>
+                <a href="trending.html">🔥 Trending Now</a>
+                <a href="categories.html">📁 Categories</a>
+                <a href="orders.html">🛒 Orders</a>
+                <a href="users.html">👥 Users</a>
+                <a href="vouchers.html">🎁 Vouchers</a>
+                <a href="promotions.html">📣 Promo Popup</a>
+                <a href="offers.html">🏷️ Offers Engine</a>
+                <a href="emails.html">📩 Email System</a>
+                <a href="chat.html" class="active">💬 Live Chat</a>
+                <a href="settings.html">⚙️ Settings</a>
+                <a href="#" id="logoutBtn">🚪 Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Live Chat Support</h1>
+                <div class="user-info">
+                    <span id="adminUser">Admin</span>
+                </div>
+            </header>
+
+            <div class="chat-container">
+                <div class="chat-sidebar">
+                    <div class="chat-sidebar-header">
+                        <input type="text" id="chatSearch" placeholder="Search conversations...">
+                    </div>
+                    <div class="chat-session-list" id="sessionList">
+                        <div class="loading-spinner">Loading conversations...</div>
+                    </div>
+                </div>
+                <div class="chat-main" id="chatMain">
+                    <div class="chat-empty-state" id="emptyState">
+                        <div class="empty-icon">💬</div>
+                        <h3>Select a conversation to start chatting</h3>
+                        <p>Real-time customer support messages will appear here.</p>
+                    </div>
+                    
+                    <div class="chat-active-window" id="activeWindow" style="display:none;">
+                        <div class="chat-active-header">
+                            <div class="active-user-info">
+                                <div class="active-user-avatar" id="activeAvatar">G</div>
+                                <div>
+                                    <div class="active-user-name" id="activeName">Guest Customer</div>
+                                    <div class="active-user-status">Online</div>
+                                </div>
+                            </div>
+                            <div class="active-user-actions">
+                                <button class="btn-icon" title="View customer details">👤</button>
+                            </div>
+                        </div>
+                        <div class="chat-active-messages" id="activeMessages"></div>
+                        <div class="chat-active-input">
+                            <input type="text" id="adminChatInput" placeholder="Type a reply...">
+                            <button class="btn-send" id="adminSendBtn">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>

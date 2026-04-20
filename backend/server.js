@@ -1,5 +1,6 @@
-const express = require('express');
 const session = require('express-session');
+const http = require('http');
+const socketIo = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
@@ -27,6 +28,8 @@ const donationsRouter = require('./routes/donations');
 const emailRouter = require('./routes/email');
 const promoTickerRouter = require('./routes/promoTicker');
 const videoStripRouter = require('./routes/videoStrip');
+const chatRouter = require('./routes/chat');
+const socketHandler = require('./lib/socketHandler');
 const {
     publicRouter: promotionsPublicRouter,
     uploadPromoImage,
@@ -40,7 +43,13 @@ const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = requ
 const { createRateLimiter } = require('./lib/adminRateLimit');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: { origin: true, credentials: true }
+});
 const PORT = process.env.PORT || 8080;
+
+socketHandler(io);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -203,6 +212,7 @@ app.use('/api/donations', donationsRouter);
 app.use('/api/email', emailRouter);
 app.use('/api/admin/promo-ticker', promoTickerRouter);
 app.use('/api/admin/video-strip', videoStripRouter);
+app.use('/api/admin/chat', chatRouter);
 
 // === Promotions (Public - Storefront) ===
 app.use('/api/promotions', promotionsPublicRouter);
@@ -259,6 +269,7 @@ app.get('*', (req, res) => {
         if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
         if (typeof db.ensureSiteSettingsTable === 'function') await db.ensureSiteSettingsTable();
+        if (typeof db.ensureChatTables === 'function') await db.ensureChatTables();
 
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS trending_products (
@@ -269,5 +280,5 @@ app.get('*', (req, res) => {
             )
         `);
     } catch (e) { console.error('Startup table init error:', e.message); }
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 })();
