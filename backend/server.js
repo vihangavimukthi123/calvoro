@@ -1,11 +1,13 @@
+require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
+const app = express();
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
+
+const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
-require('dotenv').config();
 
 const db = require('./db');
 const productsRouter = require('./routes/products');
@@ -43,9 +45,8 @@ const {
 const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = require('./routes/discountEngine');
 const { createRateLimiter } = require('./lib/adminRateLimit');
 
-const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
+const io = new Server(server, {
     cors: { origin: true, credentials: true }
 });
 const PORT = process.env.PORT || 8080;

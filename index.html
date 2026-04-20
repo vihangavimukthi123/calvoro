@@ -449,7 +449,12 @@
                 var apiUrl = (base ? base : '') + '/api/reviews/recent?limit=20';
                 fetch(apiUrl).then(function (r) {
                     if (!r.ok) throw new Error('Fetch failed ' + r.status);
-                    return r.json();
+                    var contentType = r.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        return r.json();
+                    } else {
+                        return r.text().then(function(t) { console.warn('Non-JSON response for reviews:', t.substring(0, 100)); return []; });
+                    }
                 }).then(function (reviews) {
                     if (!reviews || !reviews.length) {
                         trackContent.innerHTML = '<div class="reviews-empty-msg" style="padding:40px 24px;text-align:center;color:var(--color-text-muted);">No reviews yet. Leave one on any product page!</div>';
@@ -485,8 +490,14 @@
             var prev = document.getElementById('trendingPrev');
             var next = document.getElementById('trendingNext');
             if (row) {
-                fetch((window.CalvoroAPIBase || '') + '/api/products?trending=1&pricing=1').then(function (r) { return r.json(); }).then(function (products) {
-                    if (!products.length) return fetch((window.CalvoroAPIBase || '') + '/api/products?sort=newest&pricing=1').then(function (r) { return r.json(); });
+                fetch((window.CalvoroAPIBase || '') + '/api/products?trending=1&pricing=1').then(function (r) { 
+                    if (!r.ok) return [];
+                    return r.json().catch(function() { return []; });
+                }).then(function (products) {
+                    if (!products || !products.length) return fetch((window.CalvoroAPIBase || '') + '/api/products?sort=newest&pricing=1').then(function (r) { 
+                        if (!r.ok) return [];
+                        return r.json().catch(function() { return []; });
+                    });
                     return products;
                 }).then(function (products) {
                     if (!products || !products.length) { row.innerHTML = '<p>No products yet.</p>'; return; }
