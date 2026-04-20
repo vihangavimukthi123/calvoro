@@ -261,6 +261,18 @@ app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
+// --- Diagnostic Logging ---
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+        console.log(`[API Request] ${req.method} ${req.path}`);
+    }
+    next();
+});
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
     res.sendFile(path.join(__dirname, '..', 'index.html'));
