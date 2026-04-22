@@ -4,40 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALVORO - Sri Lanka's #1 Active & Lifestyle Brand</title>
+    <!-- Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="CALVORO is Sri Lanka's premium activewear and lifestyle clothing brand. Shop men's and women's collections, crafted sustainably in Sri Lanka. Free shipping on orders over LKR 15,000.">
-    <meta name="keywords" content="CALVORO, Sri Lanka clothing, activewear Sri Lanka, lifestyle brand, men's clothing Sri Lanka, women's clothing Sri Lanka, sportswear, gym wear, sustainable fashion Sri Lanka">
+    <title>CALVORO | Premium Activewear & Lifestyle | Sri Lanka</title>
+    <meta name="description" content="Elevate your lifestyle with CALVORO. Sri Lanka's leading premium activewear brand. High-performance apparel crafted for extraordinary living. Free shipping on orders over LKR 15,000.">
+    <meta name="keywords" content="CALVORO, fashion brands Sri Lanka, leading clothing brand, apparel, Sri Lanka fashion brands, Calvoro clothing, activewear, lifestyle brand, sustainable fashion">
     <meta name="author" content="CALVORO">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://calvorosl.com/">
 
-    <!-- Open Graph (Facebook, LinkedIn) -->
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="CALVORO - Sri Lanka's #1 Active & Lifestyle Brand">
-    <meta property="og:description" content="Premium activewear and lifestyle clothing crafted sustainably in Sri Lanka. Free shipping on orders over LKR 15,000.">
+    <meta property="og:title" content="CALVORO | Premium Activewear & Lifestyle">
+    <meta property="og:description" content="Sri Lanka's premium activewear brand. Crafted for extraordinary performance and style.">
     <meta property="og:url" content="https://calvorosl.com/">
+    <meta property="og:image" content="https://calvorosl.com/images/og-image.jpg">
     <meta property="og:site_name" content="CALVORO">
-    <meta property="og:image" content="https://calvorosl.com/logo.png">
-    <meta property="og:locale" content="en_LK">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CALVORO - Sri Lanka's #1 Active & Lifestyle Brand">
-    <meta name="twitter:description" content="Premium activewear and lifestyle clothing crafted sustainably in Sri Lanka.">
-    <meta name="twitter:image" content="https://calvorosl.com/logo.png">
+    <meta name="twitter:title" content="CALVORO | Premium Activewear">
+    <meta name="twitter:description" content="Elevate your performance with Sri Lanka's leading activewear brand.">
+    <meta name="twitter:image" content="https://calvorosl.com/images/og-image.jpg">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo.png">
     <link rel="apple-touch-icon" href="/logo.png">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1a1a2e">
-
-    <!-- Google Site Verification -->
-    <meta name="google-site-verification" content="google7e183be161d03ee5">
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -47,7 +43,7 @@
       "name": "CALVORO",
       "url": "https://calvorosl.com",
       "logo": "https://calvorosl.com/logo.png",
-      "description": "Sri Lanka's premium activewear and lifestyle clothing brand.",
+      "description": "Sri Lanka's leading premium activewear and lifestyle clothing brand.",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "LK"
@@ -112,7 +108,12 @@
 
     <header class="header">
         <div class="container">
-            <div class="logo"><a href="index.html"><img src="logo.png" alt="CALVORO - Sri Lanka's Active & Lifestyle Brand"></a></div>
+            <div class="logo"><a href="index.html"><img src="logo.png" alt="CALVORO"></a></div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <nav aria-label="Main navigation">
                 <a href="men.html">MEN</a>
                 <a href="women.html">WOMEN</a>
@@ -163,11 +164,11 @@
 
     <!-- Hero Banner -->
     <section class="hero" aria-label="Hero banner">
-        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&h=600&fit=crop" alt="CALVORO activewear collection - Crafted for extraordinary performance" loading="eager">
+        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1920&q=80" alt="CALVORO Premium Activewear - Elevated Performance" loading="eager">
         <div class="hero-content">
-            <h1>CRAFTED FOR EXTRAORDINARY</h1>
-            <p>ELEGANTLY CRAFTED IN SRI LANKA, DESTINED FOR THE WORLD</p>
-            <a href="men.html" class="btn-hero">SHOP NOW</a>
+            <p>ELEVATED PERFORMANCE</p>
+            <h1>CRAFTED FOR THE EXTRAORDINARY</h1>
+            <a href="men.html" class="btn-hero">SHOP THE COLLECTION</a>
         </div>
     </section>
 
@@ -377,38 +378,40 @@
     <!-- Footer -->
     <footer>
         <div class="container footer-grid">
+            <div class="footer-brand-story">
+                <h4>CALVORO</h4>
+                <p>Elegantly crafted in Sri Lanka, destined for the world. We believe in extraordinary performance and sustainable luxury. Join the CALVORO lifestyle.</p>
+                <div class="footer-social__icons" style="margin-top: 24px;">
+                    <a href="https://www.instagram.com/calvoro_sl" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <img src="images/social-instagram.png" alt="" class="footer-social__img" width="24" height="24">
+                    </a>
+                    <a href="https://www.facebook.com/share/1N3FAQwgDZ/" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <img src="images/social-facebook.png" alt="" class="footer-social__img" width="24" height="24">
+                    </a>
+                    <a href="https://www.tiktok.com/@calvoro.clothing" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                        <img src="images/social-tiktok.png" alt="" class="footer-social__img" width="24" height="24">
+                    </a>
+                </div>
+            </div>
             <div>
-                <h4>MENU</h4>
-                <a href="index.html">Home</a>
-                <a href="men.html">Men</a>
-                <a href="women.html">Women</a>
+                <h4>SHOP</h4>
+                <a href="men.html">Men's Collection</a>
+                <a href="women.html">Women's Collection</a>
                 <a href="gifts.html">Gift Vouchers</a>
+                <a href="index.html">New Arrivals</a>
             </div>
             <div>
                 <h4>SUPPORT</h4>
                 <a href="faq.html">FAQ</a>
                 <a href="return-exchange-policy.html">Returns &amp; Exchange</a>
-                <a href="#">Size Guide</a>
+                <a href="track.html">Track Order</a>
                 <a href="#">Contact Us</a>
-            </div>
-            <div>
-                <h4>MY ACCOUNT</h4>
-                <a href="login.html">Login</a>
-                <a href="register.html">Register</a>
-                <a href="account.html">My Account</a>
-                <a href="wishlist.html">Wishlist</a>
-            </div>
-            <div>
-                <h4>CONNECT</h4>
-                <a href="https://www.instagram.com/calvoro_sl" target="_blank" rel="noopener noreferrer">Instagram</a>
-                <a href="https://www.facebook.com/share/1N3FAQwgDZ/" target="_blank" rel="noopener noreferrer">Facebook</a>
-                <a href="https://www.tiktok.com/@calvoro.clothing" target="_blank" rel="noopener noreferrer">TikTok</a>
             </div>
             <div>
                 <h4>LEGAL</h4>
                 <a href="privacy-policy.html">Privacy Policy</a>
                 <a href="terms-and-conditions.html">Terms & Conditions</a>
-                <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a>
+                <a href="return-refund-policy.html">Refund Policy</a>
             </div>
         </div>
         <div class="footer-bar">

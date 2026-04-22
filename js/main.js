@@ -519,6 +519,40 @@ class ProductSearch {
 const search = new ProductSearch();
 
 // ======================
+// MOBILE MENU
+// ======================
+class MobileMenu {
+    constructor() {
+        this.header = document.querySelector('.header');
+        this.menuBtn = document.getElementById('mobileMenuBtn');
+        this.nav = document.querySelector('.header nav');
+        this.isOpen = false;
+        this.init();
+    }
+
+    init() {
+        if (!this.menuBtn) return;
+        this.menuBtn.addEventListener('click', () => this.toggle());
+        
+        // Scroll behavior for header
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                this.header.classList.add('header--scrolled');
+            } else {
+                this.header.classList.remove('header--scrolled');
+            }
+        });
+    }
+
+    toggle() {
+        this.isOpen = !this.isOpen;
+        this.nav.classList.toggle('active', this.isOpen);
+        this.menuBtn.classList.toggle('active', this.isOpen);
+        document.body.style.overflow = this.isOpen ? 'hidden' : '';
+    }
+}
+
+// ======================
 // PRODUCT FILTERING
 // ======================
 class ProductFilters {
@@ -1596,6 +1630,7 @@ class TrendingSlider {
 // Initialize components
 document.addEventListener('DOMContentLoaded', () => {
     new TrendingSlider();
+    new MobileMenu();
 });
 
 // Initialize everything
