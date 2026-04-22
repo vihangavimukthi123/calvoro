@@ -9,7 +9,8 @@
         window.CalvoroGoogleClientId = '681900223997-vm81gpia68ed2chs750lith3a7mo0896.apps.googleusercontent.com';
     }
 
-    var STORAGE_KEY_USER = 'calvoro_user';
+    var STORAGE_KEY_TOKEN = 'calvoro_google_id_token';
+    var STORAGE_KEY_USER = 'calvoro_google_user';
 
     function decodeJwtPayload(token) {
         if (!token || typeof token !== 'string') return null;
@@ -48,6 +49,7 @@
 
     function clearSession() {
         try {
+            localStorage.removeItem(STORAGE_KEY_TOKEN);
             localStorage.removeItem(STORAGE_KEY_USER);
         } catch (e) {}
     }
@@ -148,8 +150,138 @@
         decodeJwtPayload: decodeJwtPayload
     };
 
+    function loadGoogleScript() {
+        return new Promise(function (resolve, reject) {
+            if (window.google && window.google.accounts) {
+                resolve();
+                return;
+            }
+            var script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.onload = function () { resolve(); };
+            script.onerror = function () { reject(new Error('Google Sign-In script failed to load')); };
+            document.head.appendChild(script);
+        });
+    }
+
+    function initLoginPage() {
+        var container = document.getElementById('google-signin-container');
+        var loadingEl = document.getElementById('auth-google-loading');
+        var errorEl = document.getElementById('auth-google-error');
+        var clientId = window.CalvoroGoogleClientId;
+
+        if (!container) return;
+
+        function showLoading(show) { if (loadingEl) loadingEl.style.display = show ? 'block' : 'none'; }
+        function showError(msg) {
+            if (errorEl) {
+                errorEl.textContent = msg || 'Something went wrong.';
+                errorEl.style.display = msg ? 'block' : 'none';
+            }
+        }
+
+        if (!clientId) {
+            showError('Google Sign-In is not configured (missing Client ID).');
+            return;
+        }
+
+        showLoading(true);
+        showError('');
+
+        loadGoogleScript()
+            .then(function () {
+                if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+                    showError('Google Sign-In is not available.');
+                    showLoading(false);
+                    return;
+                }
+
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: async function (response) {
+                        showLoading(true);
+                        showError('');
+                        if (!response || !response.credential) {
+                            showError('Sign-in was cancelled or failed.');
+                            showLoading(false);
+                            return;
+                        }
+                        var decoded = decodeJwtPayload(response.credential);
+                        if (!decoded) {
+                            showError('Invalid sign-in response.');
+                            showLoading(false);
+                            return;
+                        }
+                        var user = saveSession(response.credential, decoded);
+                        if (!user) {
+                            showError('Could not save session.');
+                            showLoading(false);
+                            return;
+                        }
+                        
+                        try {
+                            // Changed from apiBase to relative path
+                            var res = await fetch('/api/users/google-login', {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id_token: response.credential })
+                            });
+                            var data = await res.json().catch(function () { return {}; });
+                            if (res.ok) {
+                                var redirect = getRedirectParam();
+                                window.location.href = redirect || 'account.html';
+                                return;
+                            }
+                            showError(data.error || 'Could not sign in with Google.');
+                        } catch (e) {
+                            showError('Connection error. Please try again later.');
+                        }
+                        showLoading(false);
+                    },
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                try {
+                    window.google.accounts.id.renderButton(container, {
+                        type: 'standard',
+                        theme: 'outline',
+                        size: 'large',
+                        text: 'continue_with',
+                        shape: 'rectangular',
+                        logo_alignment: 'left',
+                        width: container.offsetWidth || 320
+                    });
+                } catch (e) {
+                    showError('Could not render Google button.');
+                }
+                showLoading(false);
+            })
+            .catch(function (err) {
+                showError(err && err.message ? err.message : 'Google Sign-In failed to load.');
+                showLoading(false);
+            });
+    }
+
+    function getRedirectParam() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var redirect = params.get('redirect');
+            if (!redirect) return '';
+            redirect = decodeURIComponent(redirect);
+            if (/^https?:\/\//i.test(redirect)) return ''; 
+            if (redirect.indexOf('..') !== -1) return '';
+            return redirect || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
     function init() {
         renderNavbarAuth();
+        initLoginPage();
     }
 
     if (document.readyState === 'loading') {

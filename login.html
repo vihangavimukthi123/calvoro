@@ -57,6 +57,13 @@
             <button type="submit" class="btn-primary" id="loginSubmitBtn">LOG IN</button>
         </form>
 
+        <div class="auth-divider">or</div>
+
+        <!-- Google Sign-In (Google Identity Services) -->
+        <div id="auth-google-loading" class="auth-loading" style="display:none;">Loading Google Sign-In…</div>
+        <div id="google-signin-container"></div>
+        <div id="auth-google-error" class="auth-google-error"></div>
+
         <div class="auth-links">
             <p>Don't have an account? <a href="register.html">Register</a></p>
             <p class="auth-link-block"><a href="index.html">← Back to shop</a></p>
@@ -102,7 +109,7 @@
                         try {
                             var u = data.user || {};
                             var name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || 'User';
-                            localStorage.setItem('calvoro_user', JSON.stringify({ email: u.email || '', name: name, picture: '', sub: String(u.id || '') }));
+                            localStorage.setItem('calvoro_google_user', JSON.stringify({ email: u.email || '', name: name, picture: '', sub: String(u.id || '') }));
                         } catch (e) {}
                         var params = new URLSearchParams(window.location.search);
                         var redirect = params.get('redirect');
