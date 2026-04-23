@@ -1600,3 +1600,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize everything
 console.log('✅ Calvoro e-commerce system loaded');
+
+// Mobile Menu Logic
+(function() {
+    const btn = document.getElementById('mobileMenuBtn');
+    const menu = document.getElementById('mobileMenu');
+    const close = document.getElementById('mobileMenuClose');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    
+    if (!btn || !menu) return;
+    
+    const toggle = (open) => {
+        menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+        document.body.style.overflow = open ? 'hidden' : '';
+    };
+    
+    btn.addEventListener('click', () => toggle(true));
+    if (close) close.addEventListener('click', () => toggle(false));
+    if (overlay) overlay.addEventListener('click', () => toggle(false));
+    
+    // Close on link click
+    menu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => toggle(false));
+    });
+})();
