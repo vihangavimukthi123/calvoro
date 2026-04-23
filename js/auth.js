@@ -166,7 +166,7 @@
     }
 
     function initLoginPage() {
-        var container = document.getElementById('google-signin-container');
+        var container = document.getElementById('google-signin-container') || document.getElementById('google-signin-container-checkout');
         var loadingEl = document.getElementById('auth-google-loading');
         var errorEl = document.getElementById('auth-google-error');
         var clientId = window.CalvoroGoogleClientId;

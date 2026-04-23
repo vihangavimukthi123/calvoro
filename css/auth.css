@@ -293,3 +293,16 @@
     font-size: 13px;
     margin-top: 8px;
 }
+
+@media (max-width: 768px) {
+    .auth-user-name {
+        display: none;
+    }
+    .auth-user-pill {
+        padding: 4px;
+        gap: 0;
+    }
+    .auth-user-chevron {
+        display: none;
+    }
+}

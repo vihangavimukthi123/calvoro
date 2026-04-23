@@ -162,6 +162,59 @@
             color: var(--color-text-muted);
         }
 
+        /* Contact Section Enhancements */
+        .contact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .contact-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .contact-header .sign-in-link {
+            font-size: 14px;
+            color: var(--color-text);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .email-input-wrap input {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--color-input-border);
+            border-radius: 8px;
+            background: var(--color-input-bg);
+            color: var(--color-text);
+            font-size: 14px;
+        }
+
+        .newsletter-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .newsletter-wrap input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--color-text);
+        }
+
+        .newsletter-wrap label {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .checkout-container {
                 grid-template-columns: 1fr;
@@ -219,13 +272,21 @@
 
             <form id="checkoutForm">
                 <div class="form-section">
-                    <h3 style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                        <span>CONTACT INFORMATION</span>
-                        <a href="login.html?redirect=checkout.html" id="checkoutSignInLink" style="font-size:13px;color:#111;text-decoration:underline;text-underline-offset:2px;">Sign in</a>
-                    </h3>
-                    <div class="form-group">
-                        <label>Email *</label>
-                        <input type="email" name="email" required>
+                    <div class="contact-header">
+                        <h3>Contact</h3>
+                        <a href="login.html?redirect=checkout.html" id="checkoutSignInLink" class="sign-in-link">Sign in</a>
+                    </div>
+                    <div class="form-group email-input-wrap">
+                        <input type="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="newsletter-wrap">
+                        <input type="checkbox" id="newsletter" name="newsletter">
+                        <label for="newsletter">Email me with news and offers</label>
+                    </div>
+                    
+                    <!-- Google Sign-In Option -->
+                    <div id="checkout-google-signin" style="margin-top: 16px; display: none;">
+                        <div id="google-signin-container-checkout"></div>
                     </div>
                 </div>
 
@@ -695,15 +756,19 @@
                 if (link) link.style.display = 'none';
                 return;
             }
-            // Then try backend session
             try {
                 var res = await fetch(baseUrl + '/api/users/me', { credentials: 'include' });
                 var data = await res.json();
                 if (data && data.user && data.user.email) {
                     emailInput.value = data.user.email;
                     if (link) link.style.display = 'none';
+                    document.getElementById('checkout-google-signin').style.display = 'none';
+                } else {
+                    document.getElementById('checkout-google-signin').style.display = 'block';
                 }
-            } catch (e) {}
+            } catch (e) {
+                document.getElementById('checkout-google-signin').style.display = 'block';
+            }
         })();
     </script>
 

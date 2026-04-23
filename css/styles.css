@@ -5,6 +5,12 @@
  * New components: use var(--color-*) only. Logo: CSS filter in dark (invert); optional
  * data-logo-dark / data-logo-light on <img> for PNG swap.
  * ========== */
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+}
+
 :root {
     --color-bg: #ffffff;
     --color-text: #1a1a1a;
@@ -3946,11 +3952,17 @@ footer .footer-bottom {
     }
     
     .actions {
-        gap: 8px;
+        gap: 4px;
     }
     
     .actions .search-trigger span,
-    .actions .locale-btn {
+    .actions .locale-btn,
+    .actions .search-trigger {
+        padding: 4px;
+    }
+    
+    .actions .search-trigger span,
+    .actions .auth-login-link span {
         display: none;
     }
     
