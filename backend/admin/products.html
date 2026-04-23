@@ -311,12 +311,15 @@
         function renderProducts() {
             const tbody = document.querySelector('#productsTable tbody');
 
-            if (products.length === 0) {
+            // Filter out deleted products for the admin view as well, unless we want to see them (currently hidden per user request)
+            const activeProducts = products.filter(p => p.status !== 'deleted');
+
+            if (activeProducts.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">No products found</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = products.map(product => `
+            tbody.innerHTML = activeProducts.map(product => `
                 <tr>
                     <td>${product.id}</td>
                     <td>${product.name}</td>

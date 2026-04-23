@@ -3949,37 +3949,35 @@ footer .footer-bottom {
         display: none !important;
     }
     .header .container {
-        display: flex !important;
+        display: grid !important;
+        grid-template-columns: 44px 1fr auto !important; /* Hamburger | Logo | Actions */
         align-items: center !important;
-        justify-content: center !important;
-        position: relative !important;
         padding: 0 8px !important;
+        gap: 0 !important;
+        position: relative !important;
     }
     
     .mobile-menu-trigger {
         display: flex !important;
-        position: absolute !important;
-        left: 8px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
+        position: static !important; /* Grid handles positioning */
+        transform: none !important;
         z-index: 10 !important;
     }
     
     .actions {
         display: flex !important;
-        position: absolute !important;
-        right: 8px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
+        position: static !important; /* Grid handles positioning */
+        transform: none !important;
         z-index: 10 !important;
-        gap: 4px !important;
+        gap: 6px !important;
+        justify-content: flex-end !important;
     }
 
     .logo {
         display: flex !important;
         justify-content: center !important;
-        flex: none !important;
         margin: 0 !important;
+        min-width: 0 !important;
         z-index: 1 !important;
     }
     
@@ -3999,13 +3997,13 @@ footer .footer-bottom {
         flex: 1 !important;
         display: flex !important;
         justify-content: center !important;
-        margin: 0 40px !important; /* Give space for trigger and actions */
+        margin: 0 60px !important; /* Increased space for trigger and actions */
         min-width: 0 !important;
     }
 
     .logo img {
         height: 18px !important;
-        max-width: 100% !important;
+        max-width: 100px !important; /* Restrict width further on mobile */
         object-fit: contain !important;
     }
     

@@ -997,6 +997,7 @@ class CalvoroMySQLDatabase {
                    p.name as product_name, p.slug as product_slug, p.images as product_images
             FROM reviews r
             JOIN products p ON r.product_id = p.id
+            WHERE p.status != 'deleted'
             ORDER BY r.created_at DESC
             LIMIT ?
         `, [limit]);
