@@ -3930,6 +3930,82 @@ footer .footer-bottom {
     margin-top: auto;
     padding-top: 24px;
     border-top: 1px solid var(--color-border);
+    pointer-events: auto;
+}
+
+.mobile-menu-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.mobile-menu[aria-hidden="false"] .mobile-menu-overlay {
+    opacity: 1;
+}
+
+.mobile-menu-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 300px;
+    background: var(--color-bg);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-menu[aria-hidden="false"] .mobile-menu-content {
+    transform: translateX(0);
+}
+
+.mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+
+.mobile-menu-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--color-text);
+}
+
+.mobile-menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mobile-menu-nav a {
+    text-decoration: none;
+    color: var(--color-text);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.mobile-menu-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 10px 0;
+}
+
+.mobile-menu-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
 }
 
 .mobile-menu-social {
@@ -3950,89 +4026,69 @@ footer .footer-bottom {
     }
     .header .container {
         display: grid !important;
-        grid-template-columns: 44px 1fr auto !important; /* Hamburger | Logo | Actions */
+        grid-template-columns: 48px 1fr 140px !important; /* Fixed widths for trigger and actions */
         align-items: center !important;
         padding: 0 8px !important;
         gap: 0 !important;
         position: relative !important;
-    }
-    
-    .mobile-menu-trigger {
-        display: flex !important;
-        position: static !important; /* Grid handles positioning */
-        transform: none !important;
-        z-index: 10 !important;
-    }
-    
-    .actions {
-        display: flex !important;
-        position: static !important; /* Grid handles positioning */
-        transform: none !important;
-        z-index: 10 !important;
-        gap: 6px !important;
-        justify-content: flex-end !important;
+        height: 60px !important; /* Ensure consistent height */
     }
 
+    .mobile-menu-trigger {
+        grid-column: 1 !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 10 !important;
+    }
+    
     .logo {
+        grid-column: 2 !important;
         display: flex !important;
         justify-content: center !important;
+        align-items: center !important;
         margin: 0 !important;
         min-width: 0 !important;
-        z-index: 1 !important;
-    }
-    
-    .actions .search-trigger span,
-    .actions .auth-login-link span,
-    .actions .locale-btn,
-    .auth-user-name,
-    .auth-user-chevron {
-        display: none !important;
-    }
-    
-    .auth-user-pill {
-        padding: 4px !important;
-        border: none !important;
-    }
-       .logo {
-        flex: 1 !important;
-        display: flex !important;
-        justify-content: center !important;
-        margin: 0 60px !important; /* Increased space for trigger and actions */
-        min-width: 0 !important;
+        z-index: 5 !important;
     }
 
     .logo img {
-        height: 18px !important;
-        max-width: 100px !important; /* Restrict width further on mobile */
+        height: 14px !important; /* Slightly smaller for maximum safety */
+        width: auto !important;
+        max-width: 80px !important;
         object-fit: contain !important;
     }
     
     .actions {
+        grid-column: 3 !important;
         display: flex !important;
-        position: absolute !important;
-        right: 8px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 4px !important;
         z-index: 10 !important;
-        gap: 8px !important; /* Consistent spacing */
     }
 
-    .actions .search-trigger {
+    .actions .search-trigger,
+    .actions .theme-toggle,
+    .actions .account-btn,
+    .actions .cart-btn {
+        width: 32px !important;
+        height: 32px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 4px !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
     }
 
     .actions .search-trigger span {
         display: none !important;
     }
-    
-    .actions .theme-toggle,
-    .actions .cart-btn,
-    .actions .account-btn {
-        padding: 4px !important;
-    }
+}
 
     /* Footer Responsiveness Fix */
     .footer-grid {
