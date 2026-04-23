@@ -579,17 +579,14 @@
         })();
     </script>
     <script>
-        // Diagnostic Health Check
+        // Diagnostic Health Check (Simplified)
         (function() {
             fetch('/api/health').then(function(r) {
-                if (!r.ok) throw new Error('Health check non-ok ' + r.status);
-                var ct = r.headers.get('content-type');
-                if (ct && ct.indexOf('application/json') !== -1) return r.json();
-                return r.text().then(function(t){ throw new Error('Non-JSON health: ' + t.substring(0,20)); });
+                if (r.ok) return r.json();
             }).then(function(data) {
-                console.log('Backend Health Status:', data.status, 'Time:', data.time);
+                if (data) console.log('Backend Health Status:', data.status);
             }).catch(function(e) {
-                console.warn('Backend Health Check Failed:', e.message);
+                console.warn('Backend Health Check Failed');
             });
         })();
     </script>

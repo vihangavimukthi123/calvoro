@@ -163,6 +163,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 0 16px;
+    height: 60px;
 }
 
 .logo {
@@ -874,11 +876,18 @@ body {
         display: none;
     }
     .trending-viewport {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: visible;
     }
     .products-row-nowrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: 100%;
         transform: none !important;
+    }
+    .products-row-nowrap .card {
+        flex: none;
+        width: 100%;
     }
 }
 
@@ -3933,71 +3942,90 @@ footer .footer-bottom {
 }
 
 @media (max-width: 768px) {
-    .mobile-menu-trigger {
-        display: block;
-    }
-    
     .header .container {
-        justify-content: flex-start;
-        gap: 10px;
+        gap: 4px;
+        padding: 0 8px;
+        justify-content: space-between !important;
     }
     
-    .header .logo {
-        margin-right: auto;
-        height: 30px !important;
+    .mobile-menu-trigger {
+        display: flex !important;
+        order: -1;
     }
     
     .header nav {
-        display: none;
+        display: none !important;
     }
     
     .actions {
-        gap: 4px;
+        gap: 4px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
     .actions .search-trigger span,
+    .actions .auth-login-link span,
     .actions .locale-btn,
-    .actions .search-trigger {
-        padding: 4px;
+    .auth-user-name,
+    .auth-user-chevron {
+        display: none !important;
     }
     
-    .actions .search-trigger span,
-    .actions .auth-login-link span {
-        display: none;
+    .auth-user-pill {
+        padding: 4px !important;
+        border: none !important;
     }
     
-    .hero {
-        height: 400px;
-        margin-bottom: 40px;
+    .logo {
+        margin: 0 auto !important;
+    }
+
+    .logo img {
+        height: 20px !important;
+    }
+
+    /* Product Detail Responsiveness */
+    .product-detail {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 24px !important;
+        padding: 16px !important;
     }
     
-    .hero-content h1 {
-        font-size: 32px;
-        letter-spacing: 2px;
+    .product-images {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     
-    .hero-content p {
-        font-size: 14px;
-        letter-spacing: 1px;
+    .product-info {
+        width: 100% !important;
+        padding: 0 !important;
     }
     
-    .category-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+    .thumbnail-list {
+        display: flex !important;
+        overflow-x: auto !important;
+        width: 100% !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        order: 2 !important;
+        margin-top: 12px !important;
     }
     
-    .category-card img {
-        height: 300px;
+    .thumbnail-list img {
+        width: 60px !important;
+        height: 80px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .main-image-container {
+        width: 100% !important;
+        order: 1 !important;
     }
     
-    .footer-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
+    .main-image-container img {
+        width: 100% !important;
+        height: auto !important;
     }
-    
-    .footer-trust__inner {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-}
+}
