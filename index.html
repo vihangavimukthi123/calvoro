@@ -509,7 +509,10 @@
                             '<div class="reviews-card-author">' + (r.author_name || 'Guest').replace(/</g, '&lt;') + '</div>' +
                             '</div></a>';
                     }
-                    var html = reviews.map(cardHtml).join('');
+                    // Filter out reviews for deleted products or missing product associations
+                    var html = reviews.filter(function(r) { 
+                        return r && !r.is_deleted && r.product_id && (r.product_is_active !== false); 
+                    }).map(cardHtml).join('');
                     trackContent.innerHTML = html;
                     trackCopies.forEach(function(el){ el.innerHTML = html; });
                 }).catch(function () {

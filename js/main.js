@@ -1063,7 +1063,7 @@ class RecentlyViewed {
         if (!container) return;
 
         let recent = JSON.parse(localStorage.getItem('recently_viewed') || '[]');
-        recent = recent.filter(item => item && (item.id != null) && /^\d+$/.test(String(item.id)));
+        recent = recent.filter(item => item && (item.id != null) && !item.is_deleted);
 
         // On product pages, exclude the current product so it doesn't show itself
         const currentId = this.getCurrentProductId();
@@ -1074,8 +1074,9 @@ class RecentlyViewed {
         if (recent.length > 0) {
             const base = window.location.pathname.includes('products/') ? '' : 'products/';
             const placeholder = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect fill="%23eee" width="100" height="100"/%3E%3Ctext x="50" y="50" fill="%23999" font-size="12" text-anchor="middle" dy=".3em"%3ENo image%3C/text%3E%3C/svg%3E';
+            const hrefPrefix = base; 
             container.innerHTML = recent.map(product => {
-                const href = (base || 'products/') + 'product.html?id=' + product.id;
+                const href = hrefPrefix + 'product.html?id=' + product.id;
                 const img = product.image || placeholder;
                 return `<a href="${href}"><img src="${img}" alt="${(product.name || 'Product').replace(/"/g, '&quot;')}" onerror="this.src='${placeholder}'"></a>`;
             }).join('');
