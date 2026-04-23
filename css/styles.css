@@ -3995,16 +3995,68 @@ footer .footer-bottom {
         padding: 4px !important;
         border: none !important;
     }
-    
-    .logo {
+       .logo {
         flex: 1 !important;
         display: flex !important;
         justify-content: center !important;
-        margin: 0 !important;
+        margin: 0 40px !important; /* Give space for trigger and actions */
+        min-width: 0 !important;
     }
 
     .logo img {
-        height: 20px !important;
+        height: 18px !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
+    }
+    
+    .actions {
+        display: flex !important;
+        position: absolute !important;
+        right: 8px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 10 !important;
+        gap: 8px !important; /* Consistent spacing */
+    }
+
+    .actions .search-trigger {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 4px !important;
+    }
+
+    .actions .search-trigger span {
+        display: none !important;
+    }
+    
+    .actions .theme-toggle,
+    .actions .cart-btn,
+    .actions .account-btn {
+        padding: 4px !important;
+    }
+
+    /* Footer Responsiveness Fix */
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 24px !important;
+        padding: 0 16px !important;
+    }
+    
+    .footer-bottom {
+        padding: 20px 16px !important;
+    }
+    
+    .footer-bottom p {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+    
+    .footer-bottom a {
+        display: inline-block !important;
+        margin: 0 4px !important;
     }
 
     /* Product Detail Responsiveness */
