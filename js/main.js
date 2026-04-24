@@ -1604,24 +1604,54 @@ console.log('✅ Calvoro e-commerce system loaded');
 
 // Mobile Menu Logic
 (function() {
-    const btn = document.getElementById('mobileMenuBtn');
-    const menu = document.getElementById('mobileMenu');
-    const close = document.getElementById('mobileMenuClose');
-    const overlay = document.getElementById('mobileMenuOverlay');
-    
+    var btn = document.getElementById('mobileMenuBtn');
+    var menu = document.getElementById('mobileMenu');
+    var closeBtn = document.getElementById('mobileMenuClose');
+    var overlay = document.getElementById('mobileMenuOverlay');
+
     if (!btn || !menu) return;
-    
-    const toggle = (open) => {
-        menu.setAttribute('aria-hidden', open ? 'false' : 'true');
-        document.body.style.overflow = open ? 'hidden' : '';
-    };
-    
-    btn.addEventListener('click', () => toggle(true));
-    if (close) close.addEventListener('click', () => toggle(false));
-    if (overlay) overlay.addEventListener('click', () => toggle(false));
-    
-    // Close on link click
-    menu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => toggle(false));
+
+    var scrollY = 0;
+
+    function openMenu() {
+        scrollY = window.scrollY || window.pageYOffset || 0;
+        menu.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = '-' + scrollY + 'px';
+        document.body.style.width = '100%';
+    }
+
+    function closeMenu() {
+        menu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+    }
+
+    btn.addEventListener('click', openMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (overlay) overlay.addEventListener('click', closeMenu);
+
+    // Close menu when any link inside is tapped
+    menu.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            // Only close without restoring scroll when navigating away
+            menu.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+        });
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && menu.getAttribute('aria-hidden') === 'false') {
+            closeMenu();
+        }
     });
 })();
+
