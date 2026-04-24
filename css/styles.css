@@ -1,4 +1,21 @@
 ﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* ========== GLOBAL MOBILE TOUCH SAFETY ==========
+ * Ensures no invisible overlay can block touch events.
+ * aria-hidden="true" elements get pointer-events:none.
+ * All interactive elements get tap highlight removed.
+ * ================================================= */
+
+/* Hidden elements must NOT block touches */
+[aria-hidden="true"] {
+    pointer-events: none !important;
+}
+
+/* Remove iOS tap flash & enable fast tap on all interactive elements */
+a, button, input, select, textarea, label, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
 
 /* ========== THEME TOKENS (monochrome design system) ==========
  * Light/dark via data-theme on <html>. Toggle in navbar; persisted to localStorage.
@@ -282,6 +299,10 @@ body {
     z-index: 9999;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
+}
+.search-overlay.active {
+    pointer-events: auto;
 }
 
 .search-overlay.active {
@@ -325,6 +346,7 @@ body {
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     display: flex;
     flex-direction: row;
@@ -334,6 +356,7 @@ body {
 .cart-drawer-overlay.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
 .cart-drawer-backdrop {
     position: absolute;

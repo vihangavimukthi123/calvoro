@@ -253,7 +253,10 @@ window.CartDrawer = {
     },
 
     close() {
-        if (this.overlay) this.overlay.classList.remove('active');
+        if (this.overlay) {
+            this.overlay.classList.remove('active');
+            this.overlay.setAttribute('aria-hidden', 'true');
+        }
     },
 
     async open() {
@@ -263,6 +266,7 @@ window.CartDrawer = {
         body.innerHTML = '<p style="text-align:center;padding:24px;color:var(--color-text-muted);">Loading...</p>';
         footer.style.display = 'none';
         this.overlay.classList.add('active');
+        this.overlay.setAttribute('aria-hidden', 'false');
         this.loadAlsoLikeLeft();
         const pathPrefix = (window.location.pathname || '').indexOf('/products/') >= 0 ? '../' : '';
 
@@ -1611,24 +1615,14 @@ console.log('✅ Calvoro e-commerce system loaded');
 
     if (!btn || !menu) return;
 
-    var scrollY = 0;
-
     function openMenu() {
-        scrollY = window.scrollY || window.pageYOffset || 0;
         menu.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.top = '-' + scrollY + 'px';
-        document.body.style.width = '100%';
     }
 
     function closeMenu() {
         menu.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
     }
 
     btn.addEventListener('click', openMenu);
@@ -1637,14 +1631,7 @@ console.log('✅ Calvoro e-commerce system loaded');
 
     // Close menu when any link inside is tapped
     menu.querySelectorAll('a').forEach(function(link) {
-        link.addEventListener('click', function() {
-            // Only close without restoring scroll when navigating away
-            menu.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-        });
+        link.addEventListener('click', closeMenu);
     });
 
     // Close on Escape key
@@ -1654,4 +1641,5 @@ console.log('✅ Calvoro e-commerce system loaded');
         }
     });
 })();
+
 

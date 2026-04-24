@@ -72,13 +72,14 @@
     opacity: 0;
     transform: scale(0.9) translateY(20px);
     pointer-events: none;
-    pointer-events: auto;
+    visibility: hidden;
 }
 
 .chat-window.open {
     opacity: 1;
     transform: scale(1) translateY(0);
-    pointer-events: all;
+    pointer-events: auto;
+    visibility: visible;
 }
 
 .chat-header {
@@ -216,14 +217,27 @@
 }
 
 /* Mobile Adjustments */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+    .chat-widget {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .chat-button {
+        width: 52px;
+        height: 52px;
+    }
+
     .chat-window {
-        width: 100vw;
-        height: 100vh;
-        max-height: 100vh;
-        bottom: 0;
+        /* On mobile, chat window sits above the button, not full screen */
+        width: calc(100vw - 32px);
+        max-width: 380px;
+        height: 70vh;
+        max-height: 500px;
+        bottom: 80px;
         right: 0;
         margin-bottom: 0;
-        border-radius: 0;
+        border-radius: 16px;
+        position: fixed;
     }
 }
