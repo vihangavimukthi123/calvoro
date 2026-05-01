@@ -119,10 +119,11 @@ router.get('/session/:sessionId', async (req, res) => {
     }
 });
 
+const requirePermission = require('../middleware/requirePermission');
+
 // Admin list
-router.get('/admin/list', async (req, res) => {
+router.get('/admin/list', requirePermission('donations'), async (req, res) => {
     try {
-        if (!(req.session && req.session.admin)) return res.status(401).json({ error: 'Unauthorized' });
         const limit = req.query && req.query.limit;
         const rows = await db.getDonationsForAdmin(limit || 200);
         res.json(rows || []);

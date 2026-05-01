@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../db');
+const requirePermission = require('../middleware/requirePermission');
 
 // Middleware: require admin session
 function requireAdmin(req, res, next) {
@@ -17,6 +18,8 @@ function requireAdmin(req, res, next) {
 }
 
 router.use(requireAdmin);
+// Only admins with 'users' permission can manage storefront and admin users
+router.use(requirePermission('users'));
 
 // GET /api/admin/users - List all users
 router.get('/', async (req, res) => {
@@ -67,22 +70,23 @@ router.post('/', async (req, res) => {
 // POST /api/admin/users/admin - Add new admin
 router.post('/admin', async (req, res) => {
     try {
-        const { username, password, email } = req.body;
+        const { username, password, email, permissions } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        const [existing] = await db.pool.query('SELECT * FROM admin_users WHERE username = ?', [username]);
-        if (existing && existing.length > 0) {
+        const existing = await db.getAdminByUsername(username);
+        if (existing) {
             return res.status(400).json({ error: 'Username already exists' });
         }
 
-        const hash = await bcrypt.hash(password, 10);
-        await db.pool.query(
-            'INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)',
-            [username, hash, email || '']
-        );
+        await db.createAdmin({
+            username,
+            password,
+            email,
+            permissions: Array.isArray(permissions) ? permissions : []
+        });
 
         res.status(201).json({ success: true, message: 'Admin created successfully' });
     } catch (error) {

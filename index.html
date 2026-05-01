@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALVORO - Sri Lanka's #1 Active & Lifestyle Brand</title>
+    <title>CALVORO - Sri Lanka's Active & Lifestyle Brand</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="CALVORO is the best clothing brand and Sri Lanka's premium activewear and lifestyle brand. Shop men's and women's collections, crafted sustainably in Sri Lanka. Free shipping on orders over LKR 15,000.">
@@ -15,7 +15,7 @@
 
     <!-- Open Graph (Facebook, LinkedIn) -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="CALVORO - Sri Lanka's #1 Active & Lifestyle Brand">
+    <meta property="og:title" content="CALVORO - Sri Lanka's Active & Lifestyle Brand">
     <meta property="og:description" content="Premium activewear and lifestyle clothing crafted sustainably in Sri Lanka. Free shipping on orders over LKR 15,000.">
     <meta property="og:url" content="https://calvorosl.com/">
     <meta property="og:site_name" content="CALVORO">
@@ -24,7 +24,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CALVORO - Sri Lanka's #1 Active & Lifestyle Brand">
+    <meta name="twitter:title" content="CALVORO - Sri Lanka's Active & Lifestyle Brand">
     <meta name="twitter:description" content="Premium activewear and lifestyle clothing crafted sustainably in Sri Lanka.">
     <meta name="twitter:image" content="https://calvorosl.com/logo.png">
 
@@ -250,7 +250,7 @@
                 </video>
                 <span class="video-panel-overlay">
                     <span class="video-panel-label">SHOP WOMEN</span>
-                    <span class="video-panel-arrow">â†’</span>
+                    <span class="video-panel-arrow">&rarr;</span>
                 </span>
             </a>
             <a href="men.html" class="video-panel">
@@ -259,7 +259,7 @@
                 </video>
                 <span class="video-panel-overlay">
                     <span class="video-panel-label">SHOP MEN</span>
-                    <span class="video-panel-arrow">â†’</span>
+                    <span class="video-panel-arrow">&rarr;</span>
                 </span>
             </a>
             <a href="gifts.html" class="video-panel">
@@ -268,7 +268,7 @@
                 </video>
                 <span class="video-panel-overlay">
                     <span class="video-panel-label">GIFT VOUCHERS</span>
-                    <span class="video-panel-arrow">â†’</span>
+                    <span class="video-panel-arrow">&rarr;</span>
                 </span>
             </a>
         </div>
@@ -317,9 +317,9 @@
                 <div class="donate-modal-header">
                     <div>
                         <h3 class="donate-modal-title">Donate to Calvoro</h3>
-                        <p class="donate-modal-subtitle">Secure Stripe Checkout. We'll email you a confirmation after payment.</p>
+                        <p class="donate-modal-subtitle">Secure Payhere Checkout. We'll email you a confirmation after payment.</p>
                     </div>
-                    <button type="button" class="donate-modal-x" id="donateModalClose" aria-label="Close">Ã—</button>
+                    <button type="button" class="donate-modal-x" id="donateModalClose" aria-label="Close">&times;</button>
                 </div>
 
                 <form class="donate-form" id="donationForm">
@@ -499,7 +499,7 @@
                     function cardHtml(r) {
                         var img = (r.product_images && r.product_images[0]) ? r.product_images[0] : noImg;
                         var link = 'products/product.html?id=' + (r.product_id || '');
-                        var stars = 'â˜…'.repeat(r.rating || 5) + 'â˜†'.repeat(5 - (r.rating || 5));
+                        var stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
                         var body = (r.body || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
                         return '<a href="' + link + '" class="reviews-card">' +
                             '<div class="reviews-card-img-wrap"><img src="' + img.replace(/"/g, '&quot;') + '" alt="' + (r.product_name || '').replace(/"/g, '&quot;') + '" onerror="this.src=\'' + noImg + '\'"></div>' +

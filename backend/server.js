@@ -67,13 +67,15 @@ app.use(session({
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
+const requirePermission = require('./middleware/requirePermission');
+
 function requireAdmin(req, res, next) {
     if (req.session && req.session.admin) return next();
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-// === Admin Stats API ===
-app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+// === Admin Stats API (Dashboard) ===
+app.get('/api/admin/stats', requireAdmin, requirePermission('dashboard'), async (req, res) => {
     try {
         const runQ = async (sql) => {
             try {
@@ -105,8 +107,8 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     }
 });
 
-// === Admin Password Change ===
-app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
+// === Admin Password Change (Settings) ===
+app.post('/api/admin/change-password', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
         const bcrypt = require('bcrypt');
         const { currentPassword, newUsername, newPassword } = req.body;
@@ -143,22 +145,22 @@ app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
     }
 });
 
-// === Admin Products & Trending ===
-app.get('/api/admin/products', requireAdmin, async (req, res) => {
+// === Admin Products & Trending (Products) ===
+app.get('/api/admin/products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
         const products = await db.getAllProducts(true);
         res.json(products);
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-app.get('/api/admin/trending-products', requireAdmin, async (req, res) => {
+app.get('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
         const [rows] = await db.pool.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
         res.json({ productIds: (rows || []).map(t => t.product_id) });
     } catch (e) { res.json({ productIds: [] }); }
 });
 
-app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
+app.post('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
         const { productIds } = req.body;
         await db.pool.query('DELETE FROM trending_products');
@@ -171,8 +173,8 @@ app.post('/api/admin/trending-products', requireAdmin, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// === Shipping Settings ===
-app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
+// === Shipping Settings (Settings) ===
+app.get('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
         const val = await db.getSiteSetting('default_courier');
         res.json({ defaultCourier: val || 'Standard Courier' });
@@ -181,7 +183,7 @@ app.get('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
     }
 });
 
-app.post('/api/admin/shipping-settings', requireAdmin, async (req, res) => {
+app.post('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
         const { defaultCourier } = req.body;
         await db.setSiteSetting('default_courier', defaultCourier || '');
@@ -200,7 +202,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/carousel', carouselRouter);
-app.use('/api/admin/carousel', requireAdmin, carouselRouter);
+app.use('/api/admin/carousel', requireAdmin, requirePermission('products'), carouselRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/admin/users', adminUsersRouter);
@@ -208,23 +210,23 @@ app.use('/api/account', accountRouter);
 app.use('/api/wishlist', wishlistRouter);
 app.use('/api/vouchers', vouchersRouter);
 app.use('/api/newsletter', newsletterRouter);
-app.use('/api/admin/analytics', analyticsRouter);
+app.use('/api/admin/analytics', requireAdmin, requirePermission('reports'), analyticsRouter);
 app.use('/api/delivery', deliveryRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/email', emailRouter);
-app.use('/api/admin/promo-ticker', promoTickerRouter);
-app.use('/api/admin/video-strip', videoStripRouter);
-app.use('/api/admin/chat', chatRouter);
+app.use('/api/admin/promo-ticker', requireAdmin, requirePermission('products'), promoTickerRouter);
+app.use('/api/admin/video-strip', requireAdmin, requirePermission('products'), videoStripRouter);
+app.use('/api/admin/chat', requireAdmin, requirePermission('chat'), chatRouter);
 
 // === Promotions (Public - Storefront) ===
 app.use('/api/promotions', promotionsPublicRouter);
 
 // === Promotions (Admin) ===
-app.get('/api/admin/promotions', requireAdmin, promotionsAdminList);
-app.post('/api/admin/promotions', requireAdmin, uploadPromoImage, promotionsAdminCreate);
-app.put('/api/admin/promotions/:id', requireAdmin, promotionsAdminUpdate);
-app.post('/api/admin/promotions/:id/image', requireAdmin, uploadPromoImage, promotionsAdminReplaceImage);
-app.delete('/api/admin/promotions/:id', requireAdmin, promotionsAdminDelete);
+app.get('/api/admin/promotions', requireAdmin, requirePermission('products'), promotionsAdminList);
+app.post('/api/admin/promotions', requireAdmin, requirePermission('products'), uploadPromoImage, promotionsAdminCreate);
+app.put('/api/admin/promotions/:id', requireAdmin, requirePermission('products'), promotionsAdminUpdate);
+app.post('/api/admin/promotions/:id/image', requireAdmin, requirePermission('products'), uploadPromoImage, promotionsAdminReplaceImage);
+app.delete('/api/admin/promotions/:id', requireAdmin, requirePermission('products'), promotionsAdminDelete);
 
 // Public routes (storefront - no admin auth required)
 app.get('/api/promo-ticker', async (req, res) => {
@@ -255,7 +257,7 @@ app.get('/api/offers/active', async (req, res) => {
 });
 
 // ✅ FIXED: /api/admin/offers → /api/admin/discount-engine
-app.use('/api/admin/discount-engine', requireAdmin, discountEngineAdmin);
+app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'), discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

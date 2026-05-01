@@ -391,14 +391,14 @@ class CalvoroMySQLDatabase {
 
     async initializeAdmin() {
         try {
-            const [rows] = await this.pool.query('SELECT * FROM admin_users WHERE username = ?', ['admin']);
+            const [rows] = await this.pool.query('SELECT * FROM admin_users WHERE username = ?', ['Calvoro@24']);
             if (rows.length === 0) {
-                const hash = await bcrypt.hash('admin123', 10);
+                const hash = await bcrypt.hash('CLOOsl@9899', 10);
                 await this.pool.query(
-                    'INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)',
-                    ['admin', hash, 'admin@calvoro.com']
+                    'INSERT INTO admin_users (username, password_hash, email, permissions) VALUES (?, ?, ?, ?)',
+                    ['Calvoro@24', hash, 'admin@calvoro.com', JSON.stringify(['all'])]
                 );
-                console.log('Default admin created - Username: admin, Password: admin123');
+                console.log('Default admin created - Username: Calvoro@24, Password: [HIDDEN]');
             }
             await this.ensureUserVerificationColumns();
         } catch (error) {
@@ -418,7 +418,8 @@ class CalvoroMySQLDatabase {
         const cols = [
             ['email_verified', 'ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0'],
             ['verification_code', 'ALTER TABLE users ADD COLUMN verification_code VARCHAR(10) NULL'],
-            ['verification_code_expires_at', 'ALTER TABLE users ADD COLUMN verification_code_expires_at DATETIME NULL']
+            ['verification_code_expires_at', 'ALTER TABLE users ADD COLUMN verification_code_expires_at DATETIME NULL'],
+            ['permissions', 'ALTER TABLE admin_users ADD COLUMN permissions JSON NULL']
         ];
         for (const [name, sql] of cols) {
             try {
@@ -832,7 +833,22 @@ class CalvoroMySQLDatabase {
     // ---- Admin ----
     async getAdminByUsername(username) {
         const [rows] = await this.pool.query('SELECT * FROM admin_users WHERE username = ?', [username]);
-        return rows[0] || null;
+        if (!rows || rows.length === 0) return null;
+        const row = rows[0];
+        return {
+            ...row,
+            permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : (row.permissions || [])
+        };
+    }
+
+    async createAdmin(admin) {
+        const hash = await bcrypt.hash(admin.password, 10);
+        const permissions = Array.isArray(admin.permissions) ? JSON.stringify(admin.permissions) : JSON.stringify([]);
+        const [result] = await this.pool.query(
+            'INSERT INTO admin_users (username, password_hash, email, permissions) VALUES (?, ?, ?, ?)',
+            [admin.username, hash, admin.email || '', permissions]
+        );
+        return { lastInsertRowid: result.insertId };
     }
 
     // ---- Users (storefront) ----

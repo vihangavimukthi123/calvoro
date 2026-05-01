@@ -566,16 +566,17 @@ class CalvoroDatabase {
 
     createDefaultAdmin() {
         if (this.admin.length === 0) {
-            const hash = bcrypt.hashSync('admin123', 10);
+            const hash = bcrypt.hashSync('CLOOsl@9899', 10);
             this.admin.push({
                 id: 1,
-                username: 'admin',
+                username: 'Calvoro@24',
                 password_hash: hash,
                 email: 'admin@calvoro.com',
+                permissions: ['all'],
                 created_at: new Date().toISOString()
             });
             this.saveJSON(ADMIN_FILE, this.admin);
-            console.log('Default admin created - Username: admin, Password: admin123');
+            console.log('Default admin created - Username: Calvoro@24, Password: [HIDDEN]');
         }
     }
 
@@ -764,6 +765,22 @@ class CalvoroDatabase {
     // Admin methods
     getAdminByUsername(username) {
         return this.admin.find(a => a.username === username) || null;
+    }
+
+    createAdmin(admin) {
+        const id = this.admin.length > 0 ? Math.max(...this.admin.map(a => a.id)) + 1 : 1;
+        const hash = bcrypt.hashSync(admin.password, 10);
+        const newAdmin = {
+            id,
+            username: admin.username,
+            password_hash: hash,
+            email: admin.email || '',
+            permissions: Array.isArray(admin.permissions) ? admin.permissions : [],
+            created_at: new Date().toISOString()
+        };
+        this.admin.push(newAdmin);
+        this.saveJSON(ADMIN_FILE, this.admin);
+        return { lastInsertRowid: id };
     }
 
     // Customer user methods (for account section)

@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 /* ========== GLOBAL MOBILE TOUCH SAFETY ==========
  * Ensures no invisible overlay can block touch events.
  * aria-hidden="true" elements get pointer-events:none.
@@ -44,7 +44,7 @@ html, body {
     --color-footer-bg: #1a1a1a;
     --color-footer-text: #ffffff;
     --color-footer-link: rgba(255, 255, 255, 0.7);
-    /* Black line-art on transparent â†’ invert so it reads on dark footer; tune per theme */
+    /* Black line-art on transparent -> invert so it reads on dark footer; tune per theme */
     --color-footer-emblem-filter: invert(1) brightness(1.06);
     --color-footer-emblem-opacity: 0.88;
     --color-footer-social-filter: none;
@@ -211,7 +211,7 @@ body {
     width: auto;
     display: block;
     object-fit: contain;
-    filter: var(--color-logo-filter);
+    filter: var(--color-logo-filter) !important;
     transition: var(--transition-theme);
 }
 

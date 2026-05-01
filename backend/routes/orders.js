@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const emailService = require('../services/emailService');
+const requirePermission = require('../middleware/requirePermission');
 
 // Middleware to check admin auth
 function requireAdmin(req, res, next) {
@@ -20,10 +21,15 @@ router.get('/', async (req, res) => {
             return res.json(orders);
         }
         if (req.session && req.session.admin) {
-            let orders = await db.getAllOrders();
-            const { status } = req.query;
-            if (status) orders = orders.filter(o => o.status === status);
-            return res.json(orders);
+            const permissions = req.session.admin.permissions || [];
+            if (permissions.includes('all') || permissions.includes('orders')) {
+                let orders = await db.getAllOrders();
+                const { status } = req.query;
+                if (status) orders = orders.filter(o => o.status === status);
+                return res.json(orders);
+            } else {
+                return res.status(403).json({ error: 'Access denied: Insufficient permissions' });
+            }
         }
         res.status(401).json({ error: 'Unauthorized' });
     } catch (error) {
@@ -133,7 +139,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update order status (admin only)
-router.put('/:id/status', requireAdmin, async (req, res) => {
+router.put('/:id/status', requirePermission('orders'), async (req, res) => {
     const { status } = req.body;
 
     const validStatuses = ['pending', 'processing', 'completed', 'cancelled'];
@@ -176,7 +182,7 @@ router.put('/:id/status', requireAdmin, async (req, res) => {
 /**
  * Update tracking number and notify customer (Admin only)
  */
-router.post('/:id/tracking', requireAdmin, async (req, res) => {
+router.post('/:id/tracking', requirePermission('orders'), async (req, res) => {
     const { tracking_number } = req.body;
     if (!tracking_number) {
         return res.status(400).json({ error: 'Tracking number is required' });
@@ -225,7 +231,7 @@ router.post('/:id/tracking', requireAdmin, async (req, res) => {
 /**
  * Get default courier (Admin only)
  */
-router.get('/settings/courier', requireAdmin, async (req, res) => {
+router.get('/settings/courier', requirePermission('orders'), async (req, res) => {
     try {
         const rawCourier = typeof db.getSiteSetting === 'function' ? await db.getSiteSetting('defaultCourier') : null;
         let courierName = rawCourier || 'Standard Courier';
@@ -242,7 +248,7 @@ router.get('/settings/courier', requireAdmin, async (req, res) => {
 /**
  * Update default courier (Admin only)
  */
-router.post('/settings/courier', requireAdmin, async (req, res) => {
+router.post('/settings/courier', requirePermission('orders'), async (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'Courier name is required' });
 

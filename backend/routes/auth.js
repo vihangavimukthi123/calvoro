@@ -24,13 +24,15 @@ router.post('/login', async (req, res) => {
             req.session.admin = {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions) : (user.permissions || [])
             };
             res.json({
                 success: true,
                 admin: {
                     username: user.username,
-                    email: user.email
+                    email: user.email,
+                    permissions: req.session.admin.permissions
                 }
             });
         } else {
@@ -45,6 +47,42 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
+});
+
+router.post('/frictionless-login', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    
+    try {
+        const user = await db.getUserByEmail(email);
+        if (user) {
+            // Found existing user, log them in for checkout
+            req.session.user = {
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name
+            };
+            return res.json({ 
+                success: true, 
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    phone: user.phone,
+                    address: user.address,
+                    city: user.city
+                }, 
+                existing: true 
+            });
+        } else {
+            return res.json({ success: true, existing: false });
+        }
+    } catch (e) {
+        console.error('Frictionless login error:', e);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Check auth status

@@ -175,6 +175,35 @@
                     <label>Password *</label>
                     <input type="password" name="password" required placeholder="Min 6 characters">
                 </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="dashboard" checked> 📊 Dashboard
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="orders" checked> 🛒 Orders
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="products" checked> 📦 Products
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="users"> 👥 Users
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="reports"> 📈 Reports
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="donations"> 💎 Donations
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="chat"> 💬 Chat
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" name="permissions" value="settings"> ⚙️ Settings
+                        </label>
+                    </div>
+                </div>
                 <button type="submit" class="btn-primary" style="background:#4f46e5;">Create Admin</button>
             </form>
         </div>
@@ -298,6 +327,14 @@
             e.preventDefault();
             const fd = new FormData(e.target);
             const data = Object.fromEntries(fd);
+            
+            // Collect permissions
+            const permissions = [];
+            e.target.querySelectorAll('input[name="permissions"]:checked').forEach(cb => {
+                permissions.push(cb.value);
+            });
+            data.permissions = permissions;
+
             try {
                 const res = await fetch('/api/admin/users/admin', {
                     method: 'POST',
@@ -308,6 +345,7 @@
                 if (res.ok) {
                     showNotification('Admin created successfully');
                     closeAddAdminModal();
+                    // No need to reload users as this table shows storefront users
                 } else {
                     showNotification(json.error || 'Failed to create admin', 'error');
                 }
