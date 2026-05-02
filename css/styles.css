@@ -2277,6 +2277,10 @@ details p {
     opacity: 0.85;
 }
 
+[data-theme="dark"] .footer-trust__icon {
+    opacity: 1;
+}
+
 .footer-trust__icon svg {
     width: 60px;
     height: 60px;
@@ -2286,8 +2290,12 @@ details p {
     width: 80px;
     height: 80px;
     object-fit: contain;
-    filter: var(--color-logo-filter);
+    filter: var(--color-logo-filter) !important;
     transition: var(--transition-theme);
+}
+
+[data-theme="dark"] .footer-trust__icon img {
+    opacity: 1 !important;
 }
 
 .footer-trust__title {
