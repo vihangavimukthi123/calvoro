@@ -137,6 +137,52 @@
                         <button type="button" class="btn-secondary" id="reloadVideoStripBtn">Reload</button>
                         <span id="videoStatusText" style="font-size:13px;color:#666;"></span>
                     </div>
+                </div>
+
+                <div class="card" style="padding:24px;margin-top:24px;">
+                    <div class="card-header" style="margin-bottom:16px;">
+                        <h2>Shop By Category Images</h2>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin-top:-8px;margin-bottom:22px;">Update the three category images (Men's, Women's, Gift Vouchers) shown on the homepage.</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Men's Collection Image URL</label>
+                            <input type="text" id="catImgMen" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Men's Image</label>
+                            <input type="file" id="catFileMen" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Women's Collection Image URL</label>
+                            <input type="text" id="catImgWomen" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Women's Image</label>
+                            <input type="file" id="catFileWomen" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gift Vouchers Image URL</label>
+                            <input type="text" id="catImgGifts" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Gift Vouchers Image</label>
+                            <input type="file" id="catFileGifts" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
+                        <button type="button" class="btn-primary" id="saveCategoryImagesBtn">Save Category Images</button>
+                        <button type="button" class="btn-secondary" id="reloadCategoryImagesBtn">Reload</button>
+                        <span id="catImgStatusText" style="font-size:13px;color:#666;"></span>
+                    </div>
                 </div> <div class="card" style="padding:24px;margin-top:24px;">
                     <div class="card-header" style="margin-bottom:16px;">
                         <h2>Home Hero Carousel</h2>
@@ -456,6 +502,54 @@
             setTimeout(() => { status.textContent = ''; }, 1500);
         }
 
+        async function loadCategoryImages() {
+            const status = document.getElementById('catImgStatusText');
+            status.textContent = 'Loading...';
+            const r = await fetch(apiUrl('/api/category-images'), { credentials: 'include' });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                status.textContent = 'Failed to load category images.';
+                return;
+            }
+            document.getElementById('catImgMen').value = d.men || '';
+            document.getElementById('catImgWomen').value = d.women || '';
+            document.getElementById('catImgGifts').value = d.gifts || '';
+            status.textContent = '';
+        }
+
+        async function saveCategoryImages() {
+            const status = document.getElementById('catImgStatusText');
+            status.textContent = 'Saving...';
+            try {
+                const upMen = await uploadImageFromInput('catFileMen');
+                const upWomen = await uploadImageFromInput('catFileWomen');
+                const upGifts = await uploadImageFromInput('catFileGifts');
+
+                const payload = {
+                    men: upMen || getTextVal('catImgMen'),
+                    women: upWomen || getTextVal('catImgWomen'),
+                    gifts: upGifts || getTextVal('catImgGifts')
+                };
+
+                const r = await fetch(apiUrl('/api/admin/category-images'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!r.ok) throw new Error('Failed');
+                status.textContent = 'Saved.';
+                
+                if (upMen) document.getElementById('catImgMen').value = upMen;
+                if (upWomen) document.getElementById('catImgWomen').value = upWomen;
+                if (upGifts) document.getElementById('catImgGifts').value = upGifts;
+                
+                setTimeout(() => { status.textContent = ''; }, 1500);
+            } catch (e) {
+                status.textContent = 'Failed to save';
+            }
+        }
+
         // ආරක්ෂිතව ලෝඩ් කිරීම (Safe Init Block)
         (async function () {
             try {
@@ -472,6 +566,7 @@
             await loadVideoStrip().catch(e => console.error(e));
             await loadCarousel().catch(e => console.error(e));
             await loadShippingSettings().catch(e => console.error(e));
+            await loadCategoryImages().catch(e => console.error(e));
 
             const addEvt = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
             addEvt('saveBtn', saveSettings);
@@ -481,6 +576,8 @@
             addEvt('saveCarouselBtn', saveCarousel);
             addEvt('reloadCarouselBtn', loadCarousel);
             addEvt('saveShippingBtn', saveShippingSettings);
+            addEvt('saveCategoryImagesBtn', saveCategoryImages);
+            addEvt('reloadCategoryImagesBtn', loadCategoryImages);
         })();
     </script>
 </body>

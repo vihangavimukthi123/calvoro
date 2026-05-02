@@ -1600,7 +1600,32 @@ class TrendingSlider {
 // Initialize components
 document.addEventListener('DOMContentLoaded', () => {
     new TrendingSlider();
+    initCategoryImages();
 });
+
+async function initCategoryImages() {
+    var base = _calvoroApiBase();
+    try {
+        var r = await fetch(base + '/api/category-images');
+        var d = await r.json().catch(function() { return {}; });
+        if (r.ok && d) {
+            if (d.men) {
+                var el = document.getElementById('cat-img-men');
+                if (el) el.src = d.men;
+            }
+            if (d.women) {
+                var el = document.getElementById('cat-img-women');
+                if (el) el.src = d.women;
+            }
+            if (d.gifts) {
+                var el = document.getElementById('cat-img-gifts');
+                if (el) el.src = d.gifts;
+            }
+        }
+    } catch (e) {
+        // Fallback to default images in HTML
+    }
+}
 
 // Initialize everything
 console.log('✅ Calvoro e-commerce system loaded');

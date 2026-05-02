@@ -32,6 +32,7 @@ const emailRouter = require('./routes/email');
 const promoTickerRouter = require('./routes/promoTicker');
 const videoStripRouter = require('./routes/videoStrip');
 const chatRouter = require('./routes/chat');
+const categoryImagesRouter = require('./routes/categoryImages');
 const socketHandler = require('./lib/socketHandler');
 const {
     publicRouter: promotionsPublicRouter,
@@ -217,6 +218,7 @@ app.use('/api/email', emailRouter);
 app.use('/api/admin/promo-ticker', requireAdmin, requirePermission('products'), promoTickerRouter);
 app.use('/api/admin/video-strip', requireAdmin, requirePermission('products'), videoStripRouter);
 app.use('/api/admin/chat', requireAdmin, requirePermission('chat'), chatRouter);
+app.use('/api/category-images', categoryImagesRouter);
 
 // === Promotions (Public - Storefront) ===
 app.use('/api/promotions', promotionsPublicRouter);
