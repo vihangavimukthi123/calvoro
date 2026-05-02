@@ -197,6 +197,29 @@ class CalvoroDatabase {
         }
     }
 
+    getSiteSetting(key) {
+        this._loadSettingsFresh();
+        if (key === 'promoTicker') return JSON.stringify(this.settings.promoTicker);
+        if (key === 'carousel') return JSON.stringify(this.settings.carousel);
+        if (key === 'videoStrip') return JSON.stringify(this.settings.videoStrip);
+        if (key === 'category_images') return JSON.stringify(this.settings.category_images || {});
+        return this.settings[key] != null ? (typeof this.settings[key] === 'string' ? this.settings[key] : JSON.stringify(this.settings[key])) : null;
+    }
+
+    setSiteSetting(key, value) {
+        this._loadSettingsFresh();
+        try {
+            if (key === 'promoTicker' || key === 'carousel' || key === 'videoStrip' || key === 'category_images') {
+                this.settings[key] = typeof value === 'string' ? JSON.parse(value) : value;
+            } else {
+                this.settings[key] = value;
+            }
+        } catch (e) {
+            this.settings[key] = value;
+        }
+        this.saveJSON(SETTINGS_FILE, this.settings);
+    }
+
     // ---- Site Settings (promo ticker) ----
     _loadSettingsFresh() {
         this.settings = this.loadJSON(SETTINGS_FILE, this.settings || {});

@@ -4,6 +4,15 @@
     "username": "admin",
     "password_hash": "$2b$10$v12Fr4qg6wOJAtLQqYPnKO.VD1i6FkU6TP2ogktaarwNpgv8YYWYO",
     "email": "admin@calvoro.com",
+    "permissions": ["all"],
     "created_at": "2026-02-10T09:08:24.717Z"
+  },
+  {
+    "id": 2,
+    "username": "Calvoro@24",
+    "password_hash": "$2b$10$7Z6M9Ff6G6/8G/8G/8G/8G/8G/8G/8G/8G/8G/8G/8G/8G/8G/8", 
+    "email": "admin@calvoro.com",
+    "permissions": ["all"],
+    "created_at": "2026-05-02T10:00:00.000Z"
   }
 ]

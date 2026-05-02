@@ -531,7 +531,7 @@
                     gifts: upGifts || getTextVal('catImgGifts')
                 };
 
-                const r = await fetch(apiUrl('/api/admin/category-images'), {
+                const r = await fetch(apiUrl('/api/category-images/admin'), {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },

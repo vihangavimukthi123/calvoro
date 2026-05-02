@@ -1,0 +1,63 @@
+{
+  "promoTicker": {
+    "lines": [
+      "FREE SHIPPING ON ORDERS OVER LKR 15,000"
+    ],
+    "durationSeconds": 22
+  },
+  "carousel": {
+    "slides": [
+      {
+        "title": "NEW ARRIVALS",
+        "subtitle": "Discover the latest collection",
+        "image_url": "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600&h=600&fit=crop",
+        "link_url": "/women.html",
+        "button_text": "SHOP NOW",
+        "display_order": 0,
+        "is_active": true
+      },
+      {
+        "title": "SUMMER COLLECTION",
+        "subtitle": "Light and comfortable styles",
+        "image_url": "https://images.unsplash.com/photo-1483181957632-8bda974cbc91?w=1600&h=600&fit=crop",
+        "link_url": "/men.html",
+        "button_text": "EXPLORE",
+        "display_order": 1,
+        "is_active": true
+      },
+      {
+        "title": "GIFT VOUCHERS",
+        "subtitle": "The perfect gift for any occasion",
+        "image_url": "https://images.unsplash.com/photo-1513094735237-8f2714d57c13?w=1600&h=600&fit=crop",
+        "link_url": "/gifts.html",
+        "button_text": "BUY NOW",
+        "display_order": 2,
+        "is_active": true
+      }
+    ]
+  },
+  "videoStrip": {
+    "items": [
+      {
+        "label": "SHOP WOMEN",
+        "href": "women.html",
+        "videoSrc": "videos/women.mp4"
+      },
+      {
+        "label": "SHOP MEN",
+        "href": "men.html",
+        "videoSrc": "videos/men.mp4"
+      },
+      {
+        "label": "GIFT VOUCHERS",
+        "href": "gifts.html",
+        "videoSrc": "videos/gifts.mp4"
+      }
+    ]
+  },
+  "category_images": {
+    "men": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400&h=500&fit=crop",
+    "women": "",
+    "gifts": ""
+  }
+}
