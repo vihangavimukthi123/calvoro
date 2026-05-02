@@ -137,17 +137,15 @@ body {
 }
 
 .promo.promo--ticker .promo-ticker__track {
-    display: inline-flex;
-    align-items: center;
-    gap: 40px;
+    display: inline-block;
+    white-space: nowrap;
     will-change: transform;
     animation: promoTickerScroll var(--promo-ticker-duration, 22s) linear infinite;
+    padding-left: 100%;
 }
 
 .promo.promo--ticker .promo-ticker__item {
-    display: inline-flex;
-    align-items: center;
-    gap: 40px;
+    display: inline-block;
 }
 
 .promo.promo--ticker .promo-ticker__sep {
@@ -156,7 +154,7 @@ body {
 
 @keyframes promoTickerScroll {
     from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    to { transform: translateX(-100%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

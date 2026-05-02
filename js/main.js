@@ -1436,7 +1436,6 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="promo-ticker__viewport" aria-label="Promotions">' +
             '  <div class="promo-ticker__track" aria-hidden="true">' +
             '    <div class="promo-ticker__item"><span>' + escapeHtml(text) + '</span></div>' +
-            '    <div class="promo-ticker__item"><span>' + escapeHtml(text) + '</span></div>' +
             '  </div>' +
             '</div>';
     }
