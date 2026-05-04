@@ -295,7 +295,8 @@
 }
 
 @media (max-width: 768px) {
-    .auth-user-name {
+    .auth-user-name,
+    .auth-login-text {
         display: none;
     }
     .auth-user-pill {

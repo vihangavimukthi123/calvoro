@@ -116,9 +116,12 @@
                 slot.innerHTML = '<span class="auth-nav-placeholder"></span>';
             } else {
                 slot.innerHTML =
-                    '<a href="login.html" class="account-btn auth-login-link">' +
-                    '<svg width="20" height="20"><circle cx="10" cy="7" r="3"/><path d="M3 18a7 7 0 0114 0"/></svg>' +
-                    '<span>Sign in</span></a>';
+                    '<a href="login.html" class="account-btn auth-login-link" aria-label="Sign in">' +
+                    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>' +
+                    '<circle cx="12" cy="7" r="4"></circle>' +
+                    '</svg>' +
+                    '<span class="auth-login-text">Sign in</span></a>';
             }
         }
     }
