@@ -131,6 +131,10 @@
                     bcCatLink.href = '../men.html';
                     bcCatLink.textContent = "Men's Collection";
                 }
+            } else if (bcCatLink) {
+                // Fallback if no category info at all
+                bcCatLink.href = '../men.html';
+                bcCatLink.textContent = "Collection";
             }
 
             const currency = window.CalvoroCurrency && window.CalvoroCurrency.get() || 'LKR';
@@ -465,6 +469,10 @@
             section.style.display = 'block';
         } catch (e) {}
     }
+
+    window.addEventListener('calvoro-currency-change', () => {
+        loadProduct();
+    });
 
     loadProduct();
 })();

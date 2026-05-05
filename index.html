@@ -198,10 +198,10 @@
 
     <!-- Hero Banner -->
     <section class="hero loading-hero" aria-label="Hero banner">
-        <div class="hero-content">
-            <h1>CRAFTED FOR EXTRAORDINARY</h1>
-            <p>ELEGANTLY CRAFTED IN SRI LANKA, DESTINED FOR THE WORLD</p>
-            <a href="men.html" class="btn-hero">SHOP NOW</a>
+        <div class="hero-content" style="opacity: 0; transition: opacity 0.5s ease;">
+            <h1 id="hero-title">&nbsp;</h1>
+            <p id="hero-subtitle">&nbsp;</p>
+            <a href="men.html" class="btn-hero" id="hero-btn" style="display: none;">SHOP NOW</a>
         </div>
     </section>
 
@@ -218,21 +218,21 @@
             </article>
             <article class="footer-trust__item">
                 <div class="footer-trust__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <img src="freesh-removebg-preview.png" alt="Free Shipping" width="80" height="80" class="trust-icon-img">
                 </div>
                 <h3 class="footer-trust__title">Free Shipping</h3>
                 <p class="footer-trust__text">On orders over LKR 15,000</p>
             </article>
             <article class="footer-trust__item">
                 <div class="footer-trust__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+                    <img src="new-removebg-preview.png" alt="Customer Support" width="80" height="80" class="trust-icon-img">
                 </div>
                 <h3 class="footer-trust__title">Free Returns</h3>
                 <p class="footer-trust__text">Easy exchanges &amp; returns</p>
             </article>
             <article class="footer-trust__item">
                 <div class="footer-trust__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <img src="secure-removebg-preview.png" alt="Secure Checkout" width="80" height="80" class="trust-icon-img">
                 </div>
                 <h3 class="footer-trust__title">Secure Checkout</h3>
                 <p class="footer-trust__text">100% protected payments</p>
@@ -380,15 +380,15 @@
         <h2>SHOP BY CATEGORY</h2>
         <div class="category-grid">
             <a href="men.html" class="category-card">
-                <img id="cat-img-men" src="https://images.unsplash.com/photo-1622445275576-721325763afe?w=400&h=500&fit=crop" alt="Men's activewear collection" loading="lazy">
+                <div class="category-img-wrapper" id="cat-img-men" style="background: #eee; height: 300px;"></div>
                 <h3>MEN'S COLLECTION</h3>
             </a>
             <a href="women.html" class="category-card">
-                <img id="cat-img-women" src="https://images.unsplash.com/photo-1518609571773-39b7d303a87b?w=400&h=500&fit=crop" alt="Women's activewear collection" loading="lazy">
+                <div class="category-img-wrapper" id="cat-img-women" style="background: #eee; height: 300px;"></div>
                 <h3>WOMEN'S COLLECTION</h3>
             </a>
             <a href="gifts.html" class="category-card">
-                <img id="cat-img-gifts" src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=500&fit=crop" alt="Gift vouchers for CALVORO products" loading="lazy">
+                <div class="category-img-wrapper" id="cat-img-gifts" style="background: #eee; height: 300px;"></div>
                 <h3>GIFT VOUCHERS</h3>
             </a>
         </div>

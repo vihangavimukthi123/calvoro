@@ -614,7 +614,7 @@ class CalvoroDatabase {
     getAllProducts() {
         this.reloadProductsFromFile();
         return this.products.map(p => {
-            const category = this.categories.find(c => c.id === p.category_id);
+            const category = this.categories.find(c => c.id == p.category_id);
             return {
                 ...p,
                 category_name: category ? category.name : null
@@ -625,7 +625,7 @@ class CalvoroDatabase {
     getProductById(id) {
         const product = this.products.find(p => p.id == id);
         if (product) {
-            const category = this.categories.find(c => c.id === product.category_id);
+            const category = this.categories.find(c => c.id == product.category_id);
             return {
                 ...product,
                 category_name: category ? category.name : null
@@ -649,11 +649,18 @@ class CalvoroDatabase {
     updateProduct(id, product) {
         const index = this.products.findIndex(p => p.id == id);
         if (index !== -1) {
+            const existing = this.products[index];
             this.products[index] = {
-                ...this.products[index],
+                ...existing,
                 ...product,
                 id: parseInt(id)
             };
+            
+            // Ensure we don't accidentally wipe images if the frontend sent undefined
+            if (product.images === undefined && existing.images) this.products[index].images = existing.images;
+            if (product.media === undefined && existing.media) this.products[index].media = existing.media;
+            if (product.color_images === undefined && existing.color_images) this.products[index].color_images = existing.color_images;
+            if (product.category_id === undefined && existing.category_id) this.products[index].category_id = existing.category_id;
             this.saveJSON(PRODUCTS_FILE, this.products);
             return { changes: 1 };
         }

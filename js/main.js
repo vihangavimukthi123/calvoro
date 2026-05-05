@@ -578,11 +578,16 @@ class ProductFilters {
                 this.applyFilters();
             }
         };
+        };
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', runInitialLoad);
         } else {
             runInitialLoad();
         }
+
+        window.addEventListener('calvoro-currency-change', () => {
+            if (document.querySelector('.products')) this.applyFilters();
+        });
     }
 
     handleFilterChange(event) {
@@ -865,15 +870,35 @@ class HeroCarousel {
     async initialize() {
         try {
             const response = await fetch(_calvoroApiBase() + '/api/carousel');
-            if (!response.ok) return;
+            if (!response.ok) throw new Error('No carousel data');
             const data = await response.json();
             this.slides = Array.isArray(data) ? data : [];
             if (this.slides.length > 0) {
                 this.render();
                 this.startAutoPlay();
+            } else {
+                this._showFallback();
             }
         } catch (error) {
-            console.log('No dynamic carousel data, using static hero');
+            console.log('No dynamic carousel data, using fallback');
+            this._showFallback();
+        }
+    }
+
+    _showFallback() {
+        const hero = document.querySelector('.hero');
+        if (!hero) return;
+        hero.classList.remove('loading-hero');
+        // Fade in the pre-rendered static content
+        const content = hero.querySelector('.hero-content');
+        if (content) {
+            content.style.opacity = '1';
+            const btn = content.querySelector('#hero-btn');
+            if (btn) btn.style.display = '';
+            const title = content.querySelector('#hero-title');
+            const subtitle = content.querySelector('#hero-subtitle');
+            if (title) title.textContent = 'CRAFTED FOR EXTRAORDINARY';
+            if (subtitle) subtitle.textContent = 'ELEGANTLY CRAFTED IN SRI LANKA, DESTINED FOR THE WORLD';
         }
     }
 
@@ -1233,16 +1258,37 @@ window.CalvoroCurrency = {
         });
     },
     updatePrices() {
-        document.querySelectorAll('.price-large, .price').forEach(el => {
-            const lkr = el.dataset.lkr;
-            if (lkr != null) {
-                const num = parseFloat(lkr);
-                if (this.get() === 'USD') {
-                    const usd = num / this.RATE;
-                    el.textContent = '$' + Number(usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.querySelectorAll('[data-lkr]').forEach(el => {
+            const lkr = parseFloat(el.dataset.lkr);
+            if (isNaN(lkr)) return;
+            
+            const currency = this.get();
+            const rate = this.rate();
+            
+            // For complex price displays (with del/span), we update all numeric text parts
+            const updateText = (node) => {
+                if (node.nodeType === 3) { // Text node
+                    let text = node.nodeValue;
+                    // Match LKR prices or $ prices
+                    text = text.replace(/LKR\s?[\d,.]+/g, (m) => currency === 'USD' ? '$' + (lkr / rate).toFixed(2) : 'LKR ' + lkr.toLocaleString());
+                    text = text.replace(/\$\s?[\d,.]+/g, (m) => currency === 'USD' ? '$' + (lkr / rate).toFixed(2) : 'LKR ' + lkr.toLocaleString());
+                    node.nodeValue = text;
                 } else {
-                    el.textContent = 'LKR ' + Number(num).toLocaleString();
+                    node.childNodes.forEach(updateText);
                 }
+            };
+
+            // If it's a simple element without children, just update textContent
+            if (el.children.length === 0) {
+                if (currency === 'USD') {
+                    el.textContent = '$' + (lkr / rate).toFixed(2);
+                } else {
+                    el.textContent = 'LKR ' + lkr.toLocaleString();
+                }
+            } else {
+                // For complex elements, we might need a full re-render if regex is not enough
+                // But for now, let's try the regex on text nodes
+                updateText(el);
             }
         });
     }
@@ -1480,6 +1526,7 @@ class TrendingSlider {
         
         if (this.row) {
             this.init();
+            window.addEventListener('calvoro-currency-change', () => this.fetchProducts());
         }
     }
 
@@ -1607,19 +1654,28 @@ async function initCategoryImages() {
         if (r.ok && d) {
             if (d.men) {
                 var el = document.getElementById('cat-img-men');
-                if (el) el.src = d.men;
+                if (el) {
+                    if (el.tagName === 'IMG') el.src = d.men;
+                    else { el.style.backgroundImage = 'url(' + d.men + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+                }
             }
             if (d.women) {
                 var el = document.getElementById('cat-img-women');
-                if (el) el.src = d.women;
+                if (el) {
+                    if (el.tagName === 'IMG') el.src = d.women;
+                    else { el.style.backgroundImage = 'url(' + d.women + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+                }
             }
             if (d.gifts) {
                 var el = document.getElementById('cat-img-gifts');
-                if (el) el.src = d.gifts;
+                if (el) {
+                    if (el.tagName === 'IMG') el.src = d.gifts;
+                    else { el.style.backgroundImage = 'url(' + d.gifts + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+                }
             }
         }
     } catch (e) {
-        // Fallback to default images in HTML
+        // Fallback: leave placeholder divs as-is
     }
 }
 
