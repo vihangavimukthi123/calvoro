@@ -1,3 +1,4 @@
+window.getImgUrl = function(url) { if (!url) return ''; if (typeof url === 'string' && url.startsWith('/')) { var base = (typeof window.CalvoroAPIBase !== 'undefined') ? window.CalvoroAPIBase : 'http://localhost:8080'; return base + url; } return url; };
 // Enhanced main.js with full e-commerce functionality
 
 // ======================
@@ -361,13 +362,13 @@ window.CartDrawer = {
             const link = (id) => pathPrefix + (inProducts ? 'product.html?id=' + id : 'products/product.html?id=' + id);
             container.innerHTML = list.map(p => {
                 const price = p.sale_price != null && p.sale_price < p.price ? p.sale_price : p.price;
-                const img = (p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || '').replace(/"/g, '&quot;');
+                const img = (p.image_url) || window.getImgUrl( (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || '').replace(/"/g, '&quot;');
                 const name = (p.name || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
                 const colorsCount = (p.colors && p.colors.length) ? p.colors.length : (p.color_images && Object.keys(p.color_images).length) || 0;
                 const colorStr = colorsCount ? colorsCount + ' Color' + (colorsCount !== 1 ? 's' : '') : '';
                 const fitStr = (p.fit && String(p.fit).trim()) ? String(p.fit).trim() : (p.product_type && String(p.product_type).trim()) ? String(p.product_type).trim() : '';
                 const meta = (colorStr + (colorStr && fitStr ? ' \u2022 ' : '') + fitStr).replace(/</g, '&lt;').replace(/"/g, '&quot;');
-                return '<a href="' + link(p.id) + '" class="card" onclick="window.CartDrawer.close()"><div class="img"><img src="' + img + '" alt=""></div><h3>' + name + '</h3>' + (meta ? '<p class="card-meta">' + meta + '</p>' : '') + '<p class="price">' + this.fmt(price) + '</p></a>';
+                return '<a href="' + link(p.id) + '" class="card" onclick="window.CartDrawer.close()"><div class="img"><img src="' + window.getImgUrl(img) + '" alt=""></div><h3>' + name + '</h3>' + (meta ? '<p class="card-meta">' + meta + '</p>' : '') + '<p class="price">' + this.fmt(price) + '</p></a>';
             }).join('');
         } catch (e) {
             container.innerHTML = '<p style="color:var(--color-text-muted);font-size:14px;">Could not load recommendations.</p>';
@@ -487,7 +488,7 @@ class ProductSearch {
             }
             container.innerHTML = products.slice(0, 8).map(p => `
                 <a href="${productLink(p.id)}" class="search-result-item" onclick="search.close();">
-                    <img src="${p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
+                    <img src="${window.getImgUrl(p.image_url) || window.getImgUrl( (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
                     <span>${p.name}</span>
                     <span class="search-result-price">${(window.CalvoroCurrency && window.CalvoroCurrency.get() === 'USD') ? '$' + (p.price / (window.CalvoroCurrency.rate() || 320)).toFixed(2) : 'LKR ' + Number(p.price).toLocaleString()}</span>
                 </a>
@@ -706,7 +707,7 @@ class ProductFilters {
                     ${soldOut ? '<span class="sold-out-badge">Sold out</span>' : 
                       (engineBadge ? engineBadge : (onSale ? '<span class="sale">SALE</span>' : newTag))}
                     <button type="button" class="wishlist-btn ${inWishlist ? 'active' : ''}" data-product-id="${product.id}" onclick="event.preventDefault();event.stopPropagation();window.CalvoroWishlist && CalvoroWishlist.toggle(${product.id}, this);" aria-label="Wishlist">\u2665</button>
-                    <img src="${product.image_url || product.images && product.images[0] || (product.color_images && Object.values(product.color_images)[0]) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22550%22 viewBox=%220 0 400 550%22%3E%3Crect fill=%22%23eee%22 width=%22400%22 height=%22550%22/%3E%3Ctext x=%22200%22 y=%22275%22 fill=%22%23999%22 font-size=%2216%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
+                    <img src="${window.getImgUrl(product.image_url) || window.getImgUrl( product.images && product.images[0] || (product.color_images && Object.values(product.color_images)[0]) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22550%22 viewBox=%220 0 400 550%22%3E%3Crect fill=%22%23eee%22 width=%22400%22 height=%22550%22/%3E%3Ctext x=%22200%22 y=%22275%22 fill=%22%23999%22 font-size=%2216%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
                 </div>
                 <h3>${product.name}</h3>
                 <p>${product.category_name || ''}</p>
@@ -905,7 +906,7 @@ class HeroCarousel {
             <div class="carousel-container">
                 ${this.slides.map((slide, index) => `
                     <div class="carousel-slide ${index === 0 ? 'active' : ''}">
-                        <img src="${slide.image_url}" alt="${slide.title}">
+                        <img src="${window.getImgUrl(slide.image_url)}" alt="${slide.title}">
                         <div class="hero-content">
                             <h1>${slide.title}</h1>
                             <p>${slide.subtitle}</p>
@@ -1089,7 +1090,7 @@ class RecentlyViewed {
             container.innerHTML = recent.map(product => {
                 const href = hrefPrefix + 'product.html?id=' + product.id;
                 const img = product.image || placeholder;
-                return `<a href="${href}"><img src="${img}" alt="${(product.name || 'Product').replace(/"/g, '&quot;')}" onerror="this.src='${placeholder}'"></a>`;
+                return `<a href="${href}"><img src="${window.getImgUrl(img}" alt="${(product.name || 'Product').replace(/"/g, '&quot;')}" onerror="this.src='${placeholder}'"></a>`;
             }).join('');
         }
     }
@@ -1460,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var safeLines = uniqCleanLines(lines);
         var fallback = (promoEl.textContent || '').replace(/\s+/g, ' ').trim();
         if (safeLines.length === 0 && fallback) safeLines = [fallback];
-        if (safeLines.length === 0) safeLines = ['FREE SHIPPING ON ORDERS OVER LKR 15,000'];
+        if (safeLines.length === 0) safeLines = ['FREE SHIPPING ON ORDERS OVER LKR 10,000'];
 
         var text = safeLines.join('  •  ');
         promoEl.classList.add('promo--ticker');
@@ -1556,12 +1557,12 @@ class TrendingSlider {
             const price = p.price || 0;
             const salePrice = p.sale_price || price;
             const onSale = salePrice < price;
-            const img = (p.image_url || (p.images && p.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"550\"%3E%3Crect fill=\"%23eee\" width=\"400\" height=\"550\"/%3E%3C/svg%3E');
+            const img = (p.image_url) || window.getImgUrl( (p.images && p.images[0]) || 'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"550\"%3E%3Crect fill=\"%23eee\" width=\"400\" height=\"550\"/%3E%3C/svg%3E');
             
             return `
                 <a href="products/product.html?id=${p.id}" class="card">
                     <div class="img">
-                        <img src="${img}" alt="${p.name}">
+                        <img src="${window.getImgUrl(img}" alt="${p.name}">
                     </div>
                     <div class="card-info">
                         <h3>${p.name}</h3>
@@ -1709,5 +1710,6 @@ console.log('Calvoro e-commerce system loaded');
         }
     });
 })();
+
 
 

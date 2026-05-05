@@ -267,7 +267,7 @@
             '</div>' +
             '<button class="btn-cart" ' + (soldOut ? 'disabled' : '') + '>' + (soldOut ? 'SOLD OUT' : 'ADD TO CART') + '</button>' +
             '<div class="info-items">' +
-                '<div class="info-item"><span>Free delivery on orders above LKR 15,000</span></div>' +
+                '<div class="info-item"><span>Free delivery on orders above LKR 10,000</span></div>' +
                 '<div class="info-item"><span>Free Exchanges & Returns</span></div>' +
             '</div>' +
             '<details open><summary>Details</summary><p>' + escapeHtml(product.description || 'Premium quality.') + '</p></details>' +
