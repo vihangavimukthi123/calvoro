@@ -105,6 +105,34 @@
 
             document.getElementById('breadcrumbName').textContent = product.name;
 
+            // Update Breadcrumb Category Link
+            const bcCatLink = document.getElementById('breadcrumbCatLink');
+            if (bcCatLink && product.category_id) {
+                const catId = Number(product.category_id);
+                if (catId === 2) { // Women
+                    bcCatLink.href = '../women.html';
+                    bcCatLink.textContent = "Women's Collection";
+                } else if (catId === 3) { // Gifts
+                    bcCatLink.href = '../gifts.html';
+                    bcCatLink.textContent = "Gift Vouchers";
+                } else { // Default to Men (1)
+                    bcCatLink.href = '../men.html';
+                    bcCatLink.textContent = "Men's Collection";
+                }
+            } else if (bcCatLink && product.category_name) {
+                const catName = String(product.category_name).toLowerCase();
+                if (catName.includes('women')) {
+                    bcCatLink.href = '../women.html';
+                    bcCatLink.textContent = "Women's Collection";
+                } else if (catName.includes('gift')) {
+                    bcCatLink.href = '../gifts.html';
+                    bcCatLink.textContent = "Gift Vouchers";
+                } else {
+                    bcCatLink.href = '../men.html';
+                    bcCatLink.textContent = "Men's Collection";
+                }
+            }
+
             const currency = window.CalvoroCurrency && window.CalvoroCurrency.get() || 'LKR';
             const rate = (window.CalvoroCurrency && window.CalvoroCurrency.rate()) || 320;
             const fmt = function (amt) {
@@ -432,7 +460,7 @@
                 var colorStr = colorsCount ? colorsCount + ' Color' + (colorsCount !== 1 ? 's' : '') : '';
                 var fitStr = (p.fit && String(p.fit).trim()) ? String(p.fit).trim() : (p.product_type && String(p.product_type).trim()) ? String(p.product_type).trim() : '';
                 var details = colorStr + (colorStr && fitStr ? ' \u2022 ' : '') + fitStr;
-                return '<a href="' + href + '" class="card"><div class="img"><img src="' + escapeAttr(img) + '" alt="' + escapeAttr(p.name || '') + '" data-fallback="' + escapeAttr(noImg) + '" onerror="var f=this.dataset.fallback;if(f)this.src=f;"></div><h3>' + escapeAttr(p.name || '') + '</h3>' + (details ? '<p class="card-meta">' + escapeAttr(details) + '</p>' : '') + '<p class="price">' + formatPrice(price) + '</p></a>';
+                return '<a href="' + href + '" class="card"><div class="img"><img src="' + escapeAttr(img) + '" alt="' + escapeAttr(p.name || '') + '" data-fallback="' + escapeAttr(noImg) + '" onerror="var f=this.dataset.fallback;if(f)this.src=f;"></div><h3>' + escapeAttr(p.name || '') + '</h3>' + (details ? '<p class="card-meta">' + escapeAttr(details) + '</p>' : '') + '<p class="price" data-lkr="' + escapeAttr(price) + '">' + formatPrice(price) + '</p></a>';
             }).join('');
             section.style.display = 'block';
         } catch (e) {}

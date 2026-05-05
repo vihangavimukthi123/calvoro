@@ -197,8 +197,7 @@
     </div>
 
     <!-- Hero Banner -->
-    <section class="hero" aria-label="Hero banner">
-        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&h=600&fit=crop" alt="CALVORO activewear collection - Crafted for extraordinary performance" loading="eager">
+    <section class="hero loading-hero" aria-label="Hero banner">
         <div class="hero-content">
             <h1>CRAFTED FOR EXTRAORDINARY</h1>
             <p>ELEGANTLY CRAFTED IN SRI LANKA, DESTINED FOR THE WORLD</p>
@@ -522,68 +521,7 @@
             }
         })();
     </script>
-    <script>
-        (function () {
-            var row = document.getElementById('trendingRow');
-            var prev = document.getElementById('trendingPrev');
-            var next = document.getElementById('trendingNext');
-            if (row) {
-                fetch((window.CalvoroAPIBase || '') + '/api/products?trending=1&pricing=1').then(function (r) { 
-                    if (!r.ok) return [];
-                    return r.json().catch(function() { return []; });
-                }).then(function (products) {
-                    if (!products || !products.length) return fetch((window.CalvoroAPIBase || '') + '/api/products?sort=newest&pricing=1').then(function (r) { 
-                        if (!r.ok) return [];
-                        return r.json().catch(function() { return []; });
-                    });
-                    return products;
-                }).then(function (products) {
-                    if (!products || !products.length) { row.innerHTML = '<p>No products yet.</p>'; return; }
-                    var currency = (window.CalvoroCurrency && window.CalvoroCurrency.get()) || 'LKR';
-                    var rate = (window.CalvoroCurrency && window.CalvoroCurrency.rate()) || 320;
-                    var formatPrice = function (p) { return currency === 'USD' ? '$' + (p / rate).toFixed(2) : 'LKR ' + Number(p).toLocaleString(); };
-                    var link = function (id) { return 'products/product.html?id=' + id; };
-                    row.innerHTML = products.slice(0, 12).map(function (p) {
-                        var baseP = (p.pricing && p.pricing.compare_at_price != null) ? p.pricing.compare_at_price : p.price;
-                        var finalP = (p.pricing && p.pricing.final_price != null) ? p.pricing.final_price : (p.sale_price != null && p.sale_price < p.price ? p.sale_price : p.price);
-                        var onSale = finalP < baseP - 0.005;
-                        var badgeHtml = (p.pricing && p.pricing.badge) ? '<span class="sale">' + p.pricing.badge + '</span>' : (onSale ? '<span class="sale">SALE</span>' : '');
-                        
-                        var created = p.created_at ? new Date(p.created_at) : null;
-                        var now = new Date();
-                        var days = created ? (now - created) / (24 * 60 * 60 * 1000) : 999;
-                        var newTag = '';
-                        if (!badgeHtml) {
-                            newTag = days < 7 ? '<span class="badge-new badge-new-red">NEW</span>' : (days < 14 ? '<span class="badge-new">NEW</span>' : '');
-                        }
 
-                        var noImg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="550" viewBox="0 0 400 550"%3E%3Crect fill="%23eee" width="400" height="550"/%3E%3Ctext x="200" y="275" fill="%23999" font-size="16" text-anchor="middle" dy=".3em"%3ENo image%3C/text%3E%3C/svg%3E';
-                        var img = p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || noImg;
-                        var onErr = "this.onerror=null;this.src='" + noImg + "';";
-                        return '<a href="' + link(p.id) + '" class="card"><div class="img">' + (badgeHtml || newTag) + '<img src="' + img + '" alt="' + (p.name || '').replace(/"/g, '&quot;') + '" onerror="' + onErr + '" loading="lazy"></div><h3>' + (p.name || '') + '</h3><p>' + (p.category_name || '') + '</p><p class="price">' + formatPrice(finalP) + '</p></a>';
-                    }).join('');
-
-                    if (prev && next) {
-                        var viewport = row.parentElement;
-                        var cardStep = 184;
-                        next.onclick = function() {
-                            viewport.scrollBy({ left: cardStep, behavior: 'smooth' });
-                        };
-                        prev.onclick = function() {
-                            viewport.scrollBy({ left: -cardStep, behavior: 'smooth' });
-                        };
-                        function updateTrendingArrows() {
-                            prev.disabled = viewport.scrollLeft <= 2;
-                            next.disabled = viewport.scrollLeft >= viewport.scrollWidth - viewport.clientWidth - 2;
-                        }
-                        viewport.addEventListener('scroll', updateTrendingArrows, { passive: true });
-                        updateTrendingArrows();
-                    }
-
-                }).catch(function (e) { console.error(e); row.innerHTML = '<p>Could not load trending products.</p>'; });
-            }
-        })();
-    </script>
     <script>
         // Diagnostic Health Check (Simplified)
         (function() {

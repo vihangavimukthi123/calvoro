@@ -726,7 +726,7 @@ class ProductFilters {
                 </div>
                 <h3>${product.name}</h3>
                 <p>${product.category_name || ''}</p>
-                <p class="price">
+                <p class="price" data-lkr="${p}">
                     ${soldOut ? '<span class="price-sold-out">Unavailable</span>' : (onSale ? `<del>${formatPrice(displayP)}</del> <span class="red">${formatPrice(displaySp)}</span>` : formatPrice(displayP))}
                 </p>
             </a>
@@ -893,6 +893,9 @@ class HeroCarousel {
     render() {
         const hero = document.querySelector('.hero');
         if (!hero) return;
+
+        // Remove loading state
+        hero.classList.remove('loading-hero');
 
         hero.innerHTML = `
             <div class="carousel-container">
@@ -1247,7 +1250,12 @@ window.CalvoroCurrency = {
             const lkr = el.dataset.lkr;
             if (lkr != null) {
                 const num = parseFloat(lkr);
-                el.textContent = this.get() === 'USD' ? '$' + (num / this.RATE).toFixed(2) : 'LKR ' + Number(num).toLocaleString();
+                if (this.get() === 'USD') {
+                    const usd = num / this.RATE;
+                    el.textContent = '$' + Number(usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } else {
+                    el.textContent = 'LKR ' + Number(num).toLocaleString();
+                }
             }
         });
     }
@@ -1529,11 +1537,12 @@ class TrendingSlider {
                     <div class="img">
                         <img src="${img}" alt="${p.name}">
                     </div>
-                    <h3>${p.name}</h3>
-                    <p>${p.category_name || ''}</p>
-                    <p class="price">
-                        ${onSale ? `<del>${formatPrice(price)}</del> <span class="red">${formatPrice(salePrice)}</span>` : formatPrice(price)}
-                    </p>
+                    <div class="card-info">
+                        <h3>${p.name}</h3>
+                        <p class="price" data-lkr="${price}">
+                            ${onSale ? `<del>${formatPrice(price)}</del> <span class="red">${formatPrice(salePrice)}</span>` : formatPrice(price)}
+                        </p>
+                    </div>
                 </a>
             `;
         }).join('');
