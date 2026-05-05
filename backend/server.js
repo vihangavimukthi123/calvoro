@@ -263,6 +263,7 @@ app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'
 
 app.use(express.static(path.join(__dirname, '..')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/storage/videos', express.static(path.join(__dirname, 'storage', 'videos')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // --- Diagnostic Logging ---

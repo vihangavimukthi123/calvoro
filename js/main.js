@@ -102,19 +102,6 @@ class ShoppingCart {
     }
 
     async addItem(product) {
-        const loggedIn = await this.isLoggedIn();
-        if (!loggedIn) {
-            alert('Please sign in or create an account to add items to your cart.');
-            var returnPath = window.location.pathname + window.location.search;
-            var sep = returnPath.indexOf('?') >= 0 ? '&' : '?';
-            var q = 'cart_add=' + product.id;
-            if (product.color) q += '&cart_color=' + encodeURIComponent(product.color);
-            if (product.size) q += '&cart_size=' + encodeURIComponent(product.size);
-            var loginUrl = new URL('login.html', window.location.origin);
-            loginUrl.searchParams.set('redirect', returnPath + sep + q);
-            window.location.href = loginUrl.href;
-            return;
-        }
         const useApi = await this.hasBackendSession();
         if (useApi) {
             try {
@@ -132,13 +119,13 @@ class ShoppingCart {
                 if (res.ok) {
                     await this.refreshCartCount();
                     this.showNotification('Item added to cart!');
-                } else {
-                    alert('Please log in to add to cart.');
+                    return;
                 }
-            } catch (e) { alert('Please log in to add to cart.'); }
-            return;
+            } catch (e) {
+                console.error('API cart add failed, falling back to local:', e);
+            }
         }
-        // Google Sign-In only: add to localStorage cart
+        // Guest mode or fallback: add to localStorage cart
         var item = {
             id: product.id,
             quantity: product.quantity || 1,
