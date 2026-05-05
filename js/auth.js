@@ -1,5 +1,5 @@
 /**
- * Calvoro – Google Sign-In (Google Identity Services)
+ * Calvoro - Google Sign-In (Google Identity Services)
  * ---------------------------------------------------
  */
 (function () {

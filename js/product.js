@@ -204,16 +204,16 @@
             var starHtml = '';
             for (var s = 5; s >= 1; s--) {
                 var idx = s - 1;
-                starHtml += '<div class="pd-review-bar-row"><span class="pd-review-bar-label">' + s + ' <span class="pd-star">★</span></span><div class="pd-review-bar"><div class="pd-review-bar-fill" style="width:' + (total ? Math.round((dist[idx]/total)*100) : 0) + '%"></div></div><span class="pd-review-bar-pct">' + (total ? Math.round((dist[idx]/total)*100) : 0) + '%</span></div>';
+                starHtml += '<div class="pd-review-bar-row"><span class="pd-review-bar-label">' + s + ' <span class="pd-star">\u2605</span></span><div class="pd-review-bar"><div class="pd-review-bar-fill" style="width:' + (total ? Math.round((dist[idx]/total)*100) : 0) + '%"></div></div><span class="pd-review-bar-pct">' + (total ? Math.round((dist[idx]/total)*100) : 0) + '%</span></div>';
             }
 
             var reviewsLeftHtml = '<div class="pd-reviews-left"><h3 class="pd-reviews-title">Customer Reviews</h3>' +
                 '<div class="pd-reviews-summary-card">' +
-                '<div class="pd-reviews-summary-top"><span class="pd-reviews-stars">' + '★'.repeat(avgStars) + '☆'.repeat(5 - avgStars) + '</span> <span class="pd-reviews-based">Based on ' + total + ' review' + (total === 1 ? '' : 's') + '</span></div>' +
+                '<div class="pd-reviews-summary-top"><span class="pd-reviews-stars">' + '\u2605'.repeat(avgStars) + '\u2606'.repeat(5 - avgStars) + '</span> <span class="pd-reviews-based">Based on ' + total + ' review' + (total === 1 ? '' : 's') + '</span></div>' +
                 '<div class="pd-reviews-bars">' + starHtml + '</div>' +
                 '</div>';
             if (isLoggedIn) {
-                reviewsLeftHtml += '<div class="pd-review-form-wrap"><h4>Write a review</h4><form id="reviewForm" class="pd-review-form"><div class="pd-review-form-row"><label>Rating</label><select name="rating"><option value="5">5 ★</option><option value="4">4 ★</option><option value="3">3 ★</option><option value="2">2 ★</option><option value="1">1 ★</option></select></div><div class="pd-review-form-row"><label>Your review</label><textarea name="body" placeholder="Share your experience with this product..." rows="4" required></textarea></div><button type="submit" class="pd-review-submit">Submit Review</button></form></div>';
+                reviewsLeftHtml += '<div class="pd-review-form-wrap"><h4>Write a review</h4><form id="reviewForm" class="pd-review-form"><div class="pd-review-form-row"><label>Rating</label><select name="rating"><option value="5">5 \u2605</option><option value="4">4 \u2605</option><option value="3">3 \u2605</option><option value="2">2 \u2605</option><option value="1">1 \u2605</option></select></div><div class="pd-review-form-row"><label>Your review</label><textarea name="body" placeholder="Share your experience with this product..." rows="4" required></textarea></div><button type="submit" class="pd-review-submit">Submit Review</button></form></div>';
             } else {
                 reviewsLeftHtml += '<div class="pd-review-signin"><p>Sign in to write a review.</p><a href="../login.html?redirect=' + encodeURIComponent(window.location.pathname + '?id=' + id) + '" class="pd-review-signin-btn">Sign In</a></div>';
             }
@@ -222,7 +222,7 @@
             var reviewsRightHtml = '<div class="pd-reviews-right">';
             if (reviews.length) {
                 reviewsRightHtml += '<h3 class="pd-reviews-title">All Reviews</h3><div class="pd-reviews-list">' +
-                    reviews.map(r => '<div class="pd-review-item"><div class="pd-review-meta"><span class="pd-review-author">' + escapeHtml(r.author_name || 'Guest') + '</span><span class="pd-review-rating">' + '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) + '</span><span class="pd-review-date">' + new Date(r.created_at).toLocaleDateString() + '</span></div><p class="pd-review-body">' + escapeHtml(r.body || '') + '</p></div>').join('') +
+                    reviews.map(r => '<div class="pd-review-item"><div class="pd-review-meta"><span class="pd-review-author">' + escapeHtml(r.author_name || 'Guest') + '</span><span class="pd-review-rating">' + '\u2605'.repeat(r.rating) + '\u2606'.repeat(5 - r.rating) + '</span><span class="pd-review-date">' + new Date(r.created_at).toLocaleDateString() + '</span></div><p class="pd-review-body">' + escapeHtml(r.body || '') + '</p></div>').join('') +
                     '</div>';
             } else {
                 reviewsRightHtml += '<p class="pd-reviews-empty">No reviews yet. Be the first to review this product!</p>';

@@ -124,7 +124,7 @@
             if (!thumb.parentElement.querySelector('.video-play-icon')) {
                 const playIcon = document.createElement('div');
                 playIcon.className = 'video-play-icon';
-                playIcon.innerHTML = '▶';
+                playIcon.innerHTML = '\u25B6';
                 playIcon.style.cssText = `
                     position: absolute;
                     top: 50%;

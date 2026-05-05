@@ -161,7 +161,7 @@
                     </svg>
                     <span>Search</span>
                 </button>
-                <button class="locale-btn" aria-label="Change locale">LK ▼</button>
+                <button class="locale-btn" aria-label="Change locale">LK &#9660;</button>
                 <button type="button" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
                     <svg class="icon-moon" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                     <svg class="icon-sun" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -466,7 +466,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2026 | CALVORO | All Rights Reserved | <a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-and-conditions.html">Terms &amp; Conditions</a> | <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a> | <a href="return-refund-policy.html">Return &amp; Refund Policy</a></p>
+            <p>&copy; 2026 | CALVORO | All Rights Reserved | <a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-and-conditions.html">Terms &amp; Conditions</a> | <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a> | <a href="return-refund-policy.html">Return &amp; Refund Policy</a></p>
         </div>
     </footer>
 
@@ -498,7 +498,7 @@
                     function cardHtml(r) {
                         var img = (r.product_images && r.product_images[0]) ? r.product_images[0] : noImg;
                         var link = 'products/product.html?id=' + (r.product_id || '');
-                        var stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+                        var stars = '\u2605'.repeat(r.rating || 5) + '\u2606'.repeat(5 - (r.rating || 5));
                         var body = (r.body || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
                         return '<a href="' + link + '" class="reviews-card">' +
                             '<div class="reviews-card-img-wrap"><img src="' + img.replace(/"/g, '&quot;') + '" alt="' + (r.product_name || '').replace(/"/g, '&quot;') + '" onerror="this.src=\'' + noImg + '\'"></div>' +

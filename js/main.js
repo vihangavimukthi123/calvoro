@@ -577,7 +577,7 @@ class ProductFilters {
                     options.classList.toggle('active');
                     const arrow = this.querySelector('span');
                     if (arrow) {
-                        arrow.textContent = options.classList.contains('active') ? '▲' : '▼';
+                        arrow.textContent = options.classList.contains('active') ? '\u25B2' : '\u25BC';
                     }
                 }
             });
@@ -721,7 +721,7 @@ class ProductFilters {
                 <div class="img">
                     ${soldOut ? '<span class="sold-out-badge">Sold out</span>' : 
                       (engineBadge ? engineBadge : (onSale ? '<span class="sale">SALE</span>' : newTag))}
-                    <button type="button" class="wishlist-btn ${inWishlist ? 'active' : ''}" data-product-id="${product.id}" onclick="event.preventDefault();event.stopPropagation();window.CalvoroWishlist && CalvoroWishlist.toggle(${product.id}, this);" aria-label="Wishlist">♥</button>
+                    <button type="button" class="wishlist-btn ${inWishlist ? 'active' : ''}" data-product-id="${product.id}" onclick="event.preventDefault();event.stopPropagation();window.CalvoroWishlist && CalvoroWishlist.toggle(${product.id}, this);" aria-label="Wishlist">\u2665</button>
                     <img src="${product.image_url || product.images && product.images[0] || (product.color_images && Object.values(product.color_images)[0]) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22550%22 viewBox=%220 0 400 550%22%3E%3Crect fill=%22%23eee%22 width=%22400%22 height=%22550%22/%3E%3Ctext x=%22200%22 y=%22275%22 fill=%22%23999%22 font-size=%2216%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
                 </div>
                 <h3>${product.name}</h3>
@@ -1242,7 +1242,7 @@ window.CalvoroCurrency = {
     rate() { return this.RATE; },
     updateUI() {
         document.querySelectorAll('.locale-btn').forEach(btn => {
-            btn.textContent = this.get() === 'USD' ? '$ ▼' : 'LK ▼';
+            btn.textContent = this.get() === 'USD' ? '$ \u25BC' : 'LK \u25BC';
         });
     },
     updatePrices() {
@@ -1637,7 +1637,7 @@ async function initCategoryImages() {
 }
 
 // Initialize everything
-console.log('✅ Calvoro e-commerce system loaded');
+console.log('Calvoro e-commerce system loaded');
 
 // Mobile Menu Logic
 (function() {

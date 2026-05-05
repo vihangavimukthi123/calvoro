@@ -2,7 +2,6 @@
  * API Base URL - Production Ready
  */
 (function() {
-    // අන්තර්ජාලයේ එකම සර්වර් එකක දුවන නිසා මෙය හිස්ව තැබීම ප්‍රමාණවත්ය. 
-    // එවිට බ්‍රවුසරය ස්වයංක්‍රීයව අදාළ ලින්ක් එක හදාගනී.
+    // Empty base URL means relative paths will be used (same origin as HTML).
     window.CalvoroAPIBase = '';
 })();
