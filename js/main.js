@@ -1,4 +1,4 @@
-﻿// Enhanced main.js with full e-commerce functionality
+// Enhanced main.js with full e-commerce functionality
 
 // ======================
 // HELPER: API Base URL (Production-safe)
@@ -452,6 +452,12 @@ class ProductSearch {
 
         if (this.searchInput) {
             this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+            this.searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.handleSubmit(this.searchInput.value);
+                }
+            });
         }
 
         // Close on Escape
@@ -473,7 +479,11 @@ class ProductSearch {
     }
 
     async handleSearch(query) {
-        if (query.length < 2) return;
+        if (query.length < 2) {
+            const container = this.searchOverlay && this.searchOverlay.querySelector('.search-results');
+            if (container) container.style.display = 'none';
+            return;
+        }
 
         try {
             const response = await fetch(`${_calvoroApiBase()}/api/products?search=${encodeURIComponent(query)}`);
@@ -484,9 +494,35 @@ class ProductSearch {
         }
     }
 
+    handleSubmit(query) {
+        const q = query.toLowerCase().trim();
+        if (q === 'men' || q === 'mens') {
+            window.location.href = window.location.pathname.includes('/products/') ? '../men.html' : 'men.html';
+            return;
+        }
+        if (q === 'women' || q === 'womens') {
+            window.location.href = window.location.pathname.includes('/products/') ? '../women.html' : 'women.html';
+            return;
+        }
+        if (q === 'gift' || q === 'gifts' || q === 'voucher' || q === 'vouchers') {
+            window.location.href = window.location.pathname.includes('/products/') ? '../gifts.html' : 'gifts.html';
+            return;
+        }
+        if (q === 'accessory' || q === 'accessories') {
+            window.location.href = window.location.pathname.includes('/products/') ? '../accessories.html' : 'accessories.html';
+            return;
+        }
+        
+        // General search redirect to men.html (which acts as the general product list)
+        const prefix = window.location.pathname.includes('/products/') ? '../' : '';
+        window.location.href = `${prefix}men.html?search=${encodeURIComponent(query)}`;
+    }
+
     displayResults(products) {
         const container = this.searchOverlay && this.searchOverlay.querySelector('.search-results');
-        const productLink = (id) => `products/product.html?id=${id}`;
+        const inProducts = window.location.pathname.includes('/products/');
+        const productLink = (id) => (inProducts ? '' : 'products/') + `product.html?id=${id}`;
+        
         if (container) {
             if (!products.length) {
                 container.innerHTML = '<p class="search-no-results">No products found.</p>';
@@ -494,10 +530,12 @@ class ProductSearch {
                 return;
             }
             container.innerHTML = products.slice(0, 8).map(p => `
-                <a href="${productLink(p.id)}" class="search-result-item" onclick="search.close();">
+                <a href="${productLink(p.id)}" class="search-result-item" onclick="window.search && window.search.close();">
                     <img src="${window.getImgUrl(p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
-                    <span>${p.name}</span>
-                    <span class="search-result-price">${(window.CalvoroCurrency && window.CalvoroCurrency.get() === 'USD') ? '$' + (p.price / (window.CalvoroCurrency.rate() || 320)).toFixed(2) : 'LKR ' + Number(p.price).toLocaleString()}</span>
+                    <div class="search-result-info">
+                        <span class="search-result-name">${p.name}</span>
+                        <span class="search-result-price">${(window.CalvoroCurrency && window.CalvoroCurrency.get() === 'USD') ? '$' + (p.price / (window.CalvoroCurrency.rate() || 320)).toFixed(2) : 'LKR ' + Number(p.price).toLocaleString()}</span>
+                    </div>
                 </a>
             `).join('');
             container.style.display = 'block';
@@ -508,7 +546,7 @@ class ProductSearch {
     }
 }
 
-const search = new ProductSearch();
+window.search = new ProductSearch();
 
 // ======================
 // PRODUCT FILTERING
@@ -637,7 +675,16 @@ class ProductFilters {
             }
             container.innerHTML = '<p class="products-loading">' + (this.initialProductsHTML == null ? 'Loading...' : 'Updating...') + '</p>';
             const params = new URLSearchParams();
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            
             if (collectionCategory) params.append('category', collectionCategory);
+            if (searchQuery) {
+                params.append('search', searchQuery);
+                const headerH1 = document.querySelector('.collection-header h1');
+                if (headerH1) headerH1.textContent = `Search results for "${searchQuery}"`;
+            }
+            
             if (this.activeFilters.productTypes.length) params.append('product_type', this.activeFilters.productTypes.join(','));
             if (this.activeFilters.colors.length) params.append('color', this.activeFilters.colors.join(','));
             if (this.activeFilters.sizes.length) params.append('size', this.activeFilters.sizes.join(','));
