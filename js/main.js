@@ -278,7 +278,7 @@ window.CartDrawer = {
         let subtotal = 0;
         items.forEach(i => { subtotal += (i.price || 0) * (i.quantity || 1); });
         const shipping = subtotal >= this.FREE_SHIPPING_THRESHOLD ? 0 : this.SHIPPING_FEE;
-        const total = subtotal + shipping;
+        const total = subtotal; // Users requested to not add shipping fee to drawer total
         const progressPct = Math.min(100, (subtotal / this.FREE_SHIPPING_THRESHOLD) * 100);
 
         let savedNote = '';

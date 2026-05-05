@@ -44,8 +44,8 @@ html, body {
     --color-footer-bg: #1a1a1a;
     --color-footer-text: #ffffff;
     --color-footer-link: rgba(255, 255, 255, 0.7);
-    /* Black line-art on transparent -> invert so it reads on dark footer; tune per theme */
-    --color-footer-emblem-filter: invert(1) brightness(1.06);
+    /* Black line-art on transparent */
+    --color-footer-emblem-filter: none;
     --color-footer-emblem-opacity: 0.88;
     --color-footer-social-filter: none;
     /* facebook0.png is already white-on-black; filtering makes it a white blob */
@@ -2340,10 +2340,6 @@ details p {
     width: 80px;
     height: 80px;
     object-fit: contain;
-}
-
-/* Only the three brand trust icons invert with theme — not Made in Sri Lanka */
-.trust-icon-img {
     filter: var(--color-logo-filter);
     transition: var(--transition-theme);
 }
