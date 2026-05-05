@@ -69,13 +69,6 @@ class ShoppingCart {
     }
 
     async refreshCartCount() {
-        const loggedIn = await this.isLoggedIn();
-        if (!loggedIn) {
-            this.items = [];
-            try { localStorage.removeItem('calvoro_cart'); } catch (e) {}
-            this.updateUI();
-            return;
-        }
         const useApi = await this.hasBackendSession();
         if (useApi) {
             try {
@@ -90,7 +83,7 @@ class ShoppingCart {
             } catch (e) {}
             return;
         }
-        // Google Sign-In only: use localStorage cart for count
+        // Guest or Google Sign-In: use localStorage cart - do NOT clear it
         this.items = this.loadCart();
         const count = this.getCount();
         const badge = document.getElementById('cart-count');
@@ -577,7 +570,6 @@ class ProductFilters {
                 this.initialProductsHTML = null;
                 this.applyFilters();
             }
-        };
         };
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', runInitialLoad);
