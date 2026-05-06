@@ -1730,8 +1730,8 @@ async function initCategoryImages() {
                 }
             }
         }
-    } catch (e) {
-        // Fallback: leave placeholder divs as-is
+    } catch (_err) {
+        // Keep placeholders when category images cannot be loaded.
     }
 }
 

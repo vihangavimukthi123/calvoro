@@ -148,10 +148,52 @@ app.post('/api/admin/change-password', requireAdmin, requirePermission('settings
 });
 
 // === Admin Products & Trending (Products) ===
+function normalizeAdminMediaUrl(url) {
+    if (typeof url !== 'string') return url;
+    return url.trim().replace(/\\/g, '/');
+}
+
+function normalizeAdminProductMedia(product) {
+    if (!product || typeof product !== 'object') return product;
+    const p = { ...product };
+
+    p.images = Array.isArray(p.images) ? p.images.map(normalizeAdminMediaUrl).filter(Boolean) : [];
+
+    const inColorImages = p.color_images && typeof p.color_images === 'object' ? p.color_images : {};
+    p.color_images = {};
+    Object.keys(inColorImages).forEach((key) => {
+        const normalized = normalizeAdminMediaUrl(inColorImages[key]);
+        if (normalized) p.color_images[key] = normalized;
+    });
+
+    const inColorVideos = p.color_videos && typeof p.color_videos === 'object' ? p.color_videos : {};
+    p.color_videos = {};
+    Object.keys(inColorVideos).forEach((key) => {
+        const normalized = normalizeAdminMediaUrl(inColorVideos[key]);
+        if (normalized) p.color_videos[key] = normalized;
+    });
+
+    if (Array.isArray(p.media)) {
+        p.media = p.media.map((m) => ({
+            ...m,
+            url: normalizeAdminMediaUrl(m && m.url),
+            hover_video_url: normalizeAdminMediaUrl(m && m.hover_video_url)
+        }));
+    } else {
+        p.media = [];
+    }
+
+    p.image_url = normalizeAdminMediaUrl(
+        p.image_url || p.images[0] || Object.values(p.color_images)[0] || ''
+    );
+    p.size_guide_url = normalizeAdminMediaUrl(p.size_guide_url || '');
+    return p;
+}
+
 app.get('/api/admin/products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
         const products = await db.getAllProducts(true);
-        res.json(products);
+        res.json((products || []).map(normalizeAdminProductMedia));
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
