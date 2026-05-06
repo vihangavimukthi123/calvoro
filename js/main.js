@@ -15,7 +15,9 @@ window.getImgUrl = function(url) {
     if (typeof url !== 'string') return url;
     if (url.startsWith('http') || url.startsWith('data:')) return url;
     const base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : window.location.origin;
-    return base.replace(/\/$/, '') + '/' + url.replace(/^\//, '');
+    const cleanBase = base.replace(/\/$/, '');
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+    return cleanBase + cleanUrl;
 };
 
 // ======================
@@ -300,7 +302,7 @@ window.CartDrawer = {
 
         const shippingHtml = subtotal >= this.FREE_SHIPPING_THRESHOLD
             ? '<div class="cart-drawer-shipping unlocked">CONGRATS! FREE SHIPPING UNLOCKED</div>'
-            : '<div class="cart-drawer-shipping">Free shipping on orders over ' + this.fmt(this.FREE_SHIPPING_THRESHOLD) + '<div class="cart-drawer-shipping-progress"><div class="cart-drawer-shipping-progress-fill" style="width:' + progressPct + '%"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;">' + this.fmt(0) + ' â€” ' + this.fmt(this.FREE_SHIPPING_THRESHOLD) + '</div></div>';
+            : '<div class="cart-drawer-shipping">Free shipping on orders over ' + this.fmt(this.FREE_SHIPPING_THRESHOLD) + '<div class="cart-drawer-shipping-progress"><div class="cart-drawer-shipping-progress-fill" style="width:' + progressPct + '%"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;">' + this.fmt(0) + ' - ' + this.fmt(this.FREE_SHIPPING_THRESHOLD) + '</div></div>';
 
         const itemsHtml = items.map((item, idx) => {
             const price = item.price || item.base_price || 0;
@@ -314,7 +316,7 @@ window.CartDrawer = {
                 '<p>' + (item.color || 'N/A') + ' / ' + (item.size || 'N/A') + '</p>' +
                 '<p><strong>' + this.fmt(lineTotal) + '</strong></p>' +
                 '<div class="cart-drawer-item-qty">' +
-                '<button type="button" data-action="minus">âˆ’</button>' +
+                '<button type="button" data-action="minus">-</button>' +
                 '<input type="number" value="' + (item.quantity || 1) + '" min="1" data-qty>' +
                 '<button type="button" data-action="plus">+</button>' +
                 '</div>' +
@@ -531,7 +533,7 @@ class ProductSearch {
             }
             container.innerHTML = products.slice(0, 8).map(p => `
                 <a href="${productLink(p.id)}" class="search-result-item" onclick="window.search && window.search.close();">
-                    <img src="${window.getImgUrl(p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E'">
+                    <img src="${window.getImgUrl(p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect fill=\'%23eee\' width=\'48\' height=\'48\'/%3E%3Ctext x=\'24\' y=\'26\' fill=\'%23999\' font-size=\'8\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect fill=\'%23eee\' width=\'48\' height=\'48\'/%3E%3Ctext x=\'24\' y=\'26\' fill=\'%23999\' font-size=\'8\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E';">
                     <div class="search-result-info">
                         <span class="search-result-name">${p.name}</span>
                         <span class="search-result-price">${(window.CalvoroCurrency && window.CalvoroCurrency.get() === 'USD') ? '$' + (p.price / (window.CalvoroCurrency.rate() || 320)).toFixed(2) : 'LKR ' + Number(p.price).toLocaleString()}</span>
@@ -761,7 +763,7 @@ class ProductFilters {
                     ${soldOut ? '<span class="sold-out-badge">Sold out</span>' : 
                       (engineBadge ? engineBadge : (onSale ? '<span class="sale">SALE</span>' : newTag))}
                     <button type="button" class="wishlist-btn ${inWishlist ? 'active' : ''}" data-product-id="${product.id}" onclick="event.preventDefault();event.stopPropagation();window.CalvoroWishlist && CalvoroWishlist.toggle(${product.id}, this);" aria-label="Wishlist">\u2665</button>
-                    <img src="${window.getImgUrl(product.image_url || (product.images && product.images[0]) || (product.color_images && Object.values(product.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'">
+                    <img src="${window.getImgUrl(product.image_url || (product.images && product.images[0]) || (product.color_images && Object.values(product.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E';">
                 </div>
                 <h3>${product.name}</h3>
                 <p>${product.category_name || ''}</p>
@@ -1179,7 +1181,7 @@ if (newsletterForm) {
         var apiBase = _calvoroApiBase();
 
         var origText = button ? button.textContent : '';
-        if (button) { button.disabled = true; button.textContent = 'â€¦'; }
+        if (button) { button.disabled = true; button.textContent = '...'; }
         try {
             var res = await fetch(apiBase + '/api/users/newsletter-signup', {
                 method: 'POST',
@@ -1517,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (safeLines.length === 0 && fallback) safeLines = [fallback];
         if (safeLines.length === 0) safeLines = ['FREE SHIPPING ON ORDERS OVER LKR 15,000'];
 
-        var text = safeLines.join('  â€¢  ');
+        var text = safeLines.join('  |  ');
         promoEl.classList.add('promo--ticker');
         promoEl.style.setProperty('--promo-ticker-duration', (Math.max(8, Number(durationSeconds) || 22)) + 's');
         promoEl.innerHTML =

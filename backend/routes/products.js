@@ -101,7 +101,8 @@ router.get('/', async (req, res) => {
             const term = search.trim().toLowerCase();
             products = products.filter(p =>
                 (p.name && p.name.toLowerCase().includes(term)) ||
-                (p.description && p.description.toLowerCase().includes(term))
+                (p.description && p.description.toLowerCase().includes(term)) ||
+                (p.category_name && p.category_name.toLowerCase().includes(term))
             );
         }
 

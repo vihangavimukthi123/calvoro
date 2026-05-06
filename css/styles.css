@@ -3938,6 +3938,11 @@ footer .footer-bottom {
     -webkit-tap-highlight-color: transparent;
 }
 
+.mobile-menu-trigger svg,
+.mobile-menu-trigger svg line {
+    stroke: var(--color-text) !important;
+}
+
 /* Drawer overlay wrapper */
 .mobile-menu {
     position: fixed;

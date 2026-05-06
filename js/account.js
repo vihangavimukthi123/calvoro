@@ -211,13 +211,20 @@
     }
 
     function savePayment() {
-        var last4 = document.getElementById('cardLast4').value.replace(/\D/g, '');
-        if (last4.length !== 4) {
-            alert('Please enter a valid 4-digit last card number.');
+        var cardNumber = document.getElementById('cardNumber').value.replace(/\D/g, '');
+        var cvv = document.getElementById('cardCvv').value.replace(/\D/g, '');
+        if (cardNumber.length < 12 || cardNumber.length > 19) {
+            alert('Please enter a valid card number.');
             return;
         }
+        if (cvv.length < 3 || cvv.length > 4) {
+            alert('Please enter a valid CVV.');
+            return;
+        }
+        var last4 = cardNumber.slice(-4);
         var data = {
             card_brand: document.getElementById('cardBrand').value || 'Card',
+            card_number: cardNumber,
             last_four: last4,
             exp_month: parseInt(document.getElementById('cardExpMonth').value, 10) || null,
             exp_year: parseInt(document.getElementById('cardExpYear').value, 10) || null,
@@ -229,7 +236,8 @@
             body: JSON.stringify(data)
         }).then(function() {
             closeModal('modalPayment');
-            document.getElementById('cardLast4').value = '';
+            document.getElementById('cardNumber').value = '';
+            document.getElementById('cardCvv').value = '';
             document.getElementById('cardExpMonth').value = '';
             document.getElementById('cardExpYear').value = '';
             loadPayments();
@@ -459,12 +467,26 @@
         document.getElementById('addAddressBtn').addEventListener('click', openAddAddress);
         document.getElementById('saveAddressBtn').addEventListener('click', saveAddress);
         document.getElementById('addPaymentBtn').addEventListener('click', function() {
-            document.getElementById('cardLast4').value = '';
+            document.getElementById('cardNumber').value = '';
+            document.getElementById('cardCvv').value = '';
             document.getElementById('cardExpMonth').value = '';
             document.getElementById('cardExpYear').value = '';
             openModal('modalPayment');
         });
         document.getElementById('savePaymentBtn').addEventListener('click', savePayment);
+        var cardNumberInput = document.getElementById('cardNumber');
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', function() {
+                var digits = this.value.replace(/\D/g, '').slice(0, 19);
+                this.value = digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+            });
+        }
+        var cardCvvInput = document.getElementById('cardCvv');
+        if (cardCvvInput) {
+            cardCvvInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 4);
+            });
+        }
         document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 
         ['toggleEmail', 'toggleSms', 'toggleMarketing'].forEach(function(id) {

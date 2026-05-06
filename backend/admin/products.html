@@ -254,6 +254,9 @@
 
     <script src="js/admin.js"></script>
     <script>
+        if (!window.CalvoroAPIBase) {
+            window.CalvoroAPIBase = window.location.origin;
+        }
         checkAuth();
 
         var products = [];

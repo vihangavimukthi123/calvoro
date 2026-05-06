@@ -33,6 +33,10 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; max-width: 400px; padding: 10px 12px; border: 1px solid var(--color-input-border); border-radius: 6px; background: var(--color-input-bg); color: var(--color-text); }
+        .form-group input.compact { max-width: 180px; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; }
+        .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: var(--color-text); }
+        .checkbox-row span { font-size: 13px; line-height: 1.4; }
         .form-row { display: flex; gap: 16px; flex-wrap: wrap; }
         .address-card { border: 1px solid var(--color-border); border-radius: 8px; padding: 16px; margin-bottom: 12px; background: var(--color-bg); }
         .address-card.default { border-color: var(--color-btn-bg); }
@@ -256,12 +260,15 @@
             <h3>Add Card</h3>
             <p style="font-size:13px;color:var(--color-text-muted);margin-bottom:16px;">We store only the last 4 digits for display. Full card numbers are never stored.</p>
             <div class="form-group"><label>Card Brand</label><select id="cardBrand"><option>Visa</option><option>Mastercard</option><option>Amex</option><option>Other</option></select></div>
-            <div class="form-group"><label>Last 4 Digits *</label><input type="text" id="cardLast4" placeholder="1234" maxlength="4" pattern="[0-9]{4}"></div>
+            <div class="form-group"><label>Card Number *</label><input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="23" inputmode="numeric" autocomplete="off"></div>
             <div class="form-row">
                 <div class="form-group" style="flex:1"><label>Exp Month</label><input type="number" id="cardExpMonth" placeholder="12" min="1" max="12"></div>
                 <div class="form-group" style="flex:1"><label>Exp Year</label><input type="number" id="cardExpYear" placeholder="2028" min="2025" max="2050"></div>
             </div>
-            <div class="form-group"><label><input type="checkbox" id="cardDefault"> Set as default</label></div>
+            <div class="form-group"><label>CVV *</label><input class="compact" type="password" id="cardCvv" placeholder="123" maxlength="4" inputmode="numeric" autocomplete="off"></div>
+            <div class="form-group">
+                <label class="checkbox-row"><input type="checkbox" id="cardDefault"><span>Set as default</span></label>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn-account secondary" onclick="closeModal('modalPayment')">Cancel</button>
                 <button type="button" class="btn-account" id="savePaymentBtn">Add Card</button>

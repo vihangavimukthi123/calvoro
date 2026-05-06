@@ -204,13 +204,16 @@ router.get('/payment-methods', async (req, res) => {
 
 router.post('/payment-methods', async (req, res) => {
     try {
-        const { card_brand, last_four, exp_month, exp_year, is_default } = req.body;
-        if (!last_four || !/^\d{4}$/.test(String(last_four))) {
-            return res.status(400).json({ error: 'Valid last 4 digits of card are required' });
+        const { card_brand, card_number, last_four, exp_month, exp_year, is_default } = req.body;
+        const digits = String(card_number || '').replace(/\D/g, '');
+        const computedLast4 = digits.length >= 4 ? digits.slice(-4) : '';
+        const finalLast4 = String(last_four || computedLast4 || '').replace(/\D/g, '').slice(-4);
+        if (!/^\d{4}$/.test(finalLast4)) {
+            return res.status(400).json({ error: 'Valid card details are required' });
         }
         const data = {
             card_brand: (card_brand || 'Card').trim().slice(0, 50),
-            last_four: String(last_four).slice(-4),
+            last_four: finalLast4,
             exp_month: exp_month ? parseInt(exp_month, 10) : null,
             exp_year: exp_year ? parseInt(exp_year, 10) : null,
             is_default: !!is_default
