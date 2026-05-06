@@ -13,8 +13,14 @@ const PAYHERE_SANDBOX_URL = 'https://sandbox.payhere.lk/pay/checkout';
 const PAYHERE_LIVE_URL = 'https://www.payhere.lk/pay/checkout';
 const PAYHERE_URL = PAYHERE_MODE === 'live' ? PAYHERE_LIVE_URL : PAYHERE_SANDBOX_URL;
 
-// Base URL - adjust this based on your deployment
-const BASE_URL = process.env.BASE_URL || '/api';
+function getPublicBaseUrl(req) {
+    const configured = (process.env.PUBLIC_BASE_URL || process.env.BASE_URL || '').trim();
+    if (configured) return configured.replace(/\/$/, '');
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString().split(',')[0].trim();
+    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString().split(',')[0].trim();
+    if (host) return `${proto}://${host}`;
+    return '';
+}
 
 /**
  * Generate PayHere security hash
@@ -58,11 +64,12 @@ router.get('/initiate/:orderId', async (req, res) => {
         const lastName = nameParts.slice(1).join(' ') || 'Name';
 
         // Prepare PayHere form data
+        const publicBaseUrl = getPublicBaseUrl(req);
         const paymentData = {
             merchant_id: MERCHANT_ID,
-            return_url: `${BASE_URL}/api/payment/return`,
-            cancel_url: `${BASE_URL}/api/payment/cancel`,
-            notify_url: `${BASE_URL}/api/payment/notify`,
+            return_url: `${publicBaseUrl}/api/payment/return`,
+            cancel_url: `${publicBaseUrl}/api/payment/cancel`,
+            notify_url: `${publicBaseUrl}/api/payment/notify`,
             order_id: order.id.toString(),
             items: order.order_number || `Order #${order.id}`,
             currency: currency,
