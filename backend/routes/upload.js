@@ -2,14 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { VIDEO_DIR } = require('../storagePaths');
+const { VIDEO_DIR, UPLOAD_DIR } = require('../storagePaths');
 
 const router = express.Router();
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-
-if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

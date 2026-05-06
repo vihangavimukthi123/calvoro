@@ -1,9 +1,19 @@
 const path = require('path');
 const fs = require('fs');
 
-const VIDEO_DIR = path.resolve(__dirname, 'storage', 'videos');
-if (!fs.existsSync(VIDEO_DIR)) {
-    fs.mkdirSync(VIDEO_DIR, { recursive: true });
-}
+const MEDIA_ROOT = process.env.MEDIA_ROOT
+    ? path.resolve(process.env.MEDIA_ROOT)
+    : (process.env.RAILWAY_VOLUME_MOUNT_PATH
+        ? path.resolve(process.env.RAILWAY_VOLUME_MOUNT_PATH)
+        : path.resolve(__dirname));
 
-module.exports = { VIDEO_DIR };
+const UPLOAD_DIR = path.resolve(MEDIA_ROOT, 'uploads');
+const VIDEO_DIR = path.resolve(MEDIA_ROOT, 'storage', 'videos');
+
+[UPLOAD_DIR, VIDEO_DIR].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+module.exports = { MEDIA_ROOT, UPLOAD_DIR, VIDEO_DIR };

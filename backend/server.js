@@ -34,6 +34,7 @@ const videoStripRouter = require('./routes/videoStrip');
 const chatRouter = require('./routes/chat');
 const categoryImagesRouter = require('./routes/categoryImages');
 const socketHandler = require('./lib/socketHandler');
+const { UPLOAD_DIR, VIDEO_DIR } = require('./storagePaths');
 const {
     publicRouter: promotionsPublicRouter,
     uploadPromoImage,
@@ -262,8 +263,8 @@ app.get('/api/offers/active', async (req, res) => {
 app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'), discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/storage/videos', express.static(path.join(__dirname, 'storage', 'videos')));
+app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/storage/videos', express.static(VIDEO_DIR));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // --- Diagnostic Logging ---

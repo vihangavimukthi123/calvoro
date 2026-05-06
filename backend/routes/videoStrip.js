@@ -4,27 +4,20 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const db = require('../db');
+const { VIDEO_DIR, UPLOAD_DIR } = require('../storagePaths');
 
 function requireAdmin(req, res, next) {
     if (req.session && req.session.admin) return next();
     res.status(401).json({ error: 'Unauthorized' });
 }
 
-let VIDEO_DIR;
-try {
-    VIDEO_DIR = require('../storagePaths').VIDEO_DIR;
-} catch (_) {
-    VIDEO_DIR = path.join(__dirname, '..', 'uploads');
-}
-
-if (!fs.existsSync(VIDEO_DIR)) {
-    fs.mkdirSync(VIDEO_DIR, { recursive: true });
-}
+if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
     destination: (_req, file, cb) => {
         const ext = (path.extname(file.originalname) || '').toLowerCase();
-        cb(null, ext.match(/^\.(mp4|webm|mov)$/) ? VIDEO_DIR : path.join(__dirname, '..', 'uploads'));
+        cb(null, ext.match(/^\.(mp4|webm|mov)$/) ? VIDEO_DIR : UPLOAD_DIR);
     },
     filename: (_req, file, cb) => {
         const ext = (path.extname(file.originalname) || '').toLowerCase() || '.mp4';
