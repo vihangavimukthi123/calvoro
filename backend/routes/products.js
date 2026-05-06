@@ -158,11 +158,33 @@ router.get('/', async (req, res) => {
 
         if (search && search.trim().length >= 2) {
             const term = search.trim().toLowerCase();
-            products = products.filter(p =>
-                (p.name && p.name.toLowerCase().includes(term)) ||
-                (p.description && p.description.toLowerCase().includes(term)) ||
-                (p.category_name && p.category_name.toLowerCase().includes(term))
-            );
+            const compact = term.replace(/[\s'-]/g, '');
+            const isMenTerm = compact === 'men' || compact === 'mens';
+            const isWomenTerm = compact === 'women' || compact === 'womens';
+
+            let matchedCategoryIds = [];
+            if (isMenTerm || isWomenTerm) {
+                const categories = await db.getAllCategories();
+                matchedCategoryIds = (categories || [])
+                    .filter((c) => {
+                        const slug = String(c.slug || '').toLowerCase();
+                        const name = String(c.name || '').toLowerCase();
+                        const value = `${slug} ${name}`.replace(/[\s'-]/g, '');
+                        if (isMenTerm) return value.includes('men') && !value.includes('women');
+                        return value.includes('women');
+                    })
+                    .map((c) => Number(c.id))
+                    .filter((id) => !isNaN(id));
+            }
+
+            products = products.filter((p) => {
+                const textMatch =
+                    (p.name && p.name.toLowerCase().includes(term)) ||
+                    (p.description && p.description.toLowerCase().includes(term)) ||
+                    (p.category_name && p.category_name.toLowerCase().includes(term));
+                const categoryMatch = matchedCategoryIds.length > 0 && matchedCategoryIds.includes(Number(p.category_id));
+                return textMatch || categoryMatch;
+            });
         }
 
         if (trending === '1' || trending === 'true') {

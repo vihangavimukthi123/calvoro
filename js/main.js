@@ -447,6 +447,15 @@ class ProductSearch {
         this.initializeSearch();
     }
 
+    detectCollectionTerm(query) {
+        const q = String(query || '').toLowerCase().trim().replace(/[\s'-]/g, '');
+        if (q === 'men' || q === 'mens') return 'men';
+        if (q === 'women' || q === 'womens') return 'women';
+        if (q === 'gift' || q === 'gifts' || q === 'voucher' || q === 'vouchers') return 'gifts';
+        if (q === 'accessory' || q === 'accessories') return 'accessories';
+        return '';
+    }
+
     initializeSearch() {
         if (this.searchTrigger && this.searchOverlay) {
             this.searchTrigger.addEventListener('click', () => this.open());
@@ -488,7 +497,14 @@ class ProductSearch {
         }
 
         try {
-            const response = await fetch(`${_calvoroApiBase()}/api/products?search=${encodeURIComponent(query)}`);
+            const collection = this.detectCollectionTerm(query);
+            const params = new URLSearchParams();
+            if (collection === 'men' || collection === 'women') {
+                params.set('category', collection);
+            } else {
+                params.set('search', query);
+            }
+            const response = await fetch(`${_calvoroApiBase()}/api/products?${params.toString()}`);
             const products = await response.json();
             this.displayResults(products);
         } catch (error) {
@@ -497,21 +513,10 @@ class ProductSearch {
     }
 
     handleSubmit(query) {
-        const q = query.toLowerCase().trim();
-        if (q === 'men' || q === 'mens') {
-            window.location.href = window.location.pathname.includes('/products/') ? '../men.html' : 'men.html';
-            return;
-        }
-        if (q === 'women' || q === 'womens') {
-            window.location.href = window.location.pathname.includes('/products/') ? '../women.html' : 'women.html';
-            return;
-        }
-        if (q === 'gift' || q === 'gifts' || q === 'voucher' || q === 'vouchers') {
-            window.location.href = window.location.pathname.includes('/products/') ? '../gifts.html' : 'gifts.html';
-            return;
-        }
-        if (q === 'accessory' || q === 'accessories') {
-            window.location.href = window.location.pathname.includes('/products/') ? '../accessories.html' : 'accessories.html';
+        const collection = this.detectCollectionTerm(query);
+        if (collection) {
+            const inProducts = window.location.pathname.includes('/products/');
+            window.location.href = `${inProducts ? '../' : ''}${collection}.html`;
             return;
         }
         
