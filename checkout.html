@@ -669,8 +669,7 @@
                 }
                 listEl.innerHTML = options.map(function(opt, idx) {
                     var feeLabel = opt.fee === 0 ? 'FREE' : ('LKR ' + opt.fee.toLocaleString());
-                    // var eta = (opt.eta_min_days && opt.eta_max_days) ? ('Estimated ' + opt.eta_min_days + '-' + opt.eta_max_days + ' days') : '';
-                    var eta = '';
+                    var eta = (opt.eta_min_days && opt.eta_max_days) ? ('Estimated ' + opt.eta_min_days + '-' + opt.eta_max_days + ' days') : '';
                     return '<label style=\"display:flex;align-items:flex-start;gap:8px;cursor:pointer;\">' +
                         '<input type=\"radio\" name=\"delivery_method\" value=\"' + opt.code + '\" data-id=\"' + (opt.id || '') + '\" data-fee=\"' + opt.fee + '\" ' + (idx === 0 ? 'checked' : '') + ' style=\"margin-top:4px;\">' +
                         '<div>' +
@@ -697,12 +696,11 @@
                     totalEl.textContent = 'LKR ' + total.toLocaleString();
                     // ETA text (take from first selected option for now)
                     var firstOpt = options.find(function(o) { return o.code === selectedDelivery.delivery_method_code; });
-                    // if (firstOpt && firstOpt.eta_min_days && firstOpt.eta_max_days) {
-                    //     etaTextEl.textContent = 'Estimated arrival: ' + firstOpt.eta_min_days + '-' + firstOpt.eta_max_days + ' business days.';
-                    // } else {
-                    //     etaTextEl.textContent = '';
-                    // }
-                    etaTextEl.textContent = '';
+                    if (firstOpt && firstOpt.eta_min_days && firstOpt.eta_max_days) {
+                        etaTextEl.textContent = 'Estimated arrival: ' + firstOpt.eta_min_days + '-' + firstOpt.eta_max_days + ' business days.';
+                    } else {
+                        etaTextEl.textContent = '';
+                    }
                 }
                 listEl.querySelectorAll('input[name=\"delivery_method\"]').forEach(function(radio) {
                     radio.addEventListener('change', updateSelection);
