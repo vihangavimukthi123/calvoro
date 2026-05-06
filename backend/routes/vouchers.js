@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const dns = require('dns').promises;
 const router = express.Router();
 const db = require('../db');
 const { sendGiftVoucherEmail } = require('../lib/mailer');
@@ -38,6 +39,17 @@ function generateVoucherCode() {
     const bytes = crypto.randomBytes(6);
     const hex = bytes.toString('hex').toUpperCase();
     return `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
+}
+
+async function hasMxRecord(email) {
+    try {
+        const domain = String(email || '').split('@')[1] || '';
+        if (!domain) return false;
+        const mx = await dns.resolveMx(domain);
+        return Array.isArray(mx) && mx.length > 0;
+    } catch (_) {
+        return false;
+    }
 }
 
 // POST /api/vouchers/validate — validate code for current cart subtotal (public, rate-limited)
@@ -181,7 +193,6 @@ router.post('/bulk', requireAdmin, async (req, res) => {
 // POST /api/vouchers/send-gift — create voucher and send via email (public)
 router.post('/send-gift', async (req, res) => {
     try {
-        const userId = req.session && req.session.user ? req.session.user.id : null;
         const { amount, recipient_email, message, sender_name } = req.body;
         const amountNum = parseFloat(amount);
         if (!amountNum || amountNum < 500) {
@@ -190,10 +201,18 @@ router.post('/send-gift', async (req, res) => {
         if (!recipient_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email)) {
             return res.status(400).json({ error: 'Valid recipient email is required' });
         }
-        const code = generateVoucherCode();
-        const existing = await db.getVoucherByCode(code);
-        if (existing) {
-            return res.status(500).json({ error: 'Code generation conflict. Please try again.' });
+        if (!(await hasMxRecord(recipient_email))) {
+            return res.status(400).json({ error: 'Recipient email domain cannot receive email. Please enter a real email address.' });
+        }
+        let code = '';
+        let attempts = 0;
+        do {
+            code = generateVoucherCode();
+            attempts++;
+            // Keep trying if a collision happens (very unlikely).
+        } while (attempts < 10 && await db.getVoucherByCode(code));
+        if (!code || await db.getVoucherByCode(code)) {
+            return res.status(500).json({ error: 'Could not generate a unique voucher code. Please try again.' });
         }
         const voucher = {
             code,
@@ -206,7 +225,8 @@ router.post('/send-gift', async (req, res) => {
             is_active: true,
             created_by: null
         };
-        await db.createVoucher(voucher);
+        const created = await db.createVoucher(voucher);
+        const createdId = created && (created.lastInsertRowid || created.insertId || created.id);
         const emailResult = await sendGiftVoucherEmail(
             recipient_email,
             code,
@@ -214,15 +234,23 @@ router.post('/send-gift', async (req, res) => {
             message || '',
             sender_name || ''
         );
-        if (!emailResult.sent && !emailResult.devCode) {
-            return res.status(500).json({ error: 'Voucher created but email failed: ' + (emailResult.error || 'Unknown error') });
+        if (!emailResult.sent) {
+            // Strict rule: voucher should not exist if recipient email was not sent successfully.
+            try {
+                if (createdId) await db.deleteVoucher(createdId);
+            } catch (rollbackErr) {
+                console.error('Gift voucher rollback error:', rollbackErr.message);
+            }
+            return res.status(400).json({
+                error: 'Gift voucher was not created because email could not be delivered. Please check recipient email and server mail configuration.'
+            });
         }
         res.status(201).json({
             success: true,
             voucher_code: code,
             amount: amountNum,
             email_sent: emailResult.sent,
-            message: emailResult.sent ? 'Gift voucher sent successfully!' : 'Voucher created. Email is not configured on server yet, so recipient did not receive it.'
+            message: 'Gift voucher sent successfully!'
         });
     } catch (err) {
         console.error(err);

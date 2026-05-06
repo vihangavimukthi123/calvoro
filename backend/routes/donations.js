@@ -6,7 +6,18 @@ const emailService = require('../services/emailService');
 const router = express.Router();
 
 function getBaseUrl(req) {
-    return process.env.BASE_URL || (req && req.protocol && req.get ? (req.protocol + '://' + req.get('host')) : '/api');
+    const configured = String(process.env.PUBLIC_BASE_URL || process.env.BASE_URL || '').trim();
+    if (configured && /^https?:\/\//i.test(configured)) {
+        return configured.replace(/\/+$/, '');
+    }
+    const proto = String((req && req.headers && req.headers['x-forwarded-proto']) || (req && req.protocol) || 'https')
+        .split(',')[0]
+        .trim();
+    const host = String((req && req.headers && req.headers['x-forwarded-host']) || (req && req.get && req.get('host')) || '')
+        .split(',')[0]
+        .trim();
+    if (!host) return '';
+    return `${proto}://${host}`;
 }
 
 function isValidEmail(email) {
@@ -51,6 +62,9 @@ router.post('/checkout-session', async (req, res) => {
 
         const stripe = stripeClient();
         const baseUrl = getBaseUrl(req);
+        if (!/^https?:\/\//i.test(baseUrl)) {
+            return res.status(500).json({ error: 'Server base URL is not configured for Stripe redirects' });
+        }
 
         // Create donation record first (pending); set session id after session created
         const created = await db.createDonation({
