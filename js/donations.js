@@ -1,4 +1,4 @@
-// Donations (Stripe Checkout) — modal UI + API call
+// Donations (PayHere) — modal UI + API call
 (function () {
     function $(id) { return document.getElementById(id); }
     var btn = $('donateDogsBtn');
@@ -100,7 +100,7 @@
             });
             var d = await r.json().catch(function () { return {}; });
             if (!r.ok || !d || !d.url) {
-                throw new Error((d && d.error) ? d.error : 'Could not start Stripe checkout.');
+                throw new Error((d && d.error) ? d.error : 'Could not start PayHere checkout.');
             }
             window.location.href = d.url;
         } catch (err2) {
