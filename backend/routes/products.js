@@ -11,10 +11,69 @@ function requireAdmin(req, res, next) {
     }
 }
 
+function normalizeUrlPath(url) {
+    if (typeof url !== 'string') return url;
+    return url.trim().replace(/\\/g, '/');
+}
+
+function normalizeProductMediaFields(product) {
+    if (!product || typeof product !== 'object') return product;
+    const p = { ...product };
+
+    if (typeof p.images === 'string') {
+        p.images = p.images ? [normalizeUrlPath(p.images)] : [];
+    } else if (Array.isArray(p.images)) {
+        p.images = p.images.map(normalizeUrlPath).filter(Boolean);
+    } else {
+        p.images = [];
+    }
+
+    if (p.color_images && typeof p.color_images === 'object' && !Array.isArray(p.color_images)) {
+        const normalized = {};
+        Object.keys(p.color_images).forEach((k) => {
+            normalized[k] = normalizeUrlPath(p.color_images[k]);
+        });
+        p.color_images = normalized;
+    } else {
+        p.color_images = {};
+    }
+
+    if (p.color_videos && typeof p.color_videos === 'object' && !Array.isArray(p.color_videos)) {
+        const normalized = {};
+        Object.keys(p.color_videos).forEach((k) => {
+            normalized[k] = normalizeUrlPath(p.color_videos[k]);
+        });
+        p.color_videos = normalized;
+    } else {
+        p.color_videos = {};
+    }
+
+    if (Array.isArray(p.media)) {
+        p.media = p.media.map((m) => ({
+            ...m,
+            url: normalizeUrlPath(m && m.url),
+            hover_video_url: normalizeUrlPath(m && m.hover_video_url),
+            thumbnail: normalizeUrlPath(m && m.thumbnail)
+        }));
+    } else {
+        p.media = [];
+    }
+
+    if (!p.image_url) {
+        p.image_url = p.images[0] || Object.values(p.color_images)[0] || '';
+    } else {
+        p.image_url = normalizeUrlPath(p.image_url);
+    }
+
+    p.size_guide_url = normalizeUrlPath(p.size_guide_url || '');
+    return p;
+}
+
 // Get all products (supports search, category, color, size, sort, trending)
 router.get('/', async (req, res) => {
     try {
         let products = await db.getAllProducts();
+        products = products.map(normalizeProductMediaFields);
         const { category, featured, status, search, sort, color, size, trending, min_price, max_price } = req.query;
 
         if (category) {
@@ -220,7 +279,7 @@ router.get('/:id', async (req, res) => {
             product = await db.enrichSingleProductWithPricing(product, coupon || null);
         }
 
-        res.json(product);
+        res.json(normalizeProductMediaFields(product));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Database error' });
@@ -246,6 +305,16 @@ router.post('/', requireAdmin, async (req, res) => {
         }
     }
 
+    const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
+    const normalizedColorImages = color_images && typeof color_images === 'object' ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => [k, normalizeUrlPath(v)])) : {};
+    const normalizedColorVideos = color_videos && typeof color_videos === 'object' ? Object.fromEntries(Object.entries(color_videos).map(([k, v]) => [k, normalizeUrlPath(v)])) : {};
+    const normalizedMedia = Array.isArray(media) ? media.map((m) => ({
+        type: m && m.type ? m.type : 'image',
+        url: normalizeUrlPath(m && m.url),
+        hover_video_url: normalizeUrlPath(m && m.hover_video_url),
+        thumbnail: normalizeUrlPath(m && m.thumbnail)
+    })).filter((m) => !!m.url) : [];
+
     const product = {
         name,
         slug,
@@ -253,18 +322,18 @@ router.post('/', requireAdmin, async (req, res) => {
         price: parseFloat(price),
         sale_price: sale_price ? parseFloat(sale_price) : null,
         category_id: finalCategoryId,
-        images: images || [],
+        images: normalizedImages,
         colors: Array.isArray(colors) ? colors : (colors || []),
         sizes: Array.isArray(sizes) ? sizes : (sizes || []),
         stock: parseInt(stock) || 0,
         featured: featured ? true : false,
         status: 'active',
-        color_images: color_images && typeof color_images === 'object' ? color_images : {},
-        color_videos: color_videos && typeof color_videos === 'object' ? color_videos : {},
+        color_images: normalizedColorImages,
+        color_videos: normalizedColorVideos,
         product_type: product_type || null,
         fit: fit || null,
-        media: Array.isArray(media) ? media : [],
-        size_guide_url: size_guide_url || null
+        media: normalizedMedia,
+        size_guide_url: normalizeUrlPath(size_guide_url) || null
     };
 
     try {
@@ -296,6 +365,16 @@ router.put('/:id', requireAdmin, async (req, res) => {
         }
     }
 
+    const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
+    const normalizedColorImages = color_images && typeof color_images === 'object' ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => [k, normalizeUrlPath(v)])) : undefined;
+    const normalizedColorVideos = color_videos && typeof color_videos === 'object' ? Object.fromEntries(Object.entries(color_videos).map(([k, v]) => [k, normalizeUrlPath(v)])) : undefined;
+    const normalizedMedia = Array.isArray(media) ? media.map((m) => ({
+        type: m && m.type ? m.type : 'image',
+        url: normalizeUrlPath(m && m.url),
+        hover_video_url: normalizeUrlPath(m && m.hover_video_url),
+        thumbnail: normalizeUrlPath(m && m.thumbnail)
+    })).filter((m) => !!m.url) : undefined;
+
     const product = {
         name,
         slug,
@@ -303,18 +382,18 @@ router.put('/:id', requireAdmin, async (req, res) => {
         price: parseFloat(price),
         sale_price: sale_price ? parseFloat(sale_price) : null,
         category_id: finalCategoryId,
-        images: images || [],
+        images: normalizedImages,
         colors: Array.isArray(colors) ? colors : (colors || []),
         sizes: Array.isArray(sizes) ? sizes : (sizes || []),
         stock: parseInt(stock) || 0,
         featured: featured ? true : false,
         status: status || 'active',
-        color_images: color_images && typeof color_images === 'object' ? color_images : undefined,
-        color_videos: color_videos && typeof color_videos === 'object' ? color_videos : undefined,
+        color_images: normalizedColorImages,
+        color_videos: normalizedColorVideos,
         product_type: product_type !== undefined ? product_type : undefined,
         fit: fit !== undefined ? fit : undefined,
-        media: Array.isArray(media) ? media : undefined,
-        size_guide_url: size_guide_url !== undefined ? size_guide_url : undefined
+        media: normalizedMedia,
+        size_guide_url: size_guide_url !== undefined ? normalizeUrlPath(size_guide_url) : undefined
     };
     if (product.color_images === undefined) delete product.color_images;
     if (product.color_videos === undefined) delete product.color_videos;

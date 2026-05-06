@@ -289,6 +289,12 @@ app.get('*', (req, res) => {
         if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
         if (typeof db.ensureSiteSettingsTable === 'function') await db.ensureSiteSettingsTable();
         if (typeof db.ensureChatTables === 'function') await db.ensureChatTables();
+        if (typeof db.normalizeProductMediaData === 'function') {
+            const mediaFix = await db.normalizeProductMediaData();
+            if (mediaFix && mediaFix.changed) {
+                console.log(`Normalized product media for ${mediaFix.changed}/${mediaFix.total} product(s)`);
+            }
+        }
 
         await db.pool.query(`
             CREATE TABLE IF NOT EXISTS trending_products (

@@ -531,9 +531,10 @@ class ProductSearch {
                 container.style.display = 'block';
                 return;
             }
+            const fallbackThumb = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Crect fill=%22%23eee%22 width=%2248%22 height=%2248%22/%3E%3Ctext x=%2224%22 y=%2226%22 fill=%22%23999%22 font-size=%228%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E';
             container.innerHTML = products.slice(0, 8).map(p => `
                 <a href="${productLink(p.id)}" class="search-result-item" onclick="window.search && window.search.close();">
-                    <img src="${window.getImgUrl(p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect fill=\'%23eee\' width=\'48\' height=\'48\'/%3E%3Ctext x=\'24\' y=\'26\' fill=\'%23999\' font-size=\'8\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${p.name}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect fill=\'%23eee\' width=\'48\' height=\'48\'/%3E%3Ctext x=\'24\' y=\'26\' fill=\'%23999\' font-size=\'8\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E';">
+                    <img src="${window.getImgUrl(p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0])) || fallbackThumb}" data-fallback="${fallbackThumb}" alt="${p.name}" onerror="this.onerror=null;this.src=this.dataset.fallback;">
                     <div class="search-result-info">
                         <span class="search-result-name">${p.name}</span>
                         <span class="search-result-price">${(window.CalvoroCurrency && window.CalvoroCurrency.get() === 'USD') ? '$' + (p.price / (window.CalvoroCurrency.rate() || 320)).toFixed(2) : 'LKR ' + Number(p.price).toLocaleString()}</span>
@@ -738,6 +739,7 @@ class ProductFilters {
             const formatPrice = (amount) => currency === 'USD' ? `$${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `LKR ${Number(amount).toLocaleString()}`;
             const rate = (window.CalvoroCurrency && window.CalvoroCurrency.rate()) || 320;
             const toDisplay = (amount) => currency === 'USD' ? amount / rate : amount;
+            const fallbackProductImg = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22550%22 viewBox=%220 0 400 550%22%3E%3Crect fill=%22%23eee%22 width=%22400%22 height=%22550%22/%3E%3Ctext x=%22200%22 y=%22275%22 fill=%22%23999%22 font-size=%2216%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo image%3C/text%3E%3C/svg%3E';
             container.innerHTML = products.map(product => {
             const p = baseCmp(product);
             const sp = finalP(product);
@@ -763,7 +765,7 @@ class ProductFilters {
                     ${soldOut ? '<span class="sold-out-badge">Sold out</span>' : 
                       (engineBadge ? engineBadge : (onSale ? '<span class="sale">SALE</span>' : newTag))}
                     <button type="button" class="wishlist-btn ${inWishlist ? 'active' : ''}" data-product-id="${product.id}" onclick="event.preventDefault();event.stopPropagation();window.CalvoroWishlist && CalvoroWishlist.toggle(${product.id}, this);" aria-label="Wishlist">\u2665</button>
-                    <img src="${window.getImgUrl(product.image_url || (product.images && product.images[0]) || (product.color_images && Object.values(product.color_images)[0])) || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E'}" alt="${product.name}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'550\' viewBox=\'0 0 400 550\'%3E%3Crect fill=\'%23eee\' width=\'400\' height=\'550\'/%3E%3Ctext x=\'200\' y=\'275\' fill=\'%23999\' font-size=\'16\' text-anchor=\'middle\' dy=\'.3em\'%3ENo image%3C/text%3E%3C/svg%3E';">
+                    <img src="${window.getImgUrl(product.image_url || (product.images && product.images[0]) || (product.color_images && Object.values(product.color_images)[0])) || fallbackProductImg}" data-fallback="${fallbackProductImg}" alt="${product.name}" onerror="this.onerror=null;this.src=this.dataset.fallback;">
                 </div>
                 <h3>${product.name}</h3>
                 <p>${product.category_name || ''}</p>

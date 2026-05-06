@@ -197,6 +197,46 @@ class CalvoroDatabase {
         }
     }
 
+    _normalizeMediaPath(url) {
+        if (typeof url !== 'string') return url;
+        return url.trim().replace(/\\/g, '/');
+    }
+
+    _normalizeProductMediaFields(product) {
+        const p = { ...product };
+
+        if (typeof p.images === 'string') p.images = p.images ? [this._normalizeMediaPath(p.images)] : [];
+        else if (!Array.isArray(p.images)) p.images = [];
+        else p.images = p.images.map(u => this._normalizeMediaPath(u)).filter(Boolean);
+
+        if (!p.color_images || typeof p.color_images !== 'object' || Array.isArray(p.color_images)) p.color_images = {};
+        else {
+            const normalized = {};
+            Object.keys(p.color_images).forEach(k => { normalized[k] = this._normalizeMediaPath(p.color_images[k]); });
+            p.color_images = normalized;
+        }
+
+        if (!p.color_videos || typeof p.color_videos !== 'object' || Array.isArray(p.color_videos)) p.color_videos = {};
+        else {
+            const normalized = {};
+            Object.keys(p.color_videos).forEach(k => { normalized[k] = this._normalizeMediaPath(p.color_videos[k]); });
+            p.color_videos = normalized;
+        }
+
+        if (!Array.isArray(p.media)) p.media = [];
+        else {
+            p.media = p.media.map(m => ({
+                ...m,
+                url: this._normalizeMediaPath(m && m.url),
+                hover_video_url: this._normalizeMediaPath(m && m.hover_video_url),
+                thumbnail: this._normalizeMediaPath(m && m.thumbnail)
+            })).filter(m => !!m.url);
+        }
+
+        if (p.size_guide_url !== undefined) p.size_guide_url = this._normalizeMediaPath(p.size_guide_url || '');
+        return p;
+    }
+
     getSiteSetting(key) {
         this._loadSettingsFresh();
         if (key === 'promoTicker') return JSON.stringify(this.settings.promoTicker);
@@ -636,11 +676,11 @@ class CalvoroDatabase {
 
     createProduct(product) {
         const id = this.products.length > 0 ? Math.max(...this.products.map(p => p.id)) + 1 : 1;
-        const newProduct = {
+        const newProduct = this._normalizeProductMediaFields({
             ...product,
             id,
             created_at: new Date().toISOString()
-        };
+        });
         this.products.push(newProduct);
         this.saveJSON(PRODUCTS_FILE, this.products);
         return { lastInsertRowid: id };
@@ -650,11 +690,11 @@ class CalvoroDatabase {
         const index = this.products.findIndex(p => p.id == id);
         if (index !== -1) {
             const existing = this.products[index];
-            this.products[index] = {
+            this.products[index] = this._normalizeProductMediaFields({
                 ...existing,
                 ...product,
                 id: parseInt(id)
-            };
+            });
             
             // Ensure we don't accidentally wipe images if the frontend sent undefined
             if (product.images === undefined && existing.images) this.products[index].images = existing.images;
@@ -665,6 +705,32 @@ class CalvoroDatabase {
             return { changes: 1 };
         }
         return { changes: 0 };
+    }
+
+    normalizeProductMediaData() {
+        this.reloadProductsFromFile();
+        let changed = 0;
+        this.products = this.products.map((product) => {
+            const before = JSON.stringify({
+                images: product.images,
+                color_images: product.color_images,
+                color_videos: product.color_videos,
+                media: product.media,
+                size_guide_url: product.size_guide_url
+            });
+            const normalized = this._normalizeProductMediaFields(product);
+            const after = JSON.stringify({
+                images: normalized.images,
+                color_images: normalized.color_images,
+                color_videos: normalized.color_videos,
+                media: normalized.media,
+                size_guide_url: normalized.size_guide_url
+            });
+            if (before !== after) changed++;
+            return normalized;
+        });
+        if (changed > 0) this.saveJSON(PRODUCTS_FILE, this.products);
+        return { total: this.products.length, changed };
     }
 
     deleteProduct(id) {

@@ -20,6 +20,11 @@ function parseJson(val) {
     return val;
 }
 
+function normalizeMediaPath(url) {
+    if (typeof url !== 'string') return url;
+    return url.trim().replace(/\\/g, '/');
+}
+
 class CalvoroMySQLDatabase {
     constructor() {
         this.pool = pool;
@@ -618,6 +623,64 @@ class CalvoroMySQLDatabase {
             ]
         );
         return { changes: result.affectedRows };
+    }
+
+    async normalizeProductMediaData() {
+        await this.ensureProductsColorImages();
+        await this.ensureProductsColorVideos();
+        await this.ensureProductsMedia();
+        await this.ensureProductsSizeGuideUrl();
+        const [rows] = await this.pool.query('SELECT id, images, color_images, color_videos, media, size_guide_url FROM products');
+        let changed = 0;
+
+        for (const row of rows) {
+            const imagesRaw = parseJson(row.images);
+            const colorImagesRaw = parseJson(row.color_images);
+            const colorVideosRaw = parseJson(row.color_videos);
+            const mediaRaw = parseJson(row.media);
+
+            const images = (Array.isArray(imagesRaw) ? imagesRaw : (typeof imagesRaw === 'string' && imagesRaw ? [imagesRaw] : []))
+                .map(normalizeMediaPath)
+                .filter(Boolean);
+            const colorImages = (colorImagesRaw && typeof colorImagesRaw === 'object' && !Array.isArray(colorImagesRaw))
+                ? Object.fromEntries(Object.entries(colorImagesRaw).map(([k, v]) => [k, normalizeMediaPath(v)]))
+                : {};
+            const colorVideos = (colorVideosRaw && typeof colorVideosRaw === 'object' && !Array.isArray(colorVideosRaw))
+                ? Object.fromEntries(Object.entries(colorVideosRaw).map(([k, v]) => [k, normalizeMediaPath(v)]))
+                : {};
+            const media = (Array.isArray(mediaRaw) ? mediaRaw : []).map((m) => ({
+                ...m,
+                url: normalizeMediaPath(m && m.url),
+                hover_video_url: normalizeMediaPath(m && m.hover_video_url),
+                thumbnail: normalizeMediaPath(m && m.thumbnail)
+            })).filter((m) => !!m.url);
+            const sizeGuideUrl = normalizeMediaPath(row.size_guide_url || '');
+
+            const before = JSON.stringify({
+                images: row.images,
+                color_images: row.color_images,
+                color_videos: row.color_videos,
+                media: row.media,
+                size_guide_url: row.size_guide_url
+            });
+            const after = JSON.stringify({
+                images: JSON.stringify(images),
+                color_images: JSON.stringify(colorImages),
+                color_videos: JSON.stringify(colorVideos),
+                media: JSON.stringify(media),
+                size_guide_url: sizeGuideUrl
+            });
+
+            if (before !== after) {
+                await this.pool.query(
+                    'UPDATE products SET images = ?, color_images = ?, color_videos = ?, media = ?, size_guide_url = ? WHERE id = ?',
+                    [JSON.stringify(images), JSON.stringify(colorImages), JSON.stringify(colorVideos), JSON.stringify(media), sizeGuideUrl, row.id]
+                );
+                changed++;
+            }
+        }
+
+        return { total: rows.length, changed };
     }
 
     async deleteProduct(id) {
