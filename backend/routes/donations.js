@@ -4,6 +4,7 @@ const db = require('../db');
 const emailService = require('../services/emailService');
 
 const router = express.Router();
+const DEFAULT_PAYHERE_SECRET = 'MTY5MzIzMzQxNTIzODczMzIzOTQzMzU2ODU2Mzk2MjU1NjkzNDkxMw==';
 
 function getBaseUrl(req) {
     const configured = (process.env.PUBLIC_BASE_URL || process.env.BASE_URL || '').trim();
@@ -37,7 +38,7 @@ function parseAmountLkr(amount) {
 
 const PAYHERE_MODE = process.env.PAYHERE_MODE || 'sandbox';
 const MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID || '1223807';
-const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || '';
+const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || DEFAULT_PAYHERE_SECRET;
 const PAYHERE_URL = PAYHERE_MODE === 'live' ? 'https://www.payhere.lk/pay/checkout' : 'https://sandbox.payhere.lk/pay/checkout';
 
 function generatePayHereHash(orderId, amount, currency) {
@@ -68,20 +69,30 @@ router.post('/checkout-session', async (req, res) => {
         }
 
         const paymentRef = `DON-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-        await db.createDonation({
-            name,
-            email,
-            amount: amountLkr,
-            currency: 'LKR',
-            payment_status: 'pending',
-            stripe_session_id: paymentRef,
-            reference_text: referenceText || null
-        });
+        try {
+            await db.createDonation({
+                name,
+                email,
+                amount: amountLkr,
+                currency: 'LKR',
+                payment_status: 'pending',
+                stripe_session_id: paymentRef,
+                reference_text: referenceText || null
+            });
+        } catch (dbErr) {
+            // Do not block PayHere checkout if DB logging fails.
+            // Payment notify can still be processed independently.
+            console.error('donations/createDonation failed:', dbErr && dbErr.message ? dbErr.message : dbErr);
+        }
 
         res.json({ url: `${baseUrl}/api/donations/payhere/${encodeURIComponent(paymentRef)}` });
     } catch (e) {
         console.error('donations/checkout-session:', e);
-        res.status(500).json({ error: 'Failed to start PayHere donation', code: 'payhere_checkout_failed' });
+        res.status(500).json({
+            error: 'Failed to start PayHere donation',
+            code: 'payhere_checkout_failed',
+            detail: (e && e.message) ? String(e.message).slice(0, 180) : 'unknown'
+        });
     }
 });
 
