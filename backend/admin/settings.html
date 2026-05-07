@@ -178,6 +178,17 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Unisex Collection Image URL</label>
+                            <input type="text" id="catImgUnisex" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Upload Unisex Image</label>
+                            <input type="file" id="catFileUnisex" accept="image/*">
+                        </div>
+                    </div>
+
                     <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
                         <button type="button" class="btn-primary" id="saveCategoryImagesBtn">Save Category Images</button>
                         <button type="button" class="btn-secondary" id="reloadCategoryImagesBtn">Reload</button>
@@ -514,6 +525,7 @@
             document.getElementById('catImgMen').value = d.men || '';
             document.getElementById('catImgWomen').value = d.women || '';
             document.getElementById('catImgGifts').value = d.gifts || '';
+            document.getElementById('catImgUnisex').value = d.unisex || '';
             status.textContent = '';
         }
 
@@ -524,11 +536,13 @@
                 const upMen = await uploadImageFromInput('catFileMen');
                 const upWomen = await uploadImageFromInput('catFileWomen');
                 const upGifts = await uploadImageFromInput('catFileGifts');
+                const upUnisex = await uploadImageFromInput('catFileUnisex');
 
                 const payload = {
                     men: upMen || getTextVal('catImgMen'),
                     women: upWomen || getTextVal('catImgWomen'),
-                    gifts: upGifts || getTextVal('catImgGifts')
+                    gifts: upGifts || getTextVal('catImgGifts'),
+                    unisex: upUnisex || getTextVal('catImgUnisex')
                 };
 
                 const r = await fetch(apiUrl('/api/category-images/admin'), {
@@ -543,6 +557,7 @@
                 if (upMen) document.getElementById('catImgMen').value = upMen;
                 if (upWomen) document.getElementById('catImgWomen').value = upWomen;
                 if (upGifts) document.getElementById('catImgGifts').value = upGifts;
+                if (upUnisex) document.getElementById('catImgUnisex').value = upUnisex;
                 
                 setTimeout(() => { status.textContent = ''; }, 1500);
             } catch (e) {

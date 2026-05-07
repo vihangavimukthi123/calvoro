@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Women's Collection - CALVORO</title>
+    <title>Unisex Collection - CALVORO</title>
     <script>(function(){var v=localStorage.getItem('calvoro_theme');var dark=v==='dark'||(!v&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();</script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/auth.css">
 </head>
 
-<body data-collection="women">
+<body data-collection="unisex">
     <!-- Mobile Navigation Menu -->
     <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
         <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
@@ -28,7 +28,7 @@
                 <a href="account.html">MY ACCOUNT</a>
                 <a href="wishlist.html">WISHLIST</a>
                 <a href="faq.html">FAQ</a>
-                <a href="return-exchange-policy.html">RETURNS & EXCHANGE</a>
+                <a href="return-exchange-policy.html">RETURNS &amp; EXCHANGE</a>
             </nav>
             <div class="mobile-menu-footer">
                 <div class="mobile-menu-social">
@@ -53,15 +53,11 @@
                     <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
-            <div class="logo">
-                <a href="index.html">
-                    <img src="logo.png" alt="CALVORO">
-                </a>
-            </div>
+            <div class="logo"><a href="index.html"><img src="logo.png" alt="CALVORO"></a></div>
             <nav>
                 <a href="men.html">MEN</a>
-                <a href="women.html" class="active">WOMEN</a>
-                <a href="unisex.html">UNISEX</a>
+                <a href="women.html">WOMEN</a>
+                <a href="unisex.html" class="active">UNISEX</a>
                 <!-- <a href="accessories.html">ACCESSORIES</a> -->
                 <a href="gifts.html">GIFT VOUCHERS</a>
             </nav>
@@ -73,14 +69,12 @@
                     <span>Search</span>
                 </button>
                 <button class="locale-btn">LK ▼</button>
-                <div id="auth-navbar-slot">
-                    <button class="account-btn">
-                        <svg width="20" height="20">
-                            <circle cx="10" cy="7" r="3" />
-                            <path d="M3 18a7 7 0 0114 0" />
-                        </svg>
-                    </button>
-                </div>
+                <div id="auth-navbar-slot"><button class="account-btn">
+                    <svg width="20" height="20">
+                        <circle cx="10" cy="7" r="3" />
+                        <path d="M3 18a7 7 0 0114 0" />
+                    </svg>
+                </button></div>
                 <a href="cart.html" class="cart-btn" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px;">
                     <svg width="20" height="20"><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /><path d="M1 1h4l2 11h10l3-8H6" /></svg>
                     <span class="badge" id="cart-count">0</span>
@@ -100,7 +94,7 @@
 
     <!-- Breadcrumb -->
     <div class="breadcrumb container">
-        <a href="index.html">Home</a> / <span>Women's Collection</span>
+        <a href="index.html">Home</a> / <span>Unisex Collection</span>
     </div>
 
     <!-- Main Layout -->
@@ -108,15 +102,17 @@
 
         <!-- Sidebar -->
         <aside class="sidebar">
-            <h2>Women's Collection</h2>
+            <h2>Unisex Collection</h2>
 
             <div class="filter">
                 <button class="filter-toggle">Category <span>▼</span></button>
                 <div class="filter-options">
-                    <label><input type="checkbox" value="Sports Bras"> Sports Bras</label>
-                    <label><input type="checkbox" value="Leggings"> Leggings</label>
-                    <label><input type="checkbox" value="Tops"> Tops</label>
+                    <label><input type="checkbox" value="Tanks"> Tanks</label>
+                    <label><input type="checkbox" value="T-Shirts"> T-Shirts</label>
                     <label><input type="checkbox" value="Shorts"> Shorts</label>
+                    <label><input type="checkbox" value="Hoodies"> Hoodies</label>
+                    <label><input type="checkbox" value="Tops"> Tops</label>
+                    <label><input type="checkbox" value="Leggings"> Leggings</label>
                 </div>
             </div>
 
@@ -126,6 +122,8 @@
                     <label><input type="checkbox" name="color" value="black"> Black</label>
                     <label><input type="checkbox" name="color" value="white"> White</label>
                     <label><input type="checkbox" name="color" value="grey"> Grey</label>
+                    <label><input type="checkbox" name="color" value="blue"> Blue</label>
+                    <label><input type="checkbox" name="color" value="navy"> Navy</label>
                     <label><input type="checkbox" name="color" value="pink"> Pink</label>
                 </div>
             </div>
@@ -155,6 +153,7 @@
                 <div class="filter-options">
                     <label><input type="radio" name="price" value="0-5000"> Under LKR 5,000</label>
                     <label><input type="radio" name="price" value="5000-10000"> LKR 5,000 - 10,000</label>
+                    <label><input type="radio" name="price" value="10000-99999"> Over LKR 10,000</label>
                 </div>
             </div>
 
@@ -164,6 +163,7 @@
                     <label><input type="radio" name="sort" value="featured"> Featured</label>
                     <label><input type="radio" name="sort" value="price_asc"> Price: Low to High</label>
                     <label><input type="radio" name="sort" value="price_desc"> Price: High to Low</label>
+                    <label><input type="radio" name="sort" value="newest"> Newest</label>
                 </div>
             </div>
         </aside>
@@ -171,7 +171,7 @@
         <!-- Products -->
         <main>
             <div class="collection-header">
-                <h1>Women's Collection</h1>
+                <h1>Unisex Collection</h1>
                 <p class="results-count">Showing 0 products</p>
             </div>
 
@@ -234,8 +234,8 @@
                 <a href="men.html">Men</a>
                 <a href="women.html">Women</a>
                 <a href="unisex.html">Unisex</a>
-                <!-- <a href="accessories.html">Accessories</a> -->
-                <a href="gifts.html">Gift Vouchers</a>
+                <a href="accessories.html">Accessories</a>
+                <a href="gifts.html">Gifts</a>
             </div>
             <div>
                 <h4>SUPPORT</h4>
@@ -255,11 +255,13 @@
                 <h4>CONNECT</h4>
                 <button onclick="window.open('#', '_blank')">CALVORO BLOG</button>
                 <button onclick="alert('Newsletter signup!')">EMAIL SIGN UP</button>
-                </div>
+            </div>
             <div>
                 <h4>LEGAL</h4>
                 <a href="privacy-policy.html">Privacy Policy</a>
-                <a href="terms-and-conditions.html">Terms & Conditions</a><a href="return-exchange-policy.html">Return &amp; Exchange Policy</a></div>
+                <a href="terms-and-conditions.html">Terms &amp; Conditions</a>
+                <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a>
+            </div>
         </div>
         <div class="footer-bar">
             <div class="container footer-bar__row">
@@ -283,7 +285,7 @@
         </div>
 
         <div class="footer-bottom">
-            <p>© 2026 | CALVORO | All Rights Reserved | <a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-and-conditions.html">Terms &amp; Conditions</a> | <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a> | <a href="return-refund-policy.html">Return &amp; Refund Policy</a></p>
+            <p>&copy; 2026 | CALVORO | All Rights Reserved | <a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-and-conditions.html">Terms &amp; Conditions</a> | <a href="return-exchange-policy.html">Return &amp; Exchange Policy</a> | <a href="return-refund-policy.html">Return &amp; Refund Policy</a></p>
         </div>
     </footer>
 

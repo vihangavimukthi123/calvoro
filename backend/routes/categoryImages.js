@@ -33,7 +33,8 @@ router.post('/admin', requireAdmin, async (req, res) => {
         await db.setSiteSetting('category_images', JSON.stringify({
             men: payload.men || '',
             women: payload.women || '',
-            gifts: payload.gifts || ''
+            gifts: payload.gifts || '',
+            unisex: payload.unisex || ''
         }));
         res.json({ success: true });
     } catch (error) {

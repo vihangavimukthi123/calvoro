@@ -161,15 +161,17 @@ router.get('/', async (req, res) => {
             const compact = term.replace(/[\s'-]/g, '');
             const isMenTerm = compact === 'men' || compact === 'mens';
             const isWomenTerm = compact === 'women' || compact === 'womens';
+            const isUnisexTerm = compact === 'unisex';
 
             let matchedCategoryIds = [];
-            if (isMenTerm || isWomenTerm) {
+            if (isMenTerm || isWomenTerm || isUnisexTerm) {
                 const categories = await db.getAllCategories();
                 matchedCategoryIds = (categories || [])
                     .filter((c) => {
                         const slug = String(c.slug || '').toLowerCase();
                         const name = String(c.name || '').toLowerCase();
                         const value = `${slug} ${name}`.replace(/[\s'-]/g, '');
+                        if (isUnisexTerm) return value.includes('unisex');
                         if (isMenTerm) return value.includes('men') && !value.includes('women');
                         return value.includes('women');
                     })

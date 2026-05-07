@@ -451,6 +451,7 @@ class ProductSearch {
         const q = String(query || '').toLowerCase().trim().replace(/[\s'-]/g, '');
         if (q === 'men' || q === 'mens') return 'men';
         if (q === 'women' || q === 'womens') return 'women';
+        if (q === 'unisex') return 'unisex';
         if (q === 'gift' || q === 'gifts' || q === 'voucher' || q === 'vouchers') return 'gifts';
         if (q === 'accessory' || q === 'accessories') return 'accessories';
         return '';
@@ -499,7 +500,7 @@ class ProductSearch {
         try {
             const collection = this.detectCollectionTerm(query);
             const params = new URLSearchParams();
-            if (collection === 'men' || collection === 'women') {
+            if (collection === 'men' || collection === 'women' || collection === 'unisex') {
                 params.set('category', collection);
             } else {
                 params.set('search', query);
@@ -1727,6 +1728,13 @@ async function initCategoryImages() {
                 if (el) {
                     if (el.tagName === 'IMG') el.src = d.gifts;
                     else { el.style.backgroundImage = 'url(' + d.gifts + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+                }
+            }
+            if (d.unisex) {
+                var el = document.getElementById('cat-img-unisex');
+                if (el) {
+                    if (el.tagName === 'IMG') el.src = d.unisex;
+                    else { el.style.backgroundImage = 'url(' + d.unisex + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
                 }
             }
         }

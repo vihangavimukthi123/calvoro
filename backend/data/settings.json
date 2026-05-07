@@ -58,6 +58,7 @@
   "category_images": {
     "men": "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400&h=500&fit=crop",
     "women": "",
-    "gifts": ""
+    "gifts": "",
+    "unisex": ""
   }
 }
