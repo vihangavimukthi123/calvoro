@@ -99,19 +99,19 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
         ]);
 
         res.json({
-            totalProducts: p[0]?.count || 0,
-            totalUsers:    u[0]?.count || 0,
-            totalOrders:   o[0]?.count || 0,
+            totalProducts: p[0]?.count    || 0,
+            totalUsers:    u[0]?.count    || 0,
+            totalOrders:   o[0]?.count    || 0,
             pendingOrders: pend[0]?.count || 0,
-            totalRevenue:  rev[0]?.sum   || 0
+            totalRevenue:  rev[0]?.sum    || 0
         });
     } catch (e) {
         res.json({
             totalProducts: 0,
-            totalUsers: 0,
-            totalOrders: 0,
+            totalUsers:    0,
+            totalOrders:   0,
             pendingOrders: 0,
-            totalRevenue: 0
+            totalRevenue:  0
         });
     }
 });
@@ -154,7 +154,7 @@ app.post('/api/admin/change-password', requireAdmin, requirePermission('settings
     }
 });
 
-// === Admin Products & Trending (Products) ===
+// === Admin Products & Trending ===
 function normalizeAdminMediaUrl(url) {
     if (typeof url !== 'string') return url;
     return url.trim().replace(/\\/g, '/');
@@ -217,14 +217,17 @@ app.post('/api/admin/trending-products', requireAdmin, requirePermission('produc
         await db.pool.query('DELETE FROM trending_products');
         if (productIds && productIds.length > 0) {
             for (let i = 0; i < productIds.length; i++) {
-                await db.pool.query('INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)', [productIds[i], i + 1]);
+                await db.pool.query(
+                    'INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)',
+                    [productIds[i], i + 1]
+                );
             }
         }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// === Shipping Settings (Settings) ===
+// === Shipping Settings ===
 app.get('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
         const val = await db.getSiteSetting('default_courier');
@@ -249,6 +252,10 @@ app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/orders', ordersRouter);
+
+// ✅ FIXED: Admin Orders Route
+app.use('/api/admin/orders', requireAdmin, requirePermission('orders'), ordersRouter);
+
 app.use('/api/cart', cartRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
@@ -270,7 +277,7 @@ app.use('/api/admin/video-strip', requireAdmin, requirePermission('products'), v
 app.use('/api/admin/chat', requireAdmin, requirePermission('chat'), chatRouter);
 app.use('/api/category-images', categoryImagesRouter);
 
-// === Promotions (Public - Storefront) ===
+// === Promotions (Public) ===
 app.use('/api/promotions', promotionsPublicRouter);
 
 // === Promotions (Admin) ===
@@ -308,6 +315,7 @@ app.get('/api/offers/active', async (req, res) => {
     }
 });
 
+// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine
 app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'), discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
@@ -315,7 +323,7 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 app.use('/storage/videos', express.static(VIDEO_DIR));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-// --- Diagnostic Logging ---
+// === Diagnostic Logging ===
 app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
         console.log(`[API Request] ${req.method} ${req.path}`);
@@ -353,6 +361,9 @@ app.get('*', (req, res) => {
                 INDEX idx_product_id (product_id)
             )
         `);
-    } catch (e) { console.error('Startup table init error:', e.message); }
+    } catch (e) {
+        console.error('Startup table init error:', e.message);
+    }
+
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 })();
