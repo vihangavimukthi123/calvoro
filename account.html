@@ -15,7 +15,23 @@
         .account-sidebar a { display: flex; align-items: center; gap: 10px; padding: 12px 16px; text-decoration: none; color: var(--color-text); border-radius: 8px; font-size: 14px; transition: background 0.2s; }
         .account-sidebar a:hover { background: var(--color-card); }
         .account-sidebar a.active { background: var(--color-card); font-weight: 600; }
-        .account-sidebar .icon { width: 20px; height: 20px; opacity: 0.8; }
+        .account-sidebar .icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .account-sidebar .icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
         .account-main { flex: 1; min-width: 0; }
         .account-section { display: none; }
         .account-section.active { display: block; }
@@ -151,14 +167,14 @@
         <aside class="account-sidebar">
             <h2 style="font-size:18px;margin-bottom:20px;">My Account</h2>
             <nav>
-                <a href="#" data-section="profile" class="active"><span class="icon">👤</span> Profile</a>
-                <a href="#" data-section="addresses"><span class="icon">🏠</span> Addresses</a>
-                <a href="#" data-section="payments"><span class="icon">💳</span> Payment Methods</a>
-                <a href="#" data-section="orders"><span class="icon">📦</span> Orders</a>
-                <a href="#" data-section="wishlist"><span class="icon">❤️</span> Wishlist</a>
-                <a href="#" data-section="cart"><span class="icon">🛒</span> Cart</a>
-                <a href="#" data-section="settings"><span class="icon">⚙️</span> Settings</a>
-                <a href="#" id="logoutBtn"><span class="icon">🚪</span> Logout</a>
+                <a href="#" data-section="profile" class="active"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="4"></circle></svg></span> Profile</a>
+                <a href="#" data-section="addresses"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span> Addresses</a>
+                <a href="#" data-section="payments"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"></rect><path d="M2.5 10h19"></path></svg></span> Payment Methods</a>
+                <a href="#" data-section="orders"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"></path><path d="M4 7l8 4 8-4"></path><path d="M12 11v10"></path></svg></span> Orders</a>
+                <a href="#" data-section="wishlist"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.2a4.8 4.8 0 0 0-8.8-2.6 4.8 4.8 0 0 0-8.8 2.6c0 5.2 8.8 11.6 8.8 11.6s8.8-6.4 8.8-11.6z"></path></svg></span> Wishlist</a>
+                <a href="#" data-section="cart"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.5"></circle><circle cx="18" cy="20" r="1.5"></circle><path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.7L21 8H7"></path></svg></span> Cart</a>
+                <a href="#" data-section="settings"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.8 1.8 0 0 0-1-1.6 1.8 1.8 0 0 0-2 .4l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.8 1.8 0 0 0 2 .4 1.8 1.8 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.8 1.8 0 0 0 1 1.6 1.8 1.8 0 0 0 2-.4l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.8 1.8 0 0 0-1.5 1z"></path></svg></span> Settings</a>
+                <a href="#" id="logoutBtn"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg></span> Logout</a>
             </nav>
         </aside>
         <main class="account-main">

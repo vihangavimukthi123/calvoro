@@ -2469,6 +2469,10 @@ footer .footer-bottom {
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
+[data-theme="dark"] .whatsapp-float img {
+    filter: invert(1) drop-shadow(0 4px 10px rgba(0,0,0,0.45));
+}
+
 @media (max-width: 768px) {
     .whatsapp-float {
         bottom: 80px;

@@ -18,14 +18,14 @@ function replaceIconsInDir(dir, isSubDir) {
             // Free Shipping
             const freeShippingRegex = /<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1\.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"\/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"\/><\/svg>/g;
             if (freeShippingRegex.test(content)) {
-                content = content.replace(freeShippingRegex, '<img src="' + prefix + 'freesh-removebg-preview.png" alt="Free Shipping">');
+                content = content.replace(freeShippingRegex, '<img src="' + prefix + 'free-removebg-preview.png" alt="Free Shipping">');
                 modified = true;
             }
 
             // Free Returns
             const freeReturnsRegex = /<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1\.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"\/><path d="M3\.51 15a9 9 0 1 0 \.49-3"\/><\/svg>/g;
             if (freeReturnsRegex.test(content)) {
-                content = content.replace(freeReturnsRegex, '<img src="' + prefix + 'new-removebg-preview.png" alt="Free Returns">');
+                content = content.replace(freeReturnsRegex, '<img src="' + prefix + 'returns1-removebg-preview.png" alt="Free Returns">');
                 modified = true;
             }
 
@@ -39,7 +39,7 @@ function replaceIconsInDir(dir, isSubDir) {
             // Also clean up any trust-icon-img classes that we previously added to images to standardize
             content = content.replace(/class="trust-icon-img"/g, '');
             // Update any img tags that don't have the correct path prefix
-            const imgRegex = new RegExp('<img src="((?:\\.\\.\\/)?)(freesh|new|secure)-removebg-preview\\.png"', 'g');
+            const imgRegex = new RegExp('<img src="((?:\\.\\.\\/)?)(free|returns1|secure)-removebg-preview\\.png"', 'g');
             content = content.replace(imgRegex, (match, currentPrefix, name) => {
                 if (currentPrefix !== prefix) {
                     modified = true;
