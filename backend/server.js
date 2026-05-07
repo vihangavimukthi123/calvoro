@@ -1,369 +1,256 @@
-require('dotenv').config();
 const express = require('express');
-const app = express();
-const http = require('http');
-const { Server } = require('socket.io');
+const router = express.Router();
+const db = require('../db');
+const emailService = require('../services/emailService');
+const requirePermission = require('../middleware/requirePermission');
 
-const session = require('express-session');
-const cors = require('cors');
-const path = require('path');
-const multer = require('multer');
-
-const db = require('./db');
-const productsRouter = require('./routes/products');
-const categoriesRouter = require('./routes/categories');
-const ordersRouter = require('./routes/orders');
-const authRouter = require('./routes/auth');
-const cartRouter = require('./routes/cart');
-const usersRouter = require('./routes/users');
-const paymentRouter = require('./routes/payment');
-const carouselRouter = require('./routes/carousel');
-const reviewsRouter = require('./routes/reviews');
-const uploadRouter = require('./routes/upload');
-const adminUsersRouter = require('./routes/adminUsers');
-const accountRouter = require('./routes/account');
-const wishlistRouter = require('./routes/wishlist');
-const vouchersRouter = require('./routes/vouchers');
-const newsletterRouter = require('./routes/newsletter');
-const analyticsRouter = require('./routes/analytics');
-const deliveryRouter = require('./routes/delivery');
-const donationsRouter = require('./routes/donations');
-const emailRouter = require('./routes/email');
-const promoTickerRouter = require('./routes/promoTicker');
-const videoStripRouter = require('./routes/videoStrip');
-const chatRouter = require('./routes/chat');
-const categoryImagesRouter = require('./routes/categoryImages');
-const socketHandler = require('./lib/socketHandler');
-const { UPLOAD_DIR, VIDEO_DIR } = require('./storagePaths');
-const {
-    publicRouter: promotionsPublicRouter,
-    uploadPromoImage,
-    adminList: promotionsAdminList,
-    adminCreate: promotionsAdminCreate,
-    adminUpdate: promotionsAdminUpdate,
-    adminReplaceImage: promotionsAdminReplaceImage,
-    adminDelete: promotionsAdminDelete
-} = require('./routes/promotions');
-const { router: discountEngineAdmin, publicRouter: discountEnginePublic } = require('./routes/discountEngine');
-const { createRateLimiter } = require('./lib/adminRateLimit');
-
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: true, credentials: true }
-});
-const PORT = process.env.PORT || 8080;
-
-socketHandler(io);
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ verify: (req, res, buf) => { try { req.rawBody = buf; } catch (_) { } } }));
-app.use(express.urlencoded({ extended: true }));
-
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'calvoro-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
-}));
-
-const requirePermission = require('./middleware/requirePermission');
-
+// Middleware to check admin auth
 function requireAdmin(req, res, next) {
-    if (req.session && req.session.admin) return next();
-    res.status(401).json({ error: 'Unauthorized' });
-}
-
-// === Admin Stats API (Dashboard) ===
-// ✅ FIXED: requirePermission('dashboard') removed
-app.get('/api/admin/stats', requireAdmin, async (req, res) => {
-    try {
-        const runQ = async (sql) => {
-            try {
-                const [rows] = await db.pool.query(sql);
-                return Array.isArray(rows) ? rows : [];
-            } catch (e) {
-                console.error('Stats query error:', e.message);
-                return [];
-            }
-        };
-
-        const [p, u, o, pend, rev] = await Promise.all([
-            runQ('SELECT COUNT(*) as count FROM products'),
-            runQ('SELECT COUNT(*) as count FROM users'),
-            runQ('SELECT COUNT(*) as count FROM orders'),
-            runQ('SELECT COUNT(*) as count FROM orders WHERE LOWER(status) = "pending"'),
-            runQ('SELECT COALESCE(SUM(total),0) as sum FROM orders')
-        ]);
-
-        res.json({
-            totalProducts: p[0]?.count    || 0,
-            totalUsers:    u[0]?.count    || 0,
-            totalOrders:   o[0]?.count    || 0,
-            pendingOrders: pend[0]?.count || 0,
-            totalRevenue:  rev[0]?.sum    || 0
-        });
-    } catch (e) {
-        res.json({
-            totalProducts: 0,
-            totalUsers:    0,
-            totalOrders:   0,
-            pendingOrders: 0,
-            totalRevenue:  0
-        });
-    }
-});
-
-// === Admin Password Change (Settings) ===
-app.post('/api/admin/change-password', requireAdmin, requirePermission('settings'), async (req, res) => {
-    try {
-        const bcrypt = require('bcrypt');
-        const { currentPassword, newUsername, newPassword } = req.body;
-        if (!newPassword || newPassword.length < 6) {
-            return res.status(400).json({ error: 'New password must be at least 6 characters' });
-        }
-        const admin = req.session.admin;
-        const [rows] = await db.pool.query('SELECT * FROM admin_users WHERE id = ?', [admin.id || 1]);
-        if (!rows || !rows[0]) return res.status(404).json({ error: 'Admin not found' });
-
-        const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
-        if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
-
-        const newHash = await bcrypt.hash(newPassword, 10);
-        const updates = ['password_hash = ?'];
-        const values = [newHash];
-
-        if (newUsername && newUsername.trim()) {
-            updates.push('username = ?');
-            values.push(newUsername.trim());
-        }
-
-        values.push(rows[0].id);
-        await db.pool.query(`UPDATE admin_users SET ${updates.join(', ')} WHERE id = ?`, values);
-
-        if (newUsername && newUsername.trim()) {
-            req.session.admin.username = newUsername.trim();
-        }
-
-        res.json({ success: true, message: 'Credentials updated successfully' });
-    } catch (e) {
-        console.error('Password change error:', e.message);
-        res.status(500).json({ error: 'Failed to update credentials' });
-    }
-});
-
-// === Admin Products & Trending ===
-function normalizeAdminMediaUrl(url) {
-    if (typeof url !== 'string') return url;
-    return url.trim().replace(/\\/g, '/');
-}
-
-function normalizeAdminProductMedia(product) {
-    if (!product || typeof product !== 'object') return product;
-    const p = { ...product };
-
-    p.images = Array.isArray(p.images) ? p.images.map(normalizeAdminMediaUrl).filter(Boolean) : [];
-
-    const inColorImages = p.color_images && typeof p.color_images === 'object' ? p.color_images : {};
-    p.color_images = {};
-    Object.keys(inColorImages).forEach((key) => {
-        const normalized = normalizeAdminMediaUrl(inColorImages[key]);
-        if (normalized) p.color_images[key] = normalized;
-    });
-
-    const inColorVideos = p.color_videos && typeof p.color_videos === 'object' ? p.color_videos : {};
-    p.color_videos = {};
-    Object.keys(inColorVideos).forEach((key) => {
-        const normalized = normalizeAdminMediaUrl(inColorVideos[key]);
-        if (normalized) p.color_videos[key] = normalized;
-    });
-
-    if (Array.isArray(p.media)) {
-        p.media = p.media.map((m) => ({
-            ...m,
-            url: normalizeAdminMediaUrl(m && m.url),
-            hover_video_url: normalizeAdminMediaUrl(m && m.hover_video_url)
-        }));
+    if (req.session && req.session.admin) {
+        next();
     } else {
-        p.media = [];
+        res.status(401).json({ error: 'Unauthorized' });
     }
-
-    p.image_url = normalizeAdminMediaUrl(
-        p.image_url || p.images[0] || Object.values(p.color_images)[0] || ''
-    );
-    p.size_guide_url = normalizeAdminMediaUrl(p.size_guide_url || '');
-    return p;
 }
 
-app.get('/api/admin/products', requireAdmin, requirePermission('products'), async (req, res) => {
+// Get all orders (admin only) or current user's orders (customer)
+router.get('/', async (req, res) => {
     try {
-        const products = await db.getAllProducts(true);
-        res.json((products || []).map(normalizeAdminProductMedia));
-    } catch (e) { res.status(500).json({ error: 'Failed' }); }
-});
-
-app.get('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
-    try {
-        const [rows] = await db.pool.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
-        res.json({ productIds: (rows || []).map(t => t.product_id) });
-    } catch (e) { res.json({ productIds: [] }); }
-});
-
-app.post('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
-    try {
-        const { productIds } = req.body;
-        await db.pool.query('DELETE FROM trending_products');
-        if (productIds && productIds.length > 0) {
-            for (let i = 0; i < productIds.length; i++) {
-                await db.pool.query(
-                    'INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)',
-                    [productIds[i], i + 1]
-                );
-            }
-        }
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'Failed' }); }
-});
-
-// === Shipping Settings ===
-app.get('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
-    try {
-        const val = await db.getSiteSetting('default_courier');
-        res.json({ defaultCourier: val || 'Standard Courier' });
-    } catch (e) {
-        res.json({ defaultCourier: 'Standard Courier' });
-    }
-});
-
-app.post('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
-    try {
-        const { defaultCourier } = req.body;
-        await db.setSiteSetting('default_courier', defaultCourier || '');
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ error: 'Failed to save' });
-    }
-});
-
-// === Standard Routes ===
-app.use('/api/auth', authRouter);
-app.use('/api/products', productsRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/orders', ordersRouter);
-
-// ✅ FIXED: Admin Orders Route
-app.use('/api/admin/orders', requireAdmin, requirePermission('orders'), ordersRouter);
-
-app.use('/api/cart', cartRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/payment', paymentRouter);
-app.use('/api/carousel', carouselRouter);
-app.use('/api/admin/carousel', requireAdmin, requirePermission('products'), carouselRouter);
-app.use('/api/reviews', reviewsRouter);
-app.use('/api/upload', uploadRouter);
-app.use('/api/admin/users', adminUsersRouter);
-app.use('/api/account', accountRouter);
-app.use('/api/wishlist', wishlistRouter);
-app.use('/api/vouchers', vouchersRouter);
-app.use('/api/newsletter', newsletterRouter);
-app.use('/api/admin/analytics', requireAdmin, requirePermission('reports'), analyticsRouter);
-app.use('/api/delivery', deliveryRouter);
-app.use('/api/donations', donationsRouter);
-app.use('/api/email', emailRouter);
-app.use('/api/admin/promo-ticker', requireAdmin, requirePermission('products'), promoTickerRouter);
-app.use('/api/admin/video-strip', requireAdmin, requirePermission('products'), videoStripRouter);
-app.use('/api/admin/chat', requireAdmin, requirePermission('chat'), chatRouter);
-app.use('/api/category-images', categoryImagesRouter);
-
-// === Promotions (Public) ===
-app.use('/api/promotions', promotionsPublicRouter);
-
-// === Promotions (Admin) ===
-app.get('/api/admin/promotions', requireAdmin, requirePermission('products'), promotionsAdminList);
-app.post('/api/admin/promotions', requireAdmin, requirePermission('products'), uploadPromoImage, promotionsAdminCreate);
-app.put('/api/admin/promotions/:id', requireAdmin, requirePermission('products'), promotionsAdminUpdate);
-app.post('/api/admin/promotions/:id/image', requireAdmin, requirePermission('products'), uploadPromoImage, promotionsAdminReplaceImage);
-app.delete('/api/admin/promotions/:id', requireAdmin, requirePermission('products'), promotionsAdminDelete);
-
-// === Public Routes (Storefront) ===
-app.get('/api/promo-ticker', async (req, res) => {
-    try {
-        const data = await db.getPromoTicker();
-        res.json(data);
-    } catch (e) {
-        res.json({ lines: [], durationSeconds: 22 });
-    }
-});
-
-app.get('/api/video-strip', async (req, res) => {
-    try {
-        const data = await db.getVideoStrip();
-        res.json({ items: data });
-    } catch (e) {
-        res.json({ items: [] });
-    }
-});
-
-app.get('/api/offers/active', async (req, res) => {
-    try {
-        const data = await db.getActiveOffersForStorefront();
-        res.json(data);
-    } catch (e) {
-        res.json({ campaigns: [], rules: [] });
-    }
-});
-
-// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine
-app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'), discountEngineAdmin);
-
-app.use(express.static(path.join(__dirname, '..')));
-app.use('/uploads', express.static(UPLOAD_DIR));
-app.use('/storage/videos', express.static(VIDEO_DIR));
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
-
-// === Diagnostic Logging ===
-app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-        console.log(`[API Request] ${req.method} ${req.path}`);
-    }
-    next();
-});
-
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
-
-(async () => {
-    try {
-        if (typeof db.ensureUserVerificationColumns === 'function') await db.ensureUserVerificationColumns();
-        if (typeof db.ensureAccountTables === 'function') await db.ensureAccountTables();
-        if (typeof db.ensureSiteSettingsTable === 'function') await db.ensureSiteSettingsTable();
-        if (typeof db.ensureChatTables === 'function') await db.ensureChatTables();
-        if (typeof db.normalizeProductMediaData === 'function') {
-            const mediaFix = await db.normalizeProductMediaData();
-            if (mediaFix && mediaFix.changed) {
-                console.log(`Normalized product media for ${mediaFix.changed}/${mediaFix.total} product(s)`);
-            }
+        // Customer - own orders only
+        if (req.session && req.session.user) {
+            const orders = await db.getOrdersByUserId(req.session.user.id);
+            return res.json(orders);
         }
 
-        await db.pool.query(`
-            CREATE TABLE IF NOT EXISTS trending_products (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                product_id INT NOT NULL,
-                display_order INT NOT NULL DEFAULT 0,
-                INDEX idx_product_id (product_id)
-            )
-        `);
-    } catch (e) {
-        console.error('Startup table init error:', e.message);
+        // ✅ FIXED: Manual permission check ඉවත් කළා
+        // requirePermission middleware එකෙන් bypass වෙනවා
+        if (req.session && req.session.admin) {
+            let orders = await db.getAllOrders();
+            const { status } = req.query;
+            if (status) orders = orders.filter(o => o.status === status);
+            return res.json(orders);
+        }
+
+        res.status(401).json({ error: 'Unauthorized' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Get single order
+router.get('/:id', async (req, res) => {
+    try {
+        const order = await db.getOrderById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Create order (supports optional voucher_code; discount applied server-side)
+router.post('/', async (req, res) => {
+    const { customer_name, customer_email, customer_phone, customer_address, items, payment_method, notes, voucher_code, delivery_method_id, shipping_zone_id } = req.body;
+
+    if (!customer_name || !customer_email || !items || items.length === 0) {
+        return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-})();
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    let shipping = subtotal >= 15000 ? 0 : 500;
+    const user_id = req.session && req.session.user ? req.session.user.id : null;
+
+    let voucherDiscount = 0;
+    let voucherId = null;
+    if (voucher_code && String(voucher_code).trim()) {
+        try {
+            const validation = await db.validateVoucherForCart(voucher_code, subtotal, user_id);
+            if (!validation.valid) {
+                return res.status(400).json({ error: validation.message || 'Invalid voucher' });
+            }
+            voucherDiscount = validation.discount;
+            voucherId = validation.voucher && validation.voucher.id;
+        } catch (e) {
+            console.error(e);
+            return res.status(500).json({ error: 'Voucher validation failed' });
+        }
+    }
+
+    const total = Math.max(0, subtotal + shipping - voucherDiscount);
+    const order_number = 'ORD-' + Date.now();
+
+    const order = {
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone: customer_phone || '',
+        customer_address: customer_address || '',
+        user_id,
+        items,
+        subtotal,
+        shipping,
+        total,
+        status: 'pending',
+        payment_method: payment_method || 'COD',
+        notes: notes || '',
+        voucher_code: voucher_code && voucherDiscount > 0 ? String(voucher_code).trim().toUpperCase() : null,
+        voucher_discount: voucherDiscount
+    };
+
+    try {
+        const result = await db.createOrder(order);
+        const orderId = result.lastInsertRowid;
+        if (voucherId != null && voucherDiscount > 0) {
+            await db.recordRedemption(voucherId, orderId, user_id, voucherDiscount);
+        }
+
+        try {
+            const fullOrder = await db.getOrderById(orderId);
+            if (fullOrder) {
+                await emailService.sendOrderConfirmationEmail(fullOrder, items);
+            }
+        } catch (emailErr) {
+            console.error('Failed to send order confirmation email:', emailErr);
+        }
+
+        res.json({
+            success: true,
+            id: orderId,
+            order_id: orderId,
+            order_number,
+            message: 'Order created successfully'
+        });
+    } catch (error) {
+        console.error(error);
+        const msg = error && error.message ? String(error.message) : '';
+        if (msg.includes('Insufficient stock') || msg.includes('Product not found')) {
+            return res.status(400).json({ error: msg });
+        }
+        res.status(500).json({ error: 'Failed to create order' });
+    }
+});
+
+// Update order status (admin only)
+router.put('/:id/status', requirePermission('orders'), async (req, res) => {
+    const { status } = req.body;
+
+    const validStatuses = ['pending', 'processing', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    try {
+        await db.updateOrderStatus(req.params.id, status);
+
+        if (status === 'completed') {
+            try {
+                const order = await db.getOrderById(req.params.id);
+                if (order) {
+                    await emailService.queueEmail({
+                        type: 'shipping-update',
+                        to: order.customer_email,
+                        subject: `Great news! Your order #${order.order_number} has shipped!`,
+                        templateName: 'shipping-update',
+                        data: {
+                            username: order.customer_name || 'there',
+                            orderNumber: order.order_number,
+                            trackUrl: `https://calvoro.com/track.html?id=${order.id}`
+                        }
+                    });
+                }
+            } catch (emailErr) {
+                console.error('Failed to send shipping update email:', emailErr);
+            }
+        }
+
+        res.json({ success: true, message: 'Order status updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update order status' });
+    }
+});
+
+// Update tracking number and notify customer (Admin only)
+router.post('/:id/tracking', requirePermission('orders'), async (req, res) => {
+    const { tracking_number } = req.body;
+    if (!tracking_number) {
+        return res.status(400).json({ error: 'Tracking number is required' });
+    }
+
+    try {
+        const order = await db.getOrderById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const rawCourier = typeof db.getSiteSetting === 'function' ? await db.getSiteSetting('defaultCourier') : null;
+        let courierName = rawCourier || 'Standard Courier';
+        try { const p = JSON.parse(rawCourier); if (p && p.name) courierName = p.name; } catch (e) {}
+
+        if (typeof db.updateOrderTracking === 'function') {
+            await db.updateOrderTracking(req.params.id, tracking_number, courierName);
+        }
+
+        try {
+            await emailService.queueEmail({
+                type: 'order_shipped',
+                to: order.customer_email,
+                subject: `Your Order #${order.order_number} has shipped!`,
+                templateName: 'order-shipped',
+                data: {
+                    name: order.customer_name || 'there',
+                    order_number: order.order_number,
+                    tracking_number: tracking_number,
+                    courier: courierName
+                }
+            });
+        } catch (emailErr) {
+            console.error('Failed to send tracking email:', emailErr);
+        }
+
+        res.json({ success: true, message: 'Tracking updated and email sent' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update tracking' });
+    }
+});
+
+// Get default courier (Admin only)
+router.get('/settings/courier', requirePermission('orders'), async (req, res) => {
+    try {
+        const rawCourier = typeof db.getSiteSetting === 'function' ? await db.getSiteSetting('defaultCourier') : null;
+        let courierName = rawCourier || 'Standard Courier';
+        try {
+            const p = JSON.parse(rawCourier);
+            if (p && p.name) courierName = p.name;
+        } catch (e) {}
+        res.json({ name: courierName });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch courier setting' });
+    }
+});
+
+// Update default courier (Admin only)
+router.post('/settings/courier', requirePermission('orders'), async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Courier name is required' });
+
+    try {
+        if (typeof db.setSiteSetting === 'function') {
+            await db.setSiteSetting('defaultCourier', JSON.stringify({ name }));
+            res.json({ success: true, message: 'Courier updated successfully' });
+        } else {
+            res.status(500).json({ error: 'Settings storage not available' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update courier setting' });
+    }
+});
+
+module.exports = router;
