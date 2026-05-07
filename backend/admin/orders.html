@@ -103,19 +103,31 @@
 
     <script src="js/admin.js"></script>
     <script>
-        // checkAuth() function එක js/admin.js ගොනුවේ තිබිය යුතුය
         if (typeof checkAuth === 'function') checkAuth();
 
         let orders = [];
 
         async function loadOrders() {
             try {
-                // Added credentials for production security
-                const res = await fetch('/api/orders', { credentials: 'include' });
-                orders = await res.json();
+                // ✅ FIXED: /api/orders → /api/admin/orders
+                const res = await fetch('/api/admin/orders', { credentials: 'include' });
+
+                if (!res.ok) {
+                    document.querySelector('#ordersTable tbody').innerHTML =
+                        `<tr><td colspan="8" class="text-center" style="color:red;">
+                            ⛔ Error ${res.status}: Orders load කිරීමට අසමත් විය. නැවත login කරන්න.
+                         </td></tr>`;
+                    return;
+                }
+
+                const data = await res.json();
+                // ✅ FIXED: array check — filtered.map is not a function error fix
+                orders = Array.isArray(data) ? data : [];
                 renderOrders();
             } catch (error) {
                 console.error('Error loading orders:', error);
+                document.querySelector('#ordersTable tbody').innerHTML =
+                    '<tr><td colspan="8" class="text-center" style="color:red;">❌ Connection error. නැවත උත්සාහ කරන්න.</td></tr>';
             }
         }
 
@@ -169,9 +181,10 @@
             }
 
             try {
-                const res = await fetch(`/api/orders/${id}/tracking`, {
+                // ✅ FIXED: /api/orders → /api/admin/orders
+                const res = await fetch(`/api/admin/orders/${id}/tracking`, {
                     method: 'POST',
-                    credentials: 'include', // Added credentials
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracking_number: trackingNumber })
                 });
@@ -232,7 +245,7 @@
                         <h3><strong>Total:</strong> LKR ${(order.total || 0).toLocaleString()}</h3>
                     </div>
                     
-                     <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <h4 style="margin: 0 0 12px 0;">📦 Shipping & Tracking</h4>
                         <div style="display: flex; gap: 12px; align-items: center;">
                             <input type="text" id="trackingInput" placeholder="Enter tracking number..." 
@@ -259,9 +272,10 @@
             }
 
             try {
-                const res = await fetch(`/api/orders/${id}/status`, {
+                // ✅ FIXED: /api/orders → /api/admin/orders
+                const res = await fetch(`/api/admin/orders/${id}/status`, {
                     method: 'PUT',
-                    credentials: 'include', // Added credentials
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
                 });
@@ -285,9 +299,10 @@
             }
 
             try {
-                const res = await fetch(`/api/orders/${id}/tracking`, {
+                // ✅ FIXED: /api/orders → /api/admin/orders
+                const res = await fetch(`/api/admin/orders/${id}/tracking`, {
                     method: 'POST',
-                    credentials: 'include', // Added credentials
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracking_number: trackingNumber })
                 });
@@ -316,7 +331,9 @@
 
         async function loadCourier() {
             try {
-                const res = await fetch('/api/orders/settings/courier', { credentials: 'include' });
+                // ✅ FIXED: /api/orders/settings/courier → /api/admin/orders/settings/courier
+                const res = await fetch('/api/admin/orders/settings/courier', { credentials: 'include' });
+                if (!res.ok) return;
                 const data = await res.json();
                 document.getElementById('courierSetting').value = data.name || '';
             } catch (error) {
@@ -327,17 +344,18 @@
         async function saveCourier() {
             const name = document.getElementById('courierSetting').value;
             const statusLabel = document.getElementById('courierStatus');
-            if(!name) { alert('Please enter a courier name'); return; }
+            if (!name) { alert('Please enter a courier name'); return; }
 
             try {
-                const res = await fetch('/api/orders/settings/courier', {
+                // ✅ FIXED: /api/orders/settings/courier → /api/admin/orders/settings/courier
+                const res = await fetch('/api/admin/orders/settings/courier', {
                     method: 'POST',
-                    credentials: 'include', // Added credentials
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
                 });
-                
-                if(res.ok) {
+
+                if (res.ok) {
                     statusLabel.innerText = 'Saved!';
                     setTimeout(() => statusLabel.innerText = '', 2000);
                     loadOrders();
