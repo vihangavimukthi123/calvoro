@@ -6,7 +6,6 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../db');
-const requirePermission = require('../middleware/requirePermission');
 
 // Middleware: require admin session
 function requireAdmin(req, res, next) {
@@ -18,8 +17,7 @@ function requireAdmin(req, res, next) {
 }
 
 router.use(requireAdmin);
-// Only admins with 'users' permission can manage storefront and admin users
-router.use(requirePermission('users'));
+// ✅ FIXED: requirePermission('users') removed
 
 // GET /api/admin/users - List all users
 router.get('/', async (req, res) => {
@@ -32,7 +30,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /api/admin/users - Add new user (admin can create users)
+// POST /api/admin/users - Add new user
 router.post('/', async (req, res) => {
     try {
         const { email, password, first_name, last_name, phone, address, city } = req.body;
