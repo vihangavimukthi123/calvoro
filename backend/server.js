@@ -77,7 +77,8 @@ function requireAdmin(req, res, next) {
 }
 
 // === Admin Stats API (Dashboard) ===
-app.get('/api/admin/stats', requireAdmin, requirePermission('dashboard'), async (req, res) => {
+// ✅ FIXED: requirePermission('dashboard') removed
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         const runQ = async (sql) => {
             try {
@@ -99,13 +100,19 @@ app.get('/api/admin/stats', requireAdmin, requirePermission('dashboard'), async 
 
         res.json({
             totalProducts: p[0]?.count || 0,
-            totalUsers: u[0]?.count || 0,
-            totalOrders: o[0]?.count || 0,
+            totalUsers:    u[0]?.count || 0,
+            totalOrders:   o[0]?.count || 0,
             pendingOrders: pend[0]?.count || 0,
-            totalRevenue: rev[0]?.sum || 0
+            totalRevenue:  rev[0]?.sum   || 0
         });
     } catch (e) {
-        res.json({ totalProducts: 0, totalUsers: 0, totalOrders: 0, pendingOrders: 0, totalRevenue: 0 });
+        res.json({
+            totalProducts: 0,
+            totalUsers: 0,
+            totalOrders: 0,
+            pendingOrders: 0,
+            totalRevenue: 0
+        });
     }
 });
 
@@ -273,7 +280,7 @@ app.put('/api/admin/promotions/:id', requireAdmin, requirePermission('products')
 app.post('/api/admin/promotions/:id/image', requireAdmin, requirePermission('products'), uploadPromoImage, promotionsAdminReplaceImage);
 app.delete('/api/admin/promotions/:id', requireAdmin, requirePermission('products'), promotionsAdminDelete);
 
-// Public routes (storefront - no admin auth required)
+// === Public Routes (Storefront) ===
 app.get('/api/promo-ticker', async (req, res) => {
     try {
         const data = await db.getPromoTicker();
@@ -301,7 +308,6 @@ app.get('/api/offers/active', async (req, res) => {
     }
 });
 
-// ✅ FIXED: /api/admin/offers → /api/admin/discount-engine
 app.use('/api/admin/discount-engine', requireAdmin, requirePermission('products'), discountEngineAdmin);
 
 app.use(express.static(path.join(__dirname, '..')));
