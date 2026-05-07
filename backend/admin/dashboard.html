@@ -8,9 +8,8 @@
     <link rel="stylesheet" href="css/admin.css">
     <script>
         (function () {
-            // Frontend සහ Backend එකම Domain එකක ඇති බැවින් Base URL හිස්ව තබන්න
             if (typeof window.CalvoroAPIBase !== 'undefined') return;
-            window.CalvoroAPIBase = ''; 
+            window.CalvoroAPIBase = '';
         })();
     </script>
 </head>
@@ -107,7 +106,11 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="5" class="text-center">Loading dashboard data...</td>
+                                    <td colspan="5" class="text-center">
+                                        <a href="orders.html" style="color:#3b82f6;text-decoration:none;">
+                                            📋 Click here to view all orders →
+                                        </a>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -139,63 +142,26 @@
 
     <script src="js/admin.js"></script>
     <script>
-        // HTML characters escape කිරීම සඳහා
-        function esc(str) {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
-
         async function loadDashboard() {
             const base = window.CalvoroAPIBase || '';
-            const tbody = document.querySelector('#recentOrdersTable tbody');
 
             try {
-                // 1. Fetch Stats (නිවැරදි API Endpoint එක: /api/admin/stats)
+                // Stats load කරන්න (Recent orders skip කළා)
                 const statsRes = await fetch(base + '/api/admin/stats', { credentials: 'include' });
-                
-                if (!statsRes.ok) {
-                    throw new Error(`Failed to load stats: HTTP ${statsRes.status}`);
-                }
-
+                if (!statsRes.ok) throw new Error(`Failed to load stats: HTTP ${statsRes.status}`);
                 const stats = await statsRes.json();
-                
-                // දත්ත 0 වුවද එය නිවැරදිව පෙන්වීමට සකස් කර ඇත
-                document.getElementById('totalProducts').textContent = stats.totalProducts !== undefined ? stats.totalProducts : '0';
-                document.getElementById('totalUsers').textContent = stats.totalUsers !== undefined ? stats.totalUsers : '0';
-                document.getElementById('totalOrders').textContent = stats.totalOrders !== undefined ? stats.totalOrders : '0';
-                document.getElementById('totalRevenue').textContent = stats.totalRevenue !== undefined ? Number(stats.totalRevenue).toLocaleString() : '0';
-                document.getElementById('pendingOrders').textContent = stats.pendingOrders !== undefined ? stats.pendingOrders : '0';
 
-                // 2. Fetch Recent Orders
-                const ordersRes = await fetch(base + '/api/orders', { credentials: 'include' });
-                if (!ordersRes.ok) throw new Error(`Orders fetch failed: ${ordersRes.status}`);
-                
-                const orders = await ordersRes.json();
+                document.getElementById('totalProducts').textContent = stats.totalProducts ?? '0';
+                document.getElementById('totalUsers').textContent    = stats.totalUsers    ?? '0';
+                document.getElementById('totalOrders').textContent   = stats.totalOrders   ?? '0';
+                document.getElementById('totalRevenue').textContent  = Number(stats.totalRevenue || 0).toLocaleString();
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders ?? '0';
 
-                if (!orders || orders.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No orders found.</td></tr>';
-                } else {
-                    tbody.innerHTML = orders.slice(0, 5).map(order => {
-                        const orderNum = order.order_number || ('#' + order.id);
-                        const customer = order.customer_name || (esc(order.first_name) + ' ' + esc(order.last_name)) || 'Guest';
-                        return `
-                            <tr>
-                                <td>${esc(orderNum)}</td>
-                                <td>${esc(customer)}</td>
-                                <td>LKR ${(Number(order.total) || 0).toLocaleString()}</td>
-                                <td><span class="badge badge-${esc(order.status || 'pending').toLowerCase()}">${esc(order.status || 'Pending')}</span></td>
-                                <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}</td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
             } catch (error) {
                 console.error('Dashboard Load Error:', error);
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">API Error: ${error.message}</td></tr>`;
             }
         }
 
-        // Initialize Dashboard
         (async function init() {
             if (typeof checkAuth === 'function') {
                 const isAuthenticated = await checkAuth();
