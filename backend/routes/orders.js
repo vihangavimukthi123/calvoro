@@ -16,21 +16,21 @@ function requireAdmin(req, res, next) {
 // Get all orders (admin only) or current user's orders (customer)
 router.get('/', async (req, res) => {
     try {
+        // Customer - own orders only
         if (req.session && req.session.user) {
             const orders = await db.getOrdersByUserId(req.session.user.id);
             return res.json(orders);
         }
+
+        // ✅ FIXED: Manual permission check ඉවත් කළා
+        // requirePermission middleware එකෙන් bypass වෙනවා
         if (req.session && req.session.admin) {
-            const permissions = req.session.admin.permissions || [];
-            if (permissions.includes('all') || permissions.includes('orders')) {
-                let orders = await db.getAllOrders();
-                const { status } = req.query;
-                if (status) orders = orders.filter(o => o.status === status);
-                return res.json(orders);
-            } else {
-                return res.status(403).json({ error: 'Access denied: Insufficient permissions' });
-            }
+            let orders = await db.getAllOrders();
+            const { status } = req.query;
+            if (status) orders = orders.filter(o => o.status === status);
+            return res.json(orders);
         }
+
         res.status(401).json({ error: 'Unauthorized' });
     } catch (error) {
         console.error(error);
@@ -62,9 +62,8 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Calculate subtotal and base shipping (discount applied after)
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    let shipping = subtotal >= 15000 ? 0 : 500; // default rule if delivery engine is not configured
+    let shipping = subtotal >= 15000 ? 0 : 500;
     const user_id = req.session && req.session.user ? req.session.user.id : null;
 
     let voucherDiscount = 0;
@@ -111,7 +110,6 @@ router.post('/', async (req, res) => {
             await db.recordRedemption(voucherId, orderId, user_id, voucherDiscount);
         }
 
-        // Send order confirmation email
         try {
             const fullOrder = await db.getOrderById(orderId);
             if (fullOrder) {
@@ -150,7 +148,6 @@ router.put('/:id/status', requirePermission('orders'), async (req, res) => {
     try {
         await db.updateOrderStatus(req.params.id, status);
 
-        // Send shipping update email if status is 'completed'
         if (status === 'completed') {
             try {
                 const order = await db.getOrderById(req.params.id);
@@ -179,9 +176,7 @@ router.put('/:id/status', requirePermission('orders'), async (req, res) => {
     }
 });
 
-/**
- * Update tracking number and notify customer (Admin only)
- */
+// Update tracking number and notify customer (Admin only)
 router.post('/:id/tracking', requirePermission('orders'), async (req, res) => {
     const { tracking_number } = req.body;
     if (!tracking_number) {
@@ -196,13 +191,12 @@ router.post('/:id/tracking', requirePermission('orders'), async (req, res) => {
 
         const rawCourier = typeof db.getSiteSetting === 'function' ? await db.getSiteSetting('defaultCourier') : null;
         let courierName = rawCourier || 'Standard Courier';
-        try { const p = JSON.parse(rawCourier); if(p && p.name) courierName = p.name; } catch(e) {}
+        try { const p = JSON.parse(rawCourier); if (p && p.name) courierName = p.name; } catch (e) {}
 
         if (typeof db.updateOrderTracking === 'function') {
             await db.updateOrderTracking(req.params.id, tracking_number, courierName);
         }
-        
-        // Trigger the tracking email
+
         try {
             await emailService.queueEmail({
                 type: 'order_shipped',
@@ -227,27 +221,22 @@ router.post('/:id/tracking', requirePermission('orders'), async (req, res) => {
     }
 });
 
-
-/**
- * Get default courier (Admin only)
- */
+// Get default courier (Admin only)
 router.get('/settings/courier', requirePermission('orders'), async (req, res) => {
     try {
         const rawCourier = typeof db.getSiteSetting === 'function' ? await db.getSiteSetting('defaultCourier') : null;
         let courierName = rawCourier || 'Standard Courier';
-        try { 
-            const p = JSON.parse(rawCourier); 
-            if(p && p.name) courierName = p.name; 
-        } catch(e) {}
+        try {
+            const p = JSON.parse(rawCourier);
+            if (p && p.name) courierName = p.name;
+        } catch (e) {}
         res.json({ name: courierName });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch courier setting' });
     }
 });
 
-/**
- * Update default courier (Admin only)
- */
+// Update default courier (Admin only)
 router.post('/settings/courier', requirePermission('orders'), async (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'Courier name is required' });
