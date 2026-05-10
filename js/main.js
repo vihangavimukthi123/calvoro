@@ -966,18 +966,29 @@ class HeroCarousel {
         // Remove loading state
         hero.classList.remove('loading-hero');
 
+        const fontMap = {
+            'Roboto': "'Roboto', sans-serif",
+            'Poppins': "'Poppins', sans-serif",
+            'Lato': "'Lato', sans-serif",
+            'Georgia': "'Georgia', serif",
+            'Manifold': "'Montserrat', sans-serif",
+            'Inter': "'Inter', sans-serif"
+        };
+
         hero.innerHTML = `
             <div class="carousel-container">
-                ${this.slides.map((slide, index) => `
+                ${this.slides.map((slide, index) => {
+                    const fontFamily = fontMap[slide.font_family] || fontMap['Inter'];
+                    return `
                     <div class="carousel-slide ${index === 0 ? 'active' : ''}">
                         <img src="${window.getImgUrl(slide.image_url)}" alt="${slide.title}">
-                        <div class="hero-content">
+                        <div class="hero-content" style="font-family: ${fontFamily};">
                             <h1>${slide.title}</h1>
                             <p>${slide.subtitle}</p>
-                            ${slide.button_text ? `<a href="${slide.link_url}" class="btn-hero">${slide.button_text}</a>` : ''}
+                            ${slide.button_text ? `<a href="${slide.link_url}" class="btn-hero" style="font-family: ${fontFamily};">${slide.button_text}</a>` : ''}
                         </div>
                     </div>
-                `).join('')}
+                `; }).join('')}
             </div>
         `;
     }

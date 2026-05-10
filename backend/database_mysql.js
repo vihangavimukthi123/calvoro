@@ -422,6 +422,7 @@ class CalvoroMySQLDatabase {
                     image_url: slide && slide.image_url != null ? String(slide.image_url).slice(0, 1200).trim() : '',
                     link_url: slide && slide.link_url != null ? String(slide.link_url).slice(0, 500).trim() : '',
                     button_text: slide && slide.button_text != null ? String(slide.button_text).slice(0, 80).trim() : '',
+                    font_family: slide && slide.font_family ? String(slide.font_family).slice(0, 100).trim() : 'Inter',
                     display_order: Number(slide && slide.display_order != null ? slide.display_order : index) || 0,
                     is_active: slide && slide.is_active !== undefined ? !!slide.is_active : true
                 }))
@@ -440,6 +441,7 @@ class CalvoroMySQLDatabase {
                 image_url: slide && slide.image_url != null ? String(slide.image_url).trim().slice(0, 1200) : '',
                 link_url: slide && slide.link_url != null ? String(slide.link_url).trim().slice(0, 500) : '',
                 button_text: slide && slide.button_text != null ? String(slide.button_text).replace(/\s+/g, ' ').trim().slice(0, 80) : '',
+                font_family: slide && slide.font_family ? String(slide.font_family).trim().slice(0, 100) : 'Inter',
                 display_order: Number(slide && slide.display_order != null ? slide.display_order : index) || index,
                 is_active: slide && slide.is_active !== undefined ? !!slide.is_active : true
             }))

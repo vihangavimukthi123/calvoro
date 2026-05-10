@@ -359,6 +359,7 @@
                     title: s.title || '',
                     subtitle: s.subtitle || '',
                     image_url: s.image_url || '',
+                    font_family: s.font_family || 'Inter',
                     link_url: s.link_url || '',
                     button_text: s.button_text || '',
                     display_order: Number(s.display_order != null ? s.display_order : i) || i,
@@ -397,6 +398,19 @@
                         <div class="form-group">
                             <label>Button Text</label>
                             <input type="text" id="carouselButton${i}" value="${escHtml(s.button_text)}" placeholder="SHOP NOW">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Font Family</label>
+                            <select id="carouselFont${i}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+                                <option value="Inter" ${s.font_family === 'Inter' ? 'selected' : ''}>Inter (Default)</option>
+                                <option value="Roboto" ${s.font_family === 'Roboto' ? 'selected' : ''}>Roboto</option>
+                                <option value="Poppins" ${s.font_family === 'Poppins' ? 'selected' : ''}>Poppins</option>
+                                <option value="Lato" ${s.font_family === 'Lato' ? 'selected' : ''}>Lato</option>
+                                <option value="Georgia" ${s.font_family === 'Georgia' ? 'selected' : ''}>Georgia</option>
+                                <option value="Manifold" ${s.font_family === 'Manifold' ? 'selected' : ''}>Manifold (Geometric)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-row">
@@ -458,13 +472,13 @@
                     const subtitle = getTextVal('carouselSubtitle' + i);
                     const link_url = getTextVal('carouselLink' + i);
                     const button_text = getTextVal('carouselButton' + i);
+                    const font_family = document.getElementById('carouselFont' + i).value;
                     const display_order = Number(getTextVal('carouselOrder' + i)) || i;
                     const activeEl = document.getElementById('carouselActive' + i);
                     const is_active = !!(activeEl && activeEl.checked);
 
                     if (!image_url) continue;
-
-                    slides.push({ title, subtitle, image_url, link_url, button_text, display_order, is_active });
+                    slides.push({ title, subtitle, image_url, link_url, button_text, font_family, display_order, is_active });
                 }
 
                 const r = await fetch(apiUrl('/api/admin/carousel/admin'), {
