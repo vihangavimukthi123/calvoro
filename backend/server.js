@@ -82,6 +82,7 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     try {
         const runQ = async (sql) => {
             try {
+                if (!db.pool) return [];
                 const [rows] = await db.pool.query(sql);
                 return Array.isArray(rows) ? rows : [];
             } catch (e) {
@@ -353,14 +354,16 @@ app.get('*', (req, res) => {
             }
         }
 
-        await db.pool.query(`
-            CREATE TABLE IF NOT EXISTS trending_products (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                product_id INT NOT NULL,
-                display_order INT NOT NULL DEFAULT 0,
-                INDEX idx_product_id (product_id)
-            )
-        `);
+        if (db.pool) {
+            await db.pool.query(`
+                CREATE TABLE IF NOT EXISTS trending_products (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    product_id INT NOT NULL,
+                    display_order INT NOT NULL DEFAULT 0,
+                    INDEX idx_product_id (product_id)
+                )
+            `);
+        }
     } catch (e) {
         console.error('Startup table init error:', e.message);
     }
