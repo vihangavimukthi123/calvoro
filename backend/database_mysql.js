@@ -5,7 +5,7 @@ const { computeFinalPricing } = require('./lib/pricingEngine');
 let pool;
 if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
     const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
-    console.log('Connecting to MySQL using URL string...');
+    console.log('Connecting to MySQL using URL string (length:', url.length, ')');
     pool = mysql.createPool(url);
 } else {
     const poolConfig = {
@@ -18,6 +18,13 @@ if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
         connectionLimit: 10,
         queueLimit: 0
     };
+    console.log('Connecting to MySQL using config:', {
+        host: poolConfig.host,
+        user: poolConfig.user,
+        database: poolConfig.database,
+        port: poolConfig.port,
+        hasPassword: !!poolConfig.password
+    });
     pool = mysql.createPool(poolConfig);
 }
 
