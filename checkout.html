@@ -428,8 +428,6 @@
 
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-    <script type="text/javascript" src="https://www.payhere.lk/lib/payhere.js"></script>
-
     <script src="js/config.js"></script>
     <script src="js/auth-config.js"></script>
     <script src="js/auth.js"></script>
@@ -728,34 +726,57 @@
             const discount = appliedVoucher ? appliedVoucher.discount : 0;
             const total = Math.max(0, subtotal + shipping - discount);
 
-            var itemsDesc = checkoutCartItems.map(function(i) { return i.name; }).join(', ');
-            var orderId = 'ORD-' + Date.now();
-
-            var payment = {
-                sandbox: true, // testing mode
-                merchant_id: "253238", // Calvoro Merchant ID
-                return_url: window.location.origin + "/success.html",
-                cancel_url: window.location.origin + "/cancel.html",
-                notify_url: "", // Temporary testing
-                order_id: orderId,
-                items: itemsDesc || "Calvoro Products",
-                amount: total.toFixed(2),
-                currency: "LKR",
-                first_name: formData.get('first_name'),
-                last_name: formData.get('last_name'),
-                email: formData.get('email'),
-                phone: formData.get('phone'),
-                address: formData.get('address'),
-                city: formData.get('city'),
-                country: "Sri Lanka"
+            const orderData = {
+                order_number: 'ORD-' + Date.now(),
+                customer_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
+                customer_email: formData.get('email'),
+                customer_phone: formData.get('phone'),
+                customer_address: `${formData.get('address')}, ${formData.get('city')}, ${formData.get('postal_code') || ''}`,
+                subtotal: subtotal,
+                shipping: shipping,
+                total: total,
+                status: 'pending',
+                payment_method: 'payhere',
+                notes: formData.get('notes'),
+                items: checkoutCartItems
             };
+            if (appliedVoucher && appliedVoucher.code) orderData.voucher_code = appliedVoucher.code;
+            if (selectedDelivery) {
+                orderData.delivery_method_id = selectedDelivery.delivery_method_id;
+            }
 
-            // Clear cart immediately on frontend before redirecting, alternatively it is cleared on success page.
-            // Using PayHere SDK
-            if (typeof payhere !== 'undefined') {
-                payhere.startPayment(payment);
-            } else {
-                alert("PayHere SDK is not loaded.");
+            try {
+                var response = await fetch(baseUrl + '/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(orderData)
+                });
+
+                var result = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    var msg = (result && result.error) ? result.error : ('Order failed (' + response.status + ')');
+                    alert(msg);
+                    return;
+                }
+
+                var orderId = result.id || result.order_id;
+
+                if (!orderId) throw new Error('No order ID returned');
+                try { localStorage.removeItem('calvoro_cart_note'); } catch (e) {}
+                try {
+                    if (window.cart && typeof window.cart.clear === 'function') {
+                        window.cart.clear();
+                        if (window.cart.refreshCartCount) window.cart.refreshCartCount();
+                    }
+                } catch (e) {}
+                try {
+                    await fetch(baseUrl + '/api/cart', { method: 'DELETE', credentials: 'include' });
+                } catch (e) {}
+                window.location.href = baseUrl + '/api/payment/initiate/' + orderId;
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert((error && error.message) ? error.message : 'Checkout failed. Make sure the server is running and try again.');
             }
         });
 
