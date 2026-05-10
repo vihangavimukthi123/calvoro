@@ -1,26 +1,38 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const path = require('path');
 const ejs = require('ejs');
 const fs = require('fs').promises;
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-const DEFAULT_FROM = process.env.MAIL_FROM || 'Calvoro <onboarding@resend.dev>';
+const DEFAULT_FROM = process.env.MAIL_FROM || 'Calvoro <noreply@calvoro.com>';
 
 class EmailService {
+    getTransporter() {
+        const host = process.env.SMTP_HOST;
+        const user = process.env.SMTP_USER;
+        const pass = process.env.SMTP_PASS;
+        if (!host || !user || !pass) return null;
+        return nodemailer.createTransport({
+            host,
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_SECURE === '1',
+            auth: { user, pass }
+        });
+    }
+
     /**
      * Send a raw email.
      */
     async sendEmail({ to, subject, html, text }) {
-        if (!resend) {
-            console.warn('Resend API key missing. Email not sent:', { to, subject });
-            return { success: false, error: 'Resend API key missing' };
+        const transporter = this.getTransporter();
+        if (!transporter) {
+            console.warn('SMTP variables missing. Email not sent:', { to, subject });
+            return { success: false, error: 'SMTP variables missing' };
         }
 
         try {
-            const data = await resend.emails.send({
+            const data = await transporter.sendMail({
                 from: DEFAULT_FROM,
-                to: Array.isArray(to) ? to : [to],
+                to: Array.isArray(to) ? to.join(', ') : to,
                 subject,
                 html,
                 text,
