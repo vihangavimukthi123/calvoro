@@ -6,6 +6,7 @@
     "start": "cd backend && npm start",
     "dev": "cd backend && npm run dev",
     "install:backend": "cd backend && npm install",
+    "postinstall": "cd backend && npm install",
     "setup-db": "cd backend && node setup-database.js"
   },
   "dependencies": {
