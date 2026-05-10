@@ -39,16 +39,16 @@
             const isLoggedIn = !!(meData && meData.user);
 
             const colorImagesRaw = product.color_images || {};
-            const colorVideosRaw = product.color_videos || {};
-            function getColorImage(colorKey) {
+            function getColorVariant(colorKey) {
                 if (!colorKey) return null;
                 var k = Object.keys(colorImagesRaw).find(function(x) { return (x || '').toLowerCase() === (colorKey || '').toLowerCase(); });
-                return k ? colorImagesRaw[k] : colorImagesRaw[colorKey];
-            }
-            function getColorVideo(colorKey) {
-                if (!colorKey) return null;
-                var k = Object.keys(colorVideosRaw).find(function(x) { return (x || '').toLowerCase() === (colorKey || '').toLowerCase(); });
-                return k ? colorVideosRaw[k] : colorVideosRaw[colorKey];
+                if (!k) return null;
+                var data = colorImagesRaw[k];
+                if (typeof data === 'string') {
+                    var legacyVideo = (product.color_videos || {})[k] || (product.color_videos || {})[colorKey] || '';
+                    return { main: data, subs: [], video: legacyVideo };
+                }
+                return data;
             }
             var colorKeys = Object.keys(colorImagesRaw);
             var colorList = product.colors && product.colors.length ? product.colors : [];
@@ -86,13 +86,9 @@
             images = images.map(function(u) { return toAbsoluteUrl(u); });
             
             // Get main image (first image or first video thumbnail)
-            let mainImg = toAbsoluteUrl(getColorImage(colors[0]) || images[0]) || defaultImg;
-            let mainHoverVideo = null;
-            if (images[0] && hoverVideos[images[0]]) {
-                mainHoverVideo = hoverVideos[images[0]];
-            } else if (media.length && media[0].hover_video_url) {
-                mainHoverVideo = toAbsoluteUrl(media[0].hover_video_url);
-            }
+            var initialVariant = getColorVariant(colors[0]);
+            let mainImg = initialVariant ? toAbsoluteUrl(initialVariant.main) : (images[0] || defaultImg);
+            let mainHoverVideo = initialVariant ? toAbsoluteUrl(initialVariant.video) : (images[0] ? hoverVideos[images[0]] : null);
             const sizes = product.sizes && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
             const compareAt = (product.pricing && product.pricing.compare_at_price != null)
                 ? product.pricing.compare_at_price
@@ -154,51 +150,47 @@
 
             const sizeButtons = sizes.map((s, i) => '<button type="button" ' + (i === 0 ? 'class="active"' : '') + ' data-size="' + escapeAttr(s) + '">' + escapeAttr(s) + '</button>').join('');
 
-            var thumbItems = [];
-            var seen = {};
-            
-            // Add videos as thumbnails
-            videos.forEach(function(v) {
-                var thumbUrl = v.thumbnail || v.url;
-                if (thumbUrl && !seen[thumbUrl]) {
-                    seen[thumbUrl] = true;
-                    thumbItems.push({ 
-                        url: thumbUrl, 
-                        videoUrl: v.url, 
-                        type: 'video', 
-                        color: '' 
+            function getGalleryItems(selectedColor) {
+                var items = [];
+                var seen = {};
+                var variant = getColorVariant(selectedColor);
+
+                if (variant) {
+                    // Color-specific gallery
+                    if (variant.main) {
+                        var abs = toAbsoluteUrl(variant.main);
+                        seen[abs] = true;
+                        items.push({ url: abs, color: selectedColor, type: 'image', hoverVideo: toAbsoluteUrl(variant.video) });
+                    }
+                    (variant.subs || []).forEach(function(sub) {
+                        var abs = toAbsoluteUrl(sub);
+                        if (!seen[abs]) {
+                            seen[abs] = true;
+                            items.push({ url: abs, color: selectedColor, type: 'image', hoverVideo: null });
+                        }
+                    });
+                } else {
+                    // Global gallery fallback
+                    videos.forEach(function(v) {
+                        var thumbUrl = v.thumbnail || v.url;
+                        if (thumbUrl && !seen[thumbUrl]) {
+                            seen[thumbUrl] = true;
+                            items.push({ url: thumbUrl, videoUrl: v.url, type: 'video', color: '' });
+                        }
+                    });
+                    images.forEach(function(img) {
+                        var abs = toAbsoluteUrl(img);
+                        if (!seen[abs]) {
+                            seen[abs] = true;
+                            items.push({ url: abs, color: '', type: 'image', hoverVideo: hoverVideos[img] || null });
+                        }
                     });
                 }
-            });
-            
-            // Add images as thumbnails
-            colors.forEach(function(c) {
-                var img = getColorImage(c) || images[0];
-                if (img) {
-                    var abs = toAbsoluteUrl(img) || img;
-                    if (abs && !seen[abs]) { 
-                        seen[abs] = true; 
-                        thumbItems.push({ 
-                            url: abs, 
-                            color: c, 
-                            type: 'image',
-                            hoverVideo: hoverVideos[img] || null
-                        }); 
-                    }
-                }
-            });
-            
-            if (!thumbItems.length) {
-                thumbItems = images.slice(0, 8).map(function(u) { 
-                    return { 
-                        url: toAbsoluteUrl(u) || u, 
-                        color: '', 
-                        type: 'image',
-                        hoverVideo: hoverVideos[u] || null
-                    }; 
-                });
+                return items.slice(0, 12);
             }
-            thumbItems = thumbItems.slice(0, 12);
+
+            var initialColor = colors[0];
+            var thumbItems = getGalleryItems(initialColor);
 
             var dist = [0,0,0,0,0];
             reviews.forEach(function(r) { if (r.rating >= 1 && r.rating <= 5) dist[r.rating - 1]++; });
@@ -315,43 +307,54 @@
                 });
             }
 
+            function bindThumbnails() {
+                document.querySelectorAll('.thumbnails img').forEach(function(thumb) {
+                    thumb.onclick = function() {
+                        var src = this.dataset.image || this.src;
+                        var color = this.dataset.color || '';
+                        var mainEl = document.querySelector('.main-image img');
+                        if (mainEl && src) {
+                            mainEl.src = src;
+                            mainEl.dataset.hoverVideo = this.dataset.hoverVideo || '';
+                            if (window.initProductHoverVideo) window.initProductHoverVideo();
+                        }
+                        document.querySelectorAll('.thumbnails img').forEach(function(t) { t.classList.remove('active'); });
+                        this.classList.add('active');
+                    };
+                });
+            }
+
             document.querySelectorAll('.color-swatch').forEach(function(el) {
                 el.addEventListener('click', function() {
                     document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('active'); });
                     this.classList.add('active');
-                    document.getElementById('selectedColorLabel').textContent = this.dataset.color || '';
-                    var img = this.dataset.image;
-                    if (img) {
-                        var mainEl = document.querySelector('.main-image img');
-                        if (mainEl) {
-                            mainEl.src = img;
-                            mainEl.dataset.hoverVideo = this.dataset.hoverVideo || '';
+                    var colorName = this.dataset.color || '';
+                    document.getElementById('selectedColorLabel').textContent = colorName;
+                    
+                    // Update gallery for new color
+                    var newThumbs = getGalleryItems(colorName);
+                    if (newThumbs.length) {
+                        var mainImgEl = document.querySelector('.main-image img');
+                        if (mainImgEl) {
+                            mainImgEl.src = escapeAttr(newThumbs[0].url);
+                            mainImgEl.dataset.hoverVideo = newThumbs[0].hoverVideo || '';
+                            if (window.initProductHoverVideo) window.initProductHoverVideo();
                         }
-                        document.querySelectorAll('.thumbnails img').forEach(function(t) {
-                            t.classList.toggle('active', (t.dataset.image || t.src) === img);
-                        });
+                        
+                        var thumbsContainer = document.querySelector('.thumbnails');
+                        if (thumbsContainer) {
+                            thumbsContainer.innerHTML = newThumbs.map(function(t, i) {
+                                var attrs = 'class="' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(t.color) + '" data-image="' + escapeAttr(t.url) + '" data-fallback="' + fallbackEsc + '"';
+                                if (t.type === 'video') attrs += ' data-type="video" data-video-url="' + escapeAttr(t.videoUrl || t.url) + '"';
+                                if (t.hoverVideo) attrs += ' data-hover-video="' + escapeAttr(t.hoverVideo) + '"';
+                                return '<img src="' + escapeAttr(t.url) + '" alt="" ' + attrs + ' onerror="var f=this.dataset.fallback;if(f)this.src=f;">';
+                            }).join('');
+                            bindThumbnails();
+                        }
                     }
                 });
             });
-            document.querySelectorAll('.thumbnails img').forEach(function(thumb) {
-                thumb.addEventListener('click', function() {
-                    var src = this.src;
-                    var color = this.dataset.color || '';
-                    var mainEl = document.querySelector('.main-image img');
-                    if (mainEl && src) {
-                        mainEl.src = src;
-                        mainEl.dataset.hoverVideo = this.dataset.hoverVideo || '';
-                    }
-                    document.querySelectorAll('.thumbnails img').forEach(function(t) { t.classList.remove('active'); });
-                    this.classList.add('active');
-                    if (color) {
-                        document.getElementById('selectedColorLabel').textContent = color;
-                        document.querySelectorAll('.color-swatch').forEach(function(s) {
-                            s.classList.toggle('active', (s.dataset.color || '').toLowerCase() === color.toLowerCase());
-                        });
-                    }
-                });
-            });
+            bindThumbnails();
             document.querySelectorAll('.size-options button').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.size-options button').forEach(b => b.classList.remove('active'));
@@ -374,7 +377,8 @@
                 if (activeSwatch && activeSwatch.dataset.image) {
                     imgSrc = toAbsoluteUrl(activeSwatch.dataset.image);
                 } else {
-                    var backendImg = (getColorImage(color) || images[0]);
+                    var variant = getColorVariant(color);
+                    var backendImg = (variant ? variant.main : images[0]);
                     imgSrc = backendImg ? toAbsoluteUrl(backendImg) : '';
                 }
                 if (!imgSrc || imgSrc.indexOf('data:image/svg') === 0) {

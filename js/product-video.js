@@ -81,36 +81,43 @@
 
         // Desktop: hover events
         if (!isMobile) {
-            mainImageContainer.addEventListener('mouseenter', showVideo);
-            mainImageContainer.addEventListener('mouseleave', hideVideo);
+            if (!mainImageContainer._hoverBound) {
+                mainImageContainer._hoverBound = true;
+                mainImageContainer.addEventListener('mouseenter', showVideo);
+                mainImageContainer.addEventListener('mouseleave', hideVideo);
+            }
         } else {
             // Mobile: tap to show video, second tap for fullscreen
-            mainImageContainer.addEventListener('click', function(e) {
-                e.preventDefault();
-                tapCount++;
-                
-                if (tapCount === 1) {
-                    // First tap: show video
-                    showVideo();
-                    setTimeout(() => {
-                        if (tapCount === 1) {
-                            tapCount = 0;
-                            hideVideo();
+            if (!mainImageContainer._clickBound) {
+                mainImageContainer._clickBound = true;
+                mainImageContainer.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    tapCount++;
+                    
+                    if (tapCount === 1) {
+                        // First tap: show video
+                        showVideo();
+                        setTimeout(() => {
+                            if (tapCount === 1) {
+                                tapCount = 0;
+                                hideVideo();
+                            }
+                        }, 3000);
+                    } else if (tapCount === 2) {
+                        // Second tap: fullscreen
+                        tapCount = 0;
+                        const vid = createVideoElement();
+                        if (!vid) return;
+                        if (vid.requestFullscreen) {
+                            vid.requestFullscreen();
+                        } else if (vid.webkitRequestFullscreen) {
+                            vid.webkitRequestFullscreen();
+                        } else if (vid.mozRequestFullScreen) {
+                            vid.mozRequestFullScreen();
                         }
-                    }, 3000);
-                } else if (tapCount === 2) {
-                    // Second tap: fullscreen
-                    tapCount = 0;
-                    const vid = createVideoElement();
-                    if (vid.requestFullscreen) {
-                        vid.requestFullscreen();
-                    } else if (vid.webkitRequestFullscreen) {
-                        vid.webkitRequestFullscreen();
-                    } else if (vid.mozRequestFullScreen) {
-                        vid.mozRequestFullScreen();
                     }
-                }
-            });
+                });
+            }
         }
     }
 

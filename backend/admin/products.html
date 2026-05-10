@@ -192,10 +192,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Image per color (optional – main image changes when customer selects color)</label>
+                    <label>Images per color (Main Image + Sub Images + Video)</label>
                     <div id="colorImagesContainer"></div>
-                    <button type="button" class="btn-sm" onclick="addColorImageRow()" style="margin-top:6px;">+ Add color image</button>
-                    <p style="font-size:12px;color:#666;">Upload an image for each color (same names as Colors). Optional: upload a short video (mp4/webm) per variant for hover preview on the product page.</p>
+                    <button type="button" class="btn-sm" onclick="addColorImageRow()" style="margin-top:6px;">+ Add color variant images</button>
+                    <p style="font-size:12px;color:#666;">For each color, upload a <strong>Main Image</strong> (shown when color is selected) and multiple <strong>Sub Images</strong> (thumbnails). Optional: upload a hover video.</p>
                 </div>
 
                 <div class="form-group product-form-section">
@@ -415,23 +415,62 @@
             fileInput.click();
         }
 
-        function addColorImageRow(colorName, imageUrl, videoUrl) {
+        function addColorImageRow(colorName, mainUrl, subs, videoUrl) {
             const container = document.getElementById('colorImagesContainer');
             const row = document.createElement('div');
             row.className = 'color-image-row';
-            row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;';
+            row.style.cssText = 'border: 1px solid #eee; padding: 16px; border-radius: 8px; margin-bottom: 16px; background: #fafafa;';
+            
+            const subsArr = Array.isArray(subs) ? subs : [];
             const vidPreview = videoUrl ? '<video src="' + (videoUrl || '').replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>' : '<span style="font-size:10px;color:#999;">No video</span>';
+            
             row.innerHTML = `
-                <input type="text" placeholder="Color name" class="color-name" value="${(colorName || '').replace(/"/g, '&quot;')}" style="flex:1;min-width:100px;">
-                <input type="hidden" class="color-url" value="${(imageUrl || '').replace(/"/g, '&quot;')}">
-                <div class="color-preview" style="width:48px;height:48px;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">${imageUrl ? '<img src="' + getImgUrl(imageUrl || '').replace(/"/g, '&quot;') + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : 'No img'}</div>
-                <input type="file" accept="image/*" class="color-file" style="display:none;">
-                <button type="button" class="btn-sm" onclick="uploadColorImage(this)">Upload img</button>
-                <input type="hidden" class="color-video-url" value="${(videoUrl || '').replace(/"/g, '&quot;')}">
-                <div class="color-video-preview" style="width:64px;height:48px;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">${vidPreview}</div>
-                <input type="file" accept="video/mp4,video/webm,.mp4,.webm" class="color-video-file" style="display:none;">
-                <button type="button" class="btn-sm" onclick="uploadColorVideo(this)">Upload video</button>
-                <button type="button" class="btn-sm" onclick="this.closest('.color-image-row').remove()">−</button>
+                <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Color Name (matches 'Colors' list)</label>
+                        <input type="text" placeholder="e.g. Red" class="color-name" value="${(colorName || '').replace(/"/g, '&quot;')}" style="width:100%;">
+                    </div>
+                    <button type="button" class="btn-sm btn-danger" onclick="this.closest('.color-image-row').remove()" style="margin-top:22px;">Delete Variant</button>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Main Image & Video</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <div class="color-preview" style="width:64px; height:64px; border:1px solid #ddd; border-radius:4px; overflow:hidden; background:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">
+                                ${mainUrl ? '<img src="' + getImgUrl(mainUrl).replace(/"/g, '&quot;') + '" style="width:100%; height:100%; object-fit:cover;">' : 'No Main'}
+                            </div>
+                            <input type="hidden" class="color-url" value="${(mainUrl || '').replace(/"/g, '&quot;')}">
+                            <button type="button" class="btn-sm" onclick="uploadColorImage(this, 'main')">Upload Main</button>
+                        </div>
+                        
+                        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                            <div class="color-video-preview" style="width:64px; height:48px; border:1px solid #ddd; border-radius:4px; overflow:hidden; background:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">
+                                ${vidPreview}
+                            </div>
+                            <input type="hidden" class="color-video-url" value="${(videoUrl || '').replace(/"/g, '&quot;')}">
+                            <button type="button" class="btn-sm" onclick="uploadColorVideo(this)">Upload Video</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Sub Images (Thumbnails)</label>
+                        <div class="color-subs-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                            ${subsArr.map(url => `
+                                <div class="color-sub-item" style="position:relative; width:48px; height:48px; border:1px solid #ddd; border-radius:4px; overflow:hidden;">
+                                    <img src="${getImgUrl(url).replace(/"/g, '&quot;')}" style="width:100%; height:100%; object-fit:cover;">
+                                    <input type="hidden" class="color-sub-url" value="${url.replace(/"/g, '&quot;')}">
+                                    <button type="button" onclick="this.parentElement.remove()" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.5); color:#fff; border:none; width:16px; height:16px; font-size:10px; cursor:pointer;">×</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn-sm" onclick="uploadColorImage(this, 'sub')">+ Add Sub Image</button>
+                    </div>
+                </div>
+                
+                <input type="file" class="color-file-main" style="display:none;" accept="image/*">
+                <input type="file" class="color-file-sub" style="display:none;" accept="image/*">
+                <input type="file" class="color-file-video" style="display:none;" accept="video/mp4,video/webm">
             `;
             container.appendChild(row);
         }
@@ -458,9 +497,9 @@
             document.getElementById('sizeGuidePreviewBox').innerHTML = '<span style="font-size:10px;color:#999;text-align:center;">No<br>Image</span>';
         }
 
-        async function uploadColorImage(btn) {
+        async function uploadColorImage(btn, type) {
             const row = btn.closest('.color-image-row');
-            const fileInput = row.querySelector('.color-file');
+            const fileInput = type === 'main' ? row.querySelector('.color-file-main') : row.querySelector('.color-file-sub');
             fileInput.onchange = async function() {
                 const file = this.files[0];
                 if (!file) return;
@@ -470,9 +509,21 @@
                     const res = await fetch((apiBase || '') + '/api/upload', { method: 'POST', body: fd, credentials: 'include' });
                     const data = await res.json();
                     if (data.url) {
-                        row.querySelector('.color-url').value = data.url;
-                        var prev = row.querySelector('.color-preview');
-                        prev.innerHTML = '<img src="' + getImgUrl(data.url).replace(/"/g, '&quot;') + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+                        if (type === 'main') {
+                            row.querySelector('.color-url').value = data.url;
+                            row.querySelector('.color-preview').innerHTML = '<img src="' + getImgUrl(data.url).replace(/"/g, '&quot;') + '" style="width:100%;height:100%;object-fit:cover;">';
+                        } else {
+                            const subsList = row.querySelector('.color-subs-list');
+                            const div = document.createElement('div');
+                            div.className = 'color-sub-item';
+                            div.style.cssText = 'position:relative; width:48px; height:48px; border:1px solid #ddd; border-radius:4px; overflow:hidden;';
+                            div.innerHTML = `
+                                <img src="${getImgUrl(data.url).replace(/"/g, '&quot;')}" style="width:100%; height:100%; object-fit:cover;">
+                                <input type="hidden" class="color-sub-url" value="${data.url.replace(/"/g, '&quot;')}">
+                                <button type="button" onclick="this.parentElement.remove()" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.5); color:#fff; border:none; width:16px; height:16px; font-size:10px; cursor:pointer;">×</button>
+                            `;
+                            subsList.appendChild(div);
+                        }
                     } else alert(data.error || 'Upload failed');
                 } catch (e) { alert('Upload failed'); }
                 this.value = '';
@@ -482,7 +533,7 @@
 
         async function uploadColorVideo(btn) {
             const row = btn.closest('.color-image-row');
-            const fileInput = row.querySelector('.color-video-file');
+            const fileInput = row.querySelector('.color-file-video');
             fileInput.onchange = async function() {
                 const file = this.files[0];
                 if (!file) return;
@@ -495,14 +546,11 @@
                     try { data = await res.json(); } catch (_) { data = {}; }
                     if (res.ok && data.url) {
                         row.querySelector('.color-video-url').value = data.url;
-                        var prev = row.querySelector('.color-video-preview');
-                        prev.innerHTML = '<video src="' + data.url.replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+                        row.querySelector('.color-video-preview').innerHTML = '<video src="' + data.url.replace(/"/g, '&quot;') + '" muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
                     } else {
-                        alert(data.error || res.statusText || 'Upload failed (check file size & format: mp4, webm)');
+                        alert(data.error || res.statusText || 'Upload failed');
                     }
-                } catch (e) {
-                    alert('Upload failed: ' + (e.message || 'network error'));
-                }
+                } catch (e) { alert('Upload failed'); }
                 this.value = '';
             };
             fileInput.click();
@@ -599,10 +647,19 @@
             const container = document.getElementById('colorImagesContainer');
             container.innerHTML = '';
             const colorImages = product.color_images || {};
-            const colorVideos = product.color_videos || {};
             const entries = Object.entries(colorImages);
-            if (entries.length === 0) addColorImageRow();
-            else entries.forEach(([color, url]) => { addColorImageRow(color, url, colorVideos[color] || ''); });
+            if (entries.length === 0) {
+                addColorImageRow();
+            } else {
+                entries.forEach(([color, data]) => {
+                    // Handle both old (string URL) and new (object with subs) formats
+                    if (typeof data === 'string') {
+                        addColorImageRow(color, data, [], (product.color_videos || {})[color] || '');
+                    } else {
+                        addColorImageRow(color, data.main || '', data.subs || [], data.video || '');
+                    }
+                });
+            }
 
             const sizeGuideUrl = product.size_guide_url || '';
             document.getElementById('productSizeGuideUrl').value = sizeGuideUrl;
@@ -648,16 +705,19 @@
             const sizes = getSelectedSizes();
 
             const colorImages = {};
-            const colorVideos = {};
             document.querySelectorAll('#colorImagesContainer .color-image-row').forEach(row => {
-                const name = row.querySelector('.color-name');
-                const urlEl = row.querySelector('.color-url');
-                const videoEl = row.querySelector('.color-video-url');
-                const nameVal = name ? name.value.trim() : '';
-                const urlVal = urlEl ? urlEl.value.trim() : '';
-                const videoVal = videoEl ? videoEl.value.trim() : '';
-                if (nameVal && urlVal) colorImages[nameVal] = urlVal;
-                if (nameVal && videoVal) colorVideos[nameVal] = videoVal;
+                const name = row.querySelector('.color-name').value.trim();
+                const mainUrl = row.querySelector('.color-url').value.trim();
+                const videoUrl = row.querySelector('.color-video-url').value.trim();
+                const subs = Array.from(row.querySelectorAll('.color-sub-url')).map(el => el.value);
+                
+                if (name && (mainUrl || subs.length > 0)) {
+                    colorImages[name] = {
+                        main: mainUrl,
+                        subs: subs,
+                        video: videoUrl
+                    };
+                }
             });
 
             var imagesFlat = productImages.map(function(item) { return typeof item === 'string' ? item : (item.url || ''); });
@@ -681,7 +741,7 @@
                 images: imagesFlat.length ? imagesFlat : undefined,
                 media: mediaForMain.length ? mediaForMain : undefined,
                 color_images: Object.keys(colorImages).length ? colorImages : undefined,
-                color_videos: Object.keys(colorVideos).length ? colorVideos : undefined,
+                color_videos: undefined, // Now bundled in color_images object
                 size_guide_url: document.getElementById('productSizeGuideUrl').value || undefined,
                 featured: document.getElementById('productFeatured').checked,
                 status: document.getElementById('productStatus').value
