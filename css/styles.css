@@ -727,9 +727,9 @@ body {
 .hero { 
     position: relative; 
     width: 100%; 
-    height: 65vh; 
+    height: 75vh; 
     min-height: 500px;
-    max-height: 800px;
+    max-height: 900px;
     overflow: hidden;
     margin-bottom: 60px;
     background: var(--color-card);
@@ -752,6 +752,7 @@ body {
     height: 100%;
     display: block;
     object-fit: cover;
+    object-position: center top;
 }
 
 /* Carousel specific styles */
