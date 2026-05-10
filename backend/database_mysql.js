@@ -3,29 +3,35 @@ const bcrypt = require('bcrypt');
 const { computeFinalPricing } = require('./lib/pricingEngine');
 
 let pool;
-if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
-    const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
-    console.log('Connecting to MySQL using URL string (length:', url.length, ')');
-    pool = mysql.createPool(url);
-} else {
-    const poolConfig = {
-        host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-        database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'calvoro_db',
-        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306', 10),
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-    };
-    console.log('Connecting to MySQL using config:', {
-        host: poolConfig.host,
-        user: poolConfig.user,
-        database: poolConfig.database,
-        port: poolConfig.port,
-        hasPassword: !!poolConfig.password
-    });
-    pool = mysql.createPool(poolConfig);
+try {
+    if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
+        const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
+        console.log('Connecting to MySQL using URL string (length:', url ? url.length : 0, ')');
+        pool = mysql.createPool(url);
+    } else {
+        const poolConfig = {
+            host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+            user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+            password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+            database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'calvoro_db',
+            port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306', 10),
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0,
+            connectTimeout: 10000 // 10 seconds timeout
+        };
+        console.log('Connecting to MySQL using config:', {
+            host: poolConfig.host,
+            user: poolConfig.user,
+            database: poolConfig.database,
+            port: poolConfig.port,
+            hasPassword: !!poolConfig.password
+        });
+        pool = mysql.createPool(poolConfig);
+    }
+} catch (poolErr) {
+    console.error('CRITICAL: Failed to create MySQL pool object:', poolErr.message);
+    // Fallback or exit? For now, let's let it be, but autoInit will fail later.
 }
 
 function parseJson(val) {
@@ -57,6 +63,9 @@ class CalvoroMySQLDatabase {
 
     async autoInit() {
         try {
+            if (!this.pool) {
+                throw new Error('MySQL pool is not initialized. Check your environment variables.');
+            }
             // Test connection
             console.log('Testing MySQL connection...');
             await this.pool.query('SELECT 1');

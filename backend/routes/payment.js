@@ -6,7 +6,7 @@ const db = require('../db');
 // PayHere Configuration from environment variables
 const MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID || '1234567';
 const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || 'MTY5MzIzMzQxNTIzODczMzIzOTQzMzU2ODU2Mzk2MjU1NjkzNDkxMw==';
-const PAYHERE_MODE = process.env.PAYHERE_MODE || 'sandbox';
+const PAYHERE_MODE = process.env.PAYHERE_MODE || 'live';
 
 // PayHere URLs
 const PAYHERE_SANDBOX_URL = 'https://sandbox.payhere.lk/pay/checkout';

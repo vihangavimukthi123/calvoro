@@ -36,7 +36,7 @@ function parseAmountLkr(amount) {
     return whole;
 }
 
-const PAYHERE_MODE = process.env.PAYHERE_MODE || 'sandbox';
+const PAYHERE_MODE = process.env.PAYHERE_MODE || 'live';
 const MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID || '1223807';
 const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || DEFAULT_PAYHERE_SECRET;
 const PAYHERE_URL = PAYHERE_MODE === 'live' ? 'https://www.payhere.lk/pay/checkout' : 'https://sandbox.payhere.lk/pay/checkout';
