@@ -903,6 +903,20 @@ class CalvoroMySQLDatabase {
         return rows.map(row => ({ ...row, total: Number(row.total), subtotal: Number(row.subtotal), shipping: Number(row.shipping) }));
     }
 
+    async getOrderByNumber(orderNumber) {
+        try {
+            const [rows] = await this.pool.query('SELECT * FROM orders WHERE order_number = ?', [orderNumber]);
+            if (rows.length === 0) return null;
+            const order = rows[0];
+            const [items] = await this.pool.query('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.items = items;
+            return order;
+        } catch (error) {
+            console.error('Error in getOrderByNumber:', error);
+            throw error;
+        }
+    }
+
     async getOrderById(id) {
         const [orders] = await this.pool.query('SELECT * FROM orders WHERE id = ?', [id]);
         if (orders.length === 0) return null;

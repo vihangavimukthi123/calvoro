@@ -56,7 +56,7 @@ router.get('/initiate/:orderId', async (req, res) => {
         const currency = 'LKR';
 
         // Generate PayHere hash
-        const hash = generateHash(order.id, amount, currency);
+        const hash = generateHash(order.order_number, amount, currency);
 
         // Parse customer name into first and last name
         const nameParts = order.customer_name.split(' ');
@@ -70,7 +70,7 @@ router.get('/initiate/:orderId', async (req, res) => {
             return_url: `${publicBaseUrl}/api/payment/return`,
             cancel_url: `${publicBaseUrl}/api/payment/cancel`,
             notify_url: `${publicBaseUrl}/api/payment/notify`,
-            order_id: order.id.toString(),
+            order_id: order.order_number.toString(),
             items: order.order_number || `Order #${order.id}`,
             currency: currency,
             amount: amount,
@@ -144,19 +144,28 @@ router.post('/notify', express.urlencoded({ extended: true }), async (req, res) 
         // status_code: 2 = success, 0 = pending, -1 = canceled, -2 = failed, -3 = charged back
         if (status_code === '2') {
             // Payment successful - update order status
-            const result = await db.updateOrderStatus(order_id, 'paid');
+            // Look up the order by order_number
+            const order = await db.getOrderByNumber(order_id);
+            if (!order) {
+                console.error(`Order ${order_id} not found for payment update`);
+                return res.status(404).send('Order not found');
+            }
 
-            if (result.changes > 0) {
-                console.log(`✓ Order ${order_id} marked as paid`);
+            const result = await db.updateOrderStatus(order.id, 'paid');
 
-                // You can add additional logic here:
-                // - Send confirmation email
-                // - Trigger fulfillment process
-                // - Update inventory
+            if (result.affectedRows > 0) {
+                console.log(`✓ Order ${order.order_number} (ID: ${order.id}) marked as paid`);
+                
+                // Send confirmation email if not already sent or just as a "Paid" confirmation
+                try {
+                    await emailService.sendOrderConfirmationEmail(order, order.items);
+                } catch (emailErr) {
+                    console.error('Failed to send paid confirmation email:', emailErr);
+                }
 
                 return res.status(200).send('OK');
             } else {
-                console.error(`Failed to update order ${order_id}`);
+                console.error(`Failed to update order ${order.id}`);
                 return res.status(500).send('Error updating order');
             }
         } else if (status_code === '0') {
