@@ -2,18 +2,24 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const { computeFinalPricing } = require('./lib/pricingEngine');
 
-const poolConfig = {
-    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'calvoro_db',
-    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306', 10),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-
-const pool = mysql.createPool(poolConfig);
+let pool;
+if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
+    const url = process.env.MYSQL_URL || process.env.DATABASE_URL;
+    console.log('Connecting to MySQL using URL string...');
+    pool = mysql.createPool(url);
+} else {
+    const poolConfig = {
+        host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+        database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'calvoro_db',
+        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306', 10),
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+    };
+    pool = mysql.createPool(poolConfig);
+}
 
 function parseJson(val) {
     if (val === null || val === undefined) return val;
@@ -44,11 +50,19 @@ class CalvoroMySQLDatabase {
 
     async autoInit() {
         try {
+            // Test connection
+            console.log('Testing MySQL connection...');
+            await this.pool.query('SELECT 1');
+            console.log('✓ MySQL connection successful');
+
             await this.ensureCoreTables();
             await this.initializeAdmin();
             console.log('✓ MySQL initialization complete');
         } catch (err) {
-            console.error('❌ MySQL auto-init failed:', err.message);
+            console.error('❌ MySQL auto-init failed!');
+            console.error('Error Code:', err.code);
+            console.error('Error Message:', err.message);
+            console.error('Full Error:', err);
         }
     }
 
