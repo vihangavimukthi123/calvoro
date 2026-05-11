@@ -5,6 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
@@ -62,8 +63,12 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ verify: (req, res, buf) => { try { req.rawBody = buf; } catch (_) { } } }));
 app.use(express.urlencoded({ extended: true }));
 
+const sessionStore = new MySQLStore({}, db.pool);
+
 app.use(session({
+    key: 'calvoro_session',
     secret: process.env.SESSION_SECRET || 'calvoro-secret-key',
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }

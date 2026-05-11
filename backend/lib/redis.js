@@ -30,7 +30,7 @@ connection.on('error', (err) => {
     if (err.code === 'ECONNREFUSED') {
         const now = Date.now();
         if (now - lastWarn > WARN_INTERVAL) {
-            console.warn(`[Redis] Connection offline on ${REDIS_HOST}:${REDIS_PORT}. System is automatically running in "Direct Mode" (Synchronous Emails).`);
+            console.warn(`[Redis] Offline on ${REDIS_HOST}:${REDIS_PORT}. System is operating in "Direct Mode" (emails sent synchronously).`);
             lastWarn = now;
         }
     } else {
