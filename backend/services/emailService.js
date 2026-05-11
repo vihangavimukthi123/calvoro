@@ -8,15 +8,27 @@ const DEFAULT_FROM = process.env.MAIL_FROM || 'Calvoro <noreply@calvoro.com>';
 class EmailService {
     getTransporter() {
         const host = process.env.SMTP_HOST;
+        const port = parseInt(process.env.SMTP_PORT || '587', 10);
         const user = process.env.SMTP_USER;
         const pass = process.env.SMTP_PASS;
-        if (!host || !user || !pass) return null;
+        const secure = process.env.SMTP_SECURE === 'true' || process.env.SMTP_SECURE === '1';
+
+        if (!host || !user || !pass) {
+            console.warn('[EmailService] SMTP configuration missing (host/user/pass).');
+            return null;
+        }
+
+        console.log(`[EmailService] Initializing transporter: ${host}:${port} (secure: ${secure})`);
+
         return nodemailer.createTransport({
             host,
-            port: parseInt(process.env.SMTP_PORT || '587', 10),
-            secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_SECURE === '1',
+            port,
+            secure,
             auth: { user, pass },
-            family: 4 // Force IPv4 to avoid ENETUNREACH on IPv6
+            family: 4, // Force IPv4 to avoid ENETUNREACH on IPv6
+            connectionTimeout: 10000, // 10 seconds timeout
+            greetingTimeout: 5000,    // 5 seconds greeting timeout
+            socketTimeout: 15000      // 15 seconds socket timeout
         });
     }
 
