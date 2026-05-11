@@ -26,17 +26,19 @@ class EmailService {
             port,
             secure,
             auth: { user, pass },
-            family: 4, // Force IPv4
+            family: 4, 
             lookup: (hostname, options, callback) => {
                 dns.lookup(hostname, { family: 4 }, callback);
             },
+            requireTLS: port === 587, // Force STARTTLS on 587
             connectionTimeout: 20000, 
             greetingTimeout: 10000,
             socketTimeout: 30000,
             logger: true,
             debug: true,
             tls: {
-                rejectUnauthorized: false
+                rejectUnauthorized: false,
+                minVersion: 'TLSv1.2'
             }
         });
     }
@@ -45,6 +47,36 @@ class EmailService {
      * Send a raw email.
      */
     async sendEmail({ to, subject, html, text }) {
+        // PRIORITY 1: Resend API (Bypasses blocked SMTP ports)
+        if (process.env.RESEND_API_KEY) {
+            console.log(`[EmailService] Using Resend API for ${to}`);
+            try {
+                const response = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        from: process.env.MAIL_FROM || 'onboarding@resend.dev',
+                        to: Array.isArray(to) ? to : [to],
+                        subject: subject,
+                        html: html
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    console.log(`[EmailService] Resend Success: ${data.id}`);
+                    return { success: true, data };
+                } else {
+                    console.error('[EmailService] Resend Error:', data);
+                }
+            } catch (err) {
+                console.error('[EmailService] Resend Fetch Failed:', err.message);
+            }
+        }
+
+        // PRIORITY 2: SMTP (Legacy fallback)
         const transporter = this.getTransporter();
         if (!transporter) {
             console.warn('SMTP variables missing. Email not sent:', { to, subject });
