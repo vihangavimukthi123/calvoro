@@ -9,6 +9,11 @@
 
     function toAbsoluteUrl(url) {
         if (!url) return '';
+        // Handle new variant object structure
+        if (typeof url === 'object' && !Array.isArray(url)) {
+            url = url.main || (url.subs && url.subs[0]) || '';
+        }
+        if (typeof url !== 'string') return '';
         try { return new URL(url, apiBase).href; } catch (e) { return url; }
     }
     function escapeAttr(s) {
@@ -39,6 +44,7 @@
             const isLoggedIn = !!(meData && meData.user);
 
             const colorImagesRaw = product.color_images || {};
+            const colorVideosRaw = product.color_videos || {};
             function getColorVariant(colorKey) {
                 if (!colorKey) return null;
                 var k = Object.keys(colorImagesRaw).find(function(x) { return (x || '').toLowerCase() === (colorKey || '').toLowerCase(); });
@@ -49,6 +55,14 @@
                     return { main: data, subs: [], video: legacyVideo };
                 }
                 return data;
+            }
+            function getColorImage(color) {
+                var v = getColorVariant(color);
+                return v ? v.main : null;
+            }
+            function getColorVideo(color) {
+                var v = getColorVariant(color);
+                return v ? v.video : null;
             }
             var colorKeys = Object.keys(colorImagesRaw);
             var colorList = product.colors && product.colors.length ? product.colors : [];
