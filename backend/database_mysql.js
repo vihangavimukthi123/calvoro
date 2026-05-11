@@ -1812,18 +1812,23 @@ class CalvoroMySQLDatabase {
         try {
             await conn.beginTransaction();
             const [rows] = await conn.query(
-                'SELECT * FROM gift_vouchers WHERE code = ? AND is_active = 1 FOR UPDATE',
+                'SELECT * FROM gift_vouchers WHERE code = ? FOR UPDATE',
                 [normalizedCode]
             );
             const v = rows[0];
             if (!v) {
                 await conn.rollback();
-                return { valid: false, message: 'Invalid or inactive voucher code.' };
+                return { valid: false, message: `Voucher code "${normalizedCode}" not found.` };
+            }
+            if (!v.is_active) {
+                await conn.rollback();
+                return { valid: false, message: 'This voucher is currently inactive.' };
             }
             const expiry = v.expiry_date ? new Date(v.expiry_date) : null;
             if (expiry && expiry < new Date()) {
                 await conn.rollback();
-                return { valid: false, message: 'This voucher has expired.' };
+                const expiryStr = expiry.toLocaleDateString();
+                return { valid: false, message: `This voucher expired on ${expiryStr}.` };
             }
             if (v.usage_limit != null && v.used_count >= v.usage_limit) {
                 await conn.rollback();
