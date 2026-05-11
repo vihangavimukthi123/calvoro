@@ -359,7 +359,7 @@ class CalvoroMySQLDatabase {
     async getPromoTicker() {
         const raw = await this.getSiteSetting('promoTicker');
         if (!raw) {
-            return { lines: ['FREE SHIPPING ON ORDERS OVER LKR 15,000'], durationSeconds: 22 };
+            return { lines: ['FREE SHIPPING ON ORDERS OVER LKR 10,000'], durationSeconds: 22 };
         }
         try {
             const parsed = JSON.parse(raw);
@@ -368,7 +368,7 @@ class CalvoroMySQLDatabase {
                 durationSeconds: Number(parsed.durationSeconds) || 22
             };
         } catch (_) {
-            return { lines: ['FREE SHIPPING ON ORDERS OVER LKR 15,000'], durationSeconds: 22 };
+            return { lines: ['FREE SHIPPING ON ORDERS OVER LKR 10,000'], durationSeconds: 22 };
         }
     }
 
@@ -1845,6 +1845,7 @@ class CalvoroMySQLDatabase {
                 }
             }
             const subtotal = Number(cartSubtotalLkr);
+            let discount = 0;
             if (v.discount_type === 'percentage') {
                 discount = Math.min(subtotal * (Number(v.discount_value) / 100), subtotal);
             } else {
@@ -2119,8 +2120,8 @@ class CalvoroMySQLDatabase {
         if (!zone || !zone.enabled) {
             // Fallback basic options when no zones configured
             const minDays = 3, maxDays = 5;
-            const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
-            const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
+                    const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 10000);
+                    const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
             const standardFee = total >= threshold ? 0 : defaultFee;
             return [
                 { id: null, code: 'standard', name: 'Standard Delivery', fee: standardFee, eta_min_days: minDays, eta_max_days: maxDays, is_pickup: false, is_same_day: false, cod_available: true }
@@ -2129,8 +2130,8 @@ class CalvoroMySQLDatabase {
 
         const [methods] = await this.pool.query('SELECT * FROM delivery_methods WHERE enabled = 1');
         if (!methods.length) {
-            const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
-            const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
+                    const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 10000);
+                    const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
             const standardFee = total >= threshold ? 0 : (Number(zone.shipping_fee) || defaultFee);
             return [
                 { id: null, code: 'standard', name: 'Standard Delivery', fee: standardFee, eta_min_days: zone.min_days, eta_max_days: zone.max_days, is_pickup: false, is_same_day: false, cod_available: !!zone.cod_available }
@@ -2162,10 +2163,11 @@ class CalvoroMySQLDatabase {
                 candidates.sort((a, b) => Number(b.min_order_total || 0) - Number(a.min_order_total || 0));
                 rule = candidates[0];
             }
+            const globalThreshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 10000);
             let fee = 0;
             if (rule) {
-                const freeThreshold = rule.free_shipping_threshold != null ? Number(rule.free_shipping_threshold) : null;
-                if (freeThreshold != null && total >= freeThreshold) {
+                const ruleThreshold = rule.free_shipping_threshold != null ? Number(rule.free_shipping_threshold) : null;
+                if ((ruleThreshold != null && total >= ruleThreshold) || total >= globalThreshold) {
                     fee = 0;
                 } else {
                     fee = Number(rule.fee);
@@ -2180,9 +2182,8 @@ class CalvoroMySQLDatabase {
                     fee = 0;
                 } else {
                     // Use dynamic settings if available, else fallback to defaults
-                    const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
                     const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
-                    fee = total >= threshold ? 0 : defaultFee;
+                    fee = total >= globalThreshold ? 0 : defaultFee;
                 }
             }
 

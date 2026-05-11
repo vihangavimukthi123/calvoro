@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     // Dynamic Shipping
-    const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 15000;
+    const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 10000;
     const defaultFee = Number(await db.getSiteSetting('delivery_charge')) || 500;
     let shipping = subtotal >= threshold ? 0 : defaultFee;
     const user_id = req.session && req.session.user ? req.session.user.id : null;

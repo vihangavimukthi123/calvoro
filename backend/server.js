@@ -238,11 +238,11 @@ app.get('/api/admin/delivery-settings', requireAdmin, requirePermission('setting
         const threshold = await db.getSiteSetting('free_shipping_threshold');
         const charge = await db.getSiteSetting('delivery_charge');
         res.json({
-            freeShippingThreshold: Number(threshold) || 15000,
+            freeShippingThreshold: Number(threshold) || 10000,
             deliveryCharge: Number(charge) || 500
         });
     } catch (e) {
-        res.json({ freeShippingThreshold: 15000, deliveryCharge: 500 });
+        res.json({ freeShippingThreshold: 10000, deliveryCharge: 500 });
     }
 });
 
@@ -263,11 +263,11 @@ app.get('/api/site-settings/delivery', async (req, res) => {
         const threshold = await db.getSiteSetting('free_shipping_threshold');
         const charge = await db.getSiteSetting('delivery_charge');
         res.json({
-            freeShippingThreshold: Number(threshold) || 15000,
+            freeShippingThreshold: Number(threshold) || 10000,
             deliveryCharge: Number(charge) || 500
         });
     } catch (e) {
-        res.json({ freeShippingThreshold: 15000, deliveryCharge: 500 });
+        res.json({ freeShippingThreshold: 10000, deliveryCharge: 500 });
     }
 });
 

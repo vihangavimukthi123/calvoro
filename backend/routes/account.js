@@ -24,7 +24,7 @@ router.get('/my-data', async (req, res) => {
             const price = item.is_on_sale ? item.sale_price : item.base_price;
             return sum + (price * item.quantity);
         }, 0);
-        const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 15000;
+        const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 10000;
         const defaultFee = Number(await db.getSiteSetting('delivery_charge')) || 500;
         const shipping = subtotal >= threshold ? 0 : defaultFee;
         const cart = {
@@ -289,7 +289,7 @@ router.get('/cart', async (req, res) => {
             const price = item.is_on_sale ? item.sale_price : item.base_price;
             return sum + (price * item.quantity);
         }, 0);
-        const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 15000;
+        const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 10000;
         const defaultFee = Number(await db.getSiteSetting('delivery_charge')) || 500;
         const shipping = subtotal >= threshold ? 0 : defaultFee;
         res.json({

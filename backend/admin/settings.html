@@ -521,7 +521,7 @@
                 const r2 = await fetch(apiUrl('/api/admin/delivery-settings'), { credentials: 'include' });
                 const d2 = await r2.json().catch(() => ({}));
                 document.getElementById('deliveryChargeInput').value = d2.deliveryCharge || 500;
-                document.getElementById('freeShippingThresholdInput').value = d2.freeShippingThreshold || 15000;
+                document.getElementById('freeShippingThresholdInput').value = d2.freeShippingThreshold || 10000;
             } catch (e) { console.error(e); }
             status.textContent = '';
         }

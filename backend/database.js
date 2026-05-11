@@ -31,7 +31,7 @@ class CalvoroDatabase {
         if (!Array.isArray(this.promotions)) this.promotions = [];
         this.settings = this.loadJSON(SETTINGS_FILE, {
             promoTicker: {
-                lines: ['FREE SHIPPING ON ORDERS OVER LKR 15,000'],
+                lines: ['FREE SHIPPING ON ORDERS OVER LKR 10,000'],
                 durationSeconds: 22
             },
             carousel: {
@@ -1008,7 +1008,7 @@ class CalvoroDatabase {
     ensureDeliveryTables() { return Promise.resolve(); }
     getDeliveryOptions({ cart_total }) {
         const total = Number(cart_total) || 0;
-        const threshold = (this.settings && this.settings.delivery_settings && this.settings.delivery_settings.free_shipping_threshold) || 15000;
+        const threshold = (this.settings && this.settings.delivery_settings && this.settings.delivery_settings.free_shipping_threshold) || 10000;
         const defaultFee = (this.settings && this.settings.delivery_settings && this.settings.delivery_settings.delivery_charge) || 500;
         return Promise.resolve([
             {
