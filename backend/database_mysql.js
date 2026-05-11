@@ -802,7 +802,16 @@ class CalvoroMySQLDatabase {
                 .map(normalizeMediaPath)
                 .filter(Boolean);
             const colorImages = (colorImagesRaw && typeof colorImagesRaw === 'object' && !Array.isArray(colorImagesRaw))
-                ? Object.fromEntries(Object.entries(colorImagesRaw).map(([k, v]) => [k, normalizeMediaPath(v)]))
+                ? Object.fromEntries(Object.entries(colorImagesRaw).map(([k, v]) => {
+                    if (v && typeof v === 'object' && !Array.isArray(v)) {
+                        return [k, {
+                            main: normalizeMediaPath(v.main),
+                            subs: Array.isArray(v.subs) ? v.subs.map(normalizeMediaPath).filter(Boolean) : [],
+                            video: normalizeMediaPath(v.video)
+                        }];
+                    }
+                    return [k, normalizeMediaPath(v)];
+                }))
                 : {};
             const colorVideos = (colorVideosRaw && typeof colorVideosRaw === 'object' && !Array.isArray(colorVideosRaw))
                 ? Object.fromEntries(Object.entries(colorVideosRaw).map(([k, v]) => [k, normalizeMediaPath(v)]))

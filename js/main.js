@@ -12,7 +12,11 @@ function _calvoroApiBase() {
 
 window.getImgUrl = function(url) {
     if (!url) return '';
-    if (typeof url !== 'string') return url;
+    // Handle new variant object structure
+    if (typeof url === 'object' && !Array.isArray(url)) {
+        url = url.main || (url.subs && url.subs[0]) || '';
+    }
+    if (typeof url !== 'string') return '';
     if (url.startsWith('http') || url.startsWith('data:')) return url;
     const base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : window.location.origin;
     const cleanBase = base.replace(/\/$/, '');
@@ -371,7 +375,7 @@ window.CartDrawer = {
             const link = (id) => pathPrefix + (inProducts ? 'product.html?id=' + id : 'products/product.html?id=' + id);
             container.innerHTML = list.map(p => {
                 const price = p.sale_price != null && p.sale_price < p.price ? p.sale_price : p.price;
-                const img = (p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || '').replace(/"/g, '&quot;');
+                const img = (p.image_url || (p.images && p.images[0]) || (p.color_images && Object.values(p.color_images)[0]) || '');
                 const name = (p.name || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
                 const colorsCount = (p.colors && p.colors.length) ? p.colors.length : (p.color_images && Object.keys(p.color_images).length) || 0;
                 const colorStr = colorsCount ? colorsCount + ' Color' + (colorsCount !== 1 ? 's' : '') : '';

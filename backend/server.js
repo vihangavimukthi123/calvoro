@@ -331,7 +331,7 @@ app.use('/admin', express.static(path.join(__dirname, 'admin')));
 // === Diagnostic Logging ===
 app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
-        console.log(`[API Request] ${req.method} ${req.path}`);
+        console.log(`[API Request] ${req.method} ${req.path} - Content-Type: ${req.get('Content-Type')}`);
     }
     next();
 });

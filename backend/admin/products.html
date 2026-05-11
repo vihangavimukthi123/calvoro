@@ -267,7 +267,11 @@
         var apiBase = adminApiBase();
         function getImgUrl(url) {
             if (!url) return '';
-            if (typeof url !== 'string') return url;
+            // Handle new variant object structure
+            if (typeof url === 'object' && !Array.isArray(url)) {
+                url = url.main || (url.subs && url.subs[0]) || '';
+            }
+            if (typeof url !== 'string') return '';
             if (url.startsWith('http') || url.startsWith('data:')) return url;
             const base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : window.location.origin;
             return base.replace(/\/$/, '') + '/' + url.replace(/^\//, '');

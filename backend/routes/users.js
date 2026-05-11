@@ -26,14 +26,23 @@ function addToNewsletter(email) {
 // Register: create account, then user can sign in
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, first_name, last_name, phone, address, city } = req.body;
+        console.log('[Register] Request body:', req.body);
+        let { email, password, first_name, last_name, phone, address, city } = req.body;
+        
+        email = (email || '').trim().toLowerCase();
+        password = (password || '');
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
         const existing = await db.getUserByEmail(email);
         if (existing) {
+            console.log(`[Register] Blocked: Email ${email} already exists.`);
             return res.status(400).json({ error: 'Email already registered' });
         }
 
@@ -234,38 +243,6 @@ router.post('/google-login', async (req, res) => {
     } catch (error) {
         console.error('Google login error:', error);
         res.status(401).json({ error: 'Google sign-in failed.' });
-    }
-});
-
-// Newsletter Signup (and Auto-login)
-router.post('/newsletter-signup', async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ error: 'Email is required' });
-
-        const lowerEmail = email.trim().toLowerCase();
-        addToNewsletter(lowerEmail);
-
-        let user = await db.getUserByEmail(lowerEmail);
-        if (!user) {
-            const result = await db.createUser({
-                email: lowerEmail,
-                password_hash: '', 
-                full_name: lowerEmail.split('@')[0]
-            });
-            user = await db.getUserById(result.lastInsertRowid);
-        }
-
-        req.session.user = {
-            id: user.id,
-            email: user.email,
-            full_name: user.full_name
-        };
-
-        res.json({ success: true, message: 'Successfully signed up and logged in.', user: req.session.user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Newsletter signup failed' });
     }
 });
 
