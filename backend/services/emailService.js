@@ -18,17 +18,22 @@ class EmailService {
             return null;
         }
 
-        console.log(`[EmailService] Initializing transporter: ${host}:${port} (secure: ${secure})`);
+        console.log(`[EmailService] Attempting connection to ${host}:${port} (secure: ${secure}, family: 4)`);
 
         return nodemailer.createTransport({
             host,
             port,
             secure,
             auth: { user, pass },
-            family: 4, // Force IPv4 to avoid ENETUNREACH on IPv6
-            connectionTimeout: 10000, // 10 seconds timeout
-            greetingTimeout: 5000,    // 5 seconds greeting timeout
-            socketTimeout: 15000      // 15 seconds socket timeout
+            family: 4, // Force IPv4
+            connectionTimeout: 20000, // Increase to 20s
+            greetingTimeout: 10000,    // Increase to 10s
+            socketTimeout: 30000,      // Increase to 30s
+            logger: true,              // Log to console
+            debug: true,               // Include SMTP traffic in logs
+            tls: {
+                rejectUnauthorized: false // Helps with some proxy/firewall issues
+            }
         });
     }
 

@@ -63,7 +63,10 @@ router.post('/register', async (req, res) => {
 
         const user = await db.getUserByEmail(email);
         if (user) {
-            await emailService.sendWelcomeEmail(user);
+            // Send welcome email in background so it doesn't block the response
+            emailService.sendWelcomeEmail(user).catch(err => {
+                console.error(`[Register] Failed to send welcome email to ${email}:`, err.message);
+            });
         }
 
         res.json({
