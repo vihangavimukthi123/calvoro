@@ -1759,7 +1759,43 @@ async function initCategoryImages() {
 }
 
 // Initialize everything
-console.log('Calvoro e-commerce system loaded');
+(async function() {
+    console.log('Calvoro e-commerce system loaded');
+    
+    // Fetch and update delivery settings globally
+    try {
+        const res = await fetch(_calvoroApiBase() + '/api/site-settings/delivery');
+        if (res.ok) {
+            const settings = await res.json();
+            window.calvoro_delivery_settings = settings;
+            
+            const threshold = settings.freeShippingThreshold;
+            const charge = settings.deliveryCharge;
+            const thresholdFormatted = 'LKR ' + threshold.toLocaleString();
+            
+            // Update Promo Bars
+            document.querySelectorAll('.promo').forEach(el => {
+                el.textContent = `FREE SHIPPING ON ORDERS OVER ${thresholdFormatted}`;
+            });
+            
+            // Update Footer Trust sections
+            document.querySelectorAll('.footer-trust__text').forEach(el => {
+                if (el.textContent.toLowerCase().includes('orders over')) {
+                    el.textContent = `On orders over ${thresholdFormatted}`;
+                }
+            });
+            
+            // Update product page info items (if any)
+            document.querySelectorAll('.info-item span').forEach(el => {
+                if (el.textContent.toLowerCase().includes('free delivery on orders above')) {
+                    el.textContent = `Free delivery on orders above ${thresholdFormatted}`;
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Failed to load dynamic delivery settings', e);
+    }
+})();
 
 // Mobile Menu Logic
 (function() {

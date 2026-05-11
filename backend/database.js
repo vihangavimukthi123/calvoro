@@ -159,7 +159,8 @@ class CalvoroDatabase {
         const defaults = [
             { id: 1, name: 'Men', slug: 'men', created_at: new Date().toISOString() },
             { id: 2, name: 'Women', slug: 'women', created_at: new Date().toISOString() },
-            { id: 3, name: 'Gifts', slug: 'gifts', created_at: new Date().toISOString() }
+            { id: 3, name: 'Gifts', slug: 'gifts', created_at: new Date().toISOString() },
+            { id: 4, name: 'Unisex', slug: 'unisex', created_at: new Date().toISOString() }
         ];
         if (this.categories.length === 0) {
             this.categories = defaults;
@@ -1007,12 +1008,14 @@ class CalvoroDatabase {
     ensureDeliveryTables() { return Promise.resolve(); }
     getDeliveryOptions({ cart_total }) {
         const total = Number(cart_total) || 0;
+        const threshold = (this.settings && this.settings.delivery_settings && this.settings.delivery_settings.free_shipping_threshold) || 15000;
+        const defaultFee = (this.settings && this.settings.delivery_settings && this.settings.delivery_settings.delivery_charge) || 500;
         return Promise.resolve([
             {
                 id: null,
                 code: 'standard',
                 name: 'Standard Delivery',
-                fee: total >= 15000 ? 0 : 500,
+                fee: total >= threshold ? 0 : defaultFee,
                 eta_min_days: 3,
                 eta_max_days: 5,
                 is_pickup: false,

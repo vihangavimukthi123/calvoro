@@ -17,7 +17,9 @@ async function getCartHandler(req, res) {
             return sum + (price * item.quantity);
         }, 0);
 
-        const shipping = subtotal >= 15000 ? 0 : 500;
+        const threshold = Number(await db.getSiteSetting('free_shipping_threshold')) || 15000;
+        const defaultFee = Number(await db.getSiteSetting('delivery_charge')) || 500;
+        const shipping = subtotal >= threshold ? 0 : defaultFee;
         const total = subtotal + shipping;
 
         res.json({

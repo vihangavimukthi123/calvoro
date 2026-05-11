@@ -232,23 +232,42 @@ app.post('/api/admin/trending-products', requireAdmin, requirePermission('produc
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// === Shipping Settings ===
-app.get('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
+// === Delivery Settings ===
+app.get('/api/admin/delivery-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
-        const val = await db.getSiteSetting('default_courier');
-        res.json({ defaultCourier: val || 'Standard Courier' });
+        const threshold = await db.getSiteSetting('free_shipping_threshold');
+        const charge = await db.getSiteSetting('delivery_charge');
+        res.json({
+            freeShippingThreshold: Number(threshold) || 15000,
+            deliveryCharge: Number(charge) || 500
+        });
     } catch (e) {
-        res.json({ defaultCourier: 'Standard Courier' });
+        res.json({ freeShippingThreshold: 15000, deliveryCharge: 500 });
     }
 });
 
-app.post('/api/admin/shipping-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
+app.post('/api/admin/delivery-settings', requireAdmin, requirePermission('settings'), async (req, res) => {
     try {
-        const { defaultCourier } = req.body;
-        await db.setSiteSetting('default_courier', defaultCourier || '');
+        const { freeShippingThreshold, deliveryCharge } = req.body;
+        await db.setSiteSetting('free_shipping_threshold', freeShippingThreshold || '15000');
+        await db.setSiteSetting('delivery_charge', deliveryCharge || '500');
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Failed to save' });
+    }
+});
+
+// Public Delivery Settings
+app.get('/api/site-settings/delivery', async (req, res) => {
+    try {
+        const threshold = await db.getSiteSetting('free_shipping_threshold');
+        const charge = await db.getSiteSetting('delivery_charge');
+        res.json({
+            freeShippingThreshold: Number(threshold) || 15000,
+            deliveryCharge: Number(charge) || 500
+        });
+    } catch (e) {
+        res.json({ freeShippingThreshold: 15000, deliveryCharge: 500 });
     }
 });
 

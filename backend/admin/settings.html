@@ -220,6 +220,17 @@
                         </div>
                     </div>
 
+                    <div class="form-row" style="margin-top:16px;">
+                        <div class="form-group">
+                            <label for="deliveryChargeInput">Standard Delivery Charge (LKR)</label>
+                            <input type="number" id="deliveryChargeInput" placeholder="e.g. 500" value="500">
+                        </div>
+                        <div class="form-group">
+                            <label for="freeShippingThresholdInput">Free Shipping Threshold (LKR)</label>
+                            <input type="number" id="freeShippingThresholdInput" placeholder="e.g. 15000" value="15000">
+                        </div>
+                    </div>
+
                     <div style="display:flex;gap:12px;align-items:center;margin-top:18px;">
                         <button type="button" class="btn-primary" id="saveShippingBtn">Save Shipping Settings</button>
                         <span id="shippingStatusText" style="font-size:13px;color:#666;"></span>
@@ -500,31 +511,49 @@
         async function loadShippingSettings() {
             const status = document.getElementById('shippingStatusText');
             status.textContent = 'Loading...';
-            const r = await fetch(apiUrl('/api/admin/shipping-settings'), { credentials: 'include' });
-            const d = await r.json().catch(() => ({}));
-            if (!r.ok) {
-                status.textContent = '';
-                return;
-            }
-            document.getElementById('defaultCourierInput').value = d.defaultCourier || '';
+            try {
+                // Courier
+                const r1 = await fetch(apiUrl('/api/admin/shipping-settings'), { credentials: 'include' });
+                const d1 = await r1.json().catch(() => ({}));
+                document.getElementById('defaultCourierInput').value = d1.defaultCourier || '';
+
+                // Delivery Charge
+                const r2 = await fetch(apiUrl('/api/admin/delivery-settings'), { credentials: 'include' });
+                const d2 = await r2.json().catch(() => ({}));
+                document.getElementById('deliveryChargeInput').value = d2.deliveryCharge || 500;
+                document.getElementById('freeShippingThresholdInput').value = d2.freeShippingThreshold || 15000;
+            } catch (e) { console.error(e); }
             status.textContent = '';
         }
 
         async function saveShippingSettings() {
             const status = document.getElementById('shippingStatusText');
             status.textContent = 'Saving...';
-            const r = await fetch(apiUrl('/api/admin/shipping-settings'), {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ defaultCourier: document.getElementById('defaultCourierInput').value.trim() })
-            });
-            if (!r.ok) {
+            try {
+                // Save Courier
+                await fetch(apiUrl('/api/admin/shipping-settings'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ defaultCourier: document.getElementById('defaultCourierInput').value.trim() })
+                });
+
+                // Save Delivery
+                await fetch(apiUrl('/api/admin/delivery-settings'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        deliveryCharge: Number(document.getElementById('deliveryChargeInput').value) || 500,
+                        freeShippingThreshold: Number(document.getElementById('freeShippingThresholdInput').value) || 15000
+                    })
+                });
+
+                status.textContent = 'Saved.';
+                setTimeout(() => { status.textContent = ''; }, 1500);
+            } catch (e) {
                 status.textContent = 'Failed to save';
-                return;
             }
-            status.textContent = 'Saved.';
-            setTimeout(() => { status.textContent = ''; }, 1500);
         }
 
         async function loadCategoryImages() {

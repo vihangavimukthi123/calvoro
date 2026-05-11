@@ -188,7 +188,7 @@ class CalvoroMySQLDatabase {
                 INDEX idx_product_id (product_id)
             )`,
             `INSERT IGNORE INTO categories (id, name, slug, display_order) VALUES
-            (1, 'Men', 'men', 1), (2, 'Women', 'women', 2), (3, 'Gifts', 'gifts', 3)`
+            (1, 'Men', 'men', 1), (2, 'Women', 'women', 2), (3, 'Gifts', 'gifts', 3), (4, 'Unisex', 'unisex', 4)`
         ];
 
         for (const sql of tables) {
@@ -1844,12 +1844,13 @@ class CalvoroMySQLDatabase {
                     return { valid: false, message: 'You have already used this voucher the maximum number of times.' };
                 }
             }
-            let discount = 0;
             const subtotal = Number(cartSubtotalLkr);
             if (v.discount_type === 'percentage') {
                 discount = Math.min(subtotal * (Number(v.discount_value) / 100), subtotal);
             } else {
-                discount = Math.min(Number(v.discount_value), subtotal);
+                // For fixed amount, don't cap at subtotal here. 
+                // The frontend and order logic will cap it at the Total (Subtotal + Shipping).
+                discount = Number(v.discount_value);
             }
             discount = Math.round(discount * 100) / 100;
             await conn.commit();
@@ -2118,15 +2119,21 @@ class CalvoroMySQLDatabase {
         if (!zone || !zone.enabled) {
             // Fallback basic options when no zones configured
             const minDays = 3, maxDays = 5;
+            const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
+            const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
+            const standardFee = total >= threshold ? 0 : defaultFee;
             return [
-                { id: null, code: 'standard', name: 'Standard Delivery', fee: total >= 15000 ? 0 : 500, eta_min_days: minDays, eta_max_days: maxDays, is_pickup: false, is_same_day: false, cod_available: true }
+                { id: null, code: 'standard', name: 'Standard Delivery', fee: standardFee, eta_min_days: minDays, eta_max_days: maxDays, is_pickup: false, is_same_day: false, cod_available: true }
             ];
         }
 
         const [methods] = await this.pool.query('SELECT * FROM delivery_methods WHERE enabled = 1');
         if (!methods.length) {
+            const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
+            const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
+            const standardFee = total >= threshold ? 0 : (Number(zone.shipping_fee) || defaultFee);
             return [
-                { id: null, code: 'standard', name: 'Standard Delivery', fee: total >= 15000 ? 0 : 500, eta_min_days: zone.min_days, eta_max_days: zone.max_days, is_pickup: false, is_same_day: false, cod_available: !!zone.cod_available }
+                { id: null, code: 'standard', name: 'Standard Delivery', fee: standardFee, eta_min_days: zone.min_days, eta_max_days: zone.max_days, is_pickup: false, is_same_day: false, cod_available: !!zone.cod_available }
             ];
         }
 
@@ -2172,7 +2179,10 @@ class CalvoroMySQLDatabase {
                 } else if (m.is_pickup) {
                     fee = 0;
                 } else {
-                    fee = total >= 15000 ? 0 : 500;
+                    // Use dynamic settings if available, else fallback to defaults
+                    const threshold = await this.getSiteSetting('free_shipping_threshold').then(v => Number(v) || 15000);
+                    const defaultFee = await this.getSiteSetting('delivery_charge').then(v => Number(v) || 500);
+                    fee = total >= threshold ? 0 : defaultFee;
                 }
             }
 

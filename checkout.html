@@ -445,6 +445,7 @@
         var checkoutCartItems = [];
         var checkoutSubtotal = 0;
         var selectedDelivery = null;
+        var deliverySettings = { freeShippingThreshold: 15000, deliveryCharge: 500 };
 
         function showToast(message, type) {
             var container = document.getElementById('toast-container');
@@ -555,8 +556,12 @@
                 </div>
             `).join('');
 
-            var shipping = subtotal >= 10000 ? 0 : 500;
+            var threshold = deliverySettings.freeShippingThreshold;
+            var defaultFee = deliverySettings.deliveryCharge;
+            var shipping = subtotal >= threshold ? 0 : defaultFee;
             var discount = appliedVoucher ? appliedVoucher.discount : 0;
+            
+            // Allow discount to cover shipping if it's a fixed amount (capped at Total)
             var total = Math.max(0, subtotal + shipping - discount);
 
             document.getElementById('subtotal').textContent = 'LKR ' + subtotal.toLocaleString();
@@ -567,7 +572,8 @@
             var totalRow = document.getElementById('order-total-row');
             if (discount > 0) {
                 discountRow.style.display = 'flex';
-                discountAmount.textContent = '- LKR ' + discount.toLocaleString();
+                // Display the applied discount (capped at total if needed, but here we just show the savings)
+                discountAmount.textContent = '- LKR ' + Math.min(discount, subtotal + shipping).toLocaleString();
             } else {
                 discountRow.style.display = 'none';
             }
@@ -577,7 +583,7 @@
                 badge.style.display = appliedVoucher ? 'flex' : 'none';
                 if (appliedVoucher) {
                     document.getElementById('gv-applied-code').textContent = appliedVoucher.code;
-                    document.getElementById('gv-applied-discount').textContent = 'You save LKR ' + (appliedVoucher.discount || 0).toLocaleString();
+                    document.getElementById('gv-applied-discount').textContent = 'You save LKR ' + Math.min(appliedVoucher.discount, subtotal + shipping).toLocaleString();
                 }
             }
             if (totalRow && discount > 0) totalRow.classList.add('gv-total-recalc');
@@ -722,7 +728,9 @@
 
             var formData = new FormData(this);
             var subtotal = checkoutSubtotal;
-            var shipping = selectedDelivery ? selectedDelivery.fee : (subtotal >= 10000 ? 0 : 500);
+            var threshold = deliverySettings.freeShippingThreshold;
+            var defaultFee = deliverySettings.deliveryCharge;
+            var shipping = selectedDelivery ? selectedDelivery.fee : (subtotal >= threshold ? 0 : defaultFee);
             const discount = appliedVoucher ? appliedVoucher.discount : 0;
             const total = Math.max(0, subtotal + shipping - discount);
 
@@ -780,8 +788,19 @@
             }
         });
 
-        loadCartForCheckout().then(function() {
+        async function initCheckout() {
+            try {
+                const res = await fetch(baseUrl + '/api/site-settings/delivery');
+                if (res.ok) {
+                    deliverySettings = await res.json();
+                }
+            } catch (e) {}
+
+            await loadCartForCheckout();
             loadDeliveryOptions();
+        }
+
+        initCheckout().then(function() {
             var noteEl = document.querySelector('textarea[name="notes"]');
             if (noteEl) {
                 try {

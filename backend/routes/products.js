@@ -90,8 +90,8 @@ router.get('/', async (req, res) => {
                 }
             });
             if (resolvedIds.length) {
-                // Show products in this category OR uncategorized (null) so new products appear until admin sets category
-                products = products.filter(p => p.category_id == null || resolvedIds.includes(Number(p.category_id)));
+                // Strict Filtering: Only show products in the requested categories
+                products = products.filter(p => p.category_id != null && resolvedIds.includes(Number(p.category_id)));
             }
         }
 
