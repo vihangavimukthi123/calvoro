@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const ejs = require('ejs');
 const fs = require('fs').promises;
+const dns = require('dns');
 
 const DEFAULT_FROM = process.env.MAIL_FROM || 'Calvoro <noreply@calvoro.com>';
 
@@ -26,13 +27,16 @@ class EmailService {
             secure,
             auth: { user, pass },
             family: 4, // Force IPv4
-            connectionTimeout: 20000, // Increase to 20s
-            greetingTimeout: 10000,    // Increase to 10s
-            socketTimeout: 30000,      // Increase to 30s
-            logger: true,              // Log to console
-            debug: true,               // Include SMTP traffic in logs
+            lookup: (hostname, options, callback) => {
+                dns.lookup(hostname, { family: 4 }, callback);
+            },
+            connectionTimeout: 20000, 
+            greetingTimeout: 10000,
+            socketTimeout: 30000,
+            logger: true,
+            debug: true,
             tls: {
-                rejectUnauthorized: false // Helps with some proxy/firewall issues
+                rejectUnauthorized: false
             }
         });
     }
