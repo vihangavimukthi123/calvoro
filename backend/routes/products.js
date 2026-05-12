@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
         if (category) {
             const catParts = category.split(',').map(c => c.trim());
             const categories = await db.getAllCategories();
-            console.log(`[Products] Total categories in DB: ${categories.length}`);
+            console.log(`[Products] Categories in DB: ${categories.map(c => `${c.name}(ID:${c.id}, Slug:${c.slug})`).join(', ')}`);
             const resolvedIds = [];
             console.log(`[Products] Filtering by category: ${category}`);
             catParts.forEach(part => {
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
             });
             console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
             console.log(`[Products] Before category filter: ${products.length} products`);
-            products.forEach(p => console.log(`  - Product ID: ${p.id}, Name: ${p.name}, category_id: ${p.category_id}`));
+            console.log(`[Products] Current Product Category IDs: ${products.map(p => p.category_id).join(', ')}`);
             if (resolvedIds.length) {
                 // Strict Filtering: Only show products in the requested categories
                 products = products.filter(p => {
