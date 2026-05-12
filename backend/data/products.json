@@ -38,5 +38,17 @@
     "status": "active",
     "id": 2,
     "created_at": "2026-02-11T04:35:38.502Z"
+  },
+  {
+    "name": "Test Unisex Item 1778576920777",
+    "price": 1000,
+    "category_id": 4,
+    "status": "active",
+    "id": 3,
+    "created_at": "2026-05-12T09:08:40.777Z",
+    "images": [],
+    "color_images": {},
+    "color_videos": {},
+    "media": []
   }
 ]

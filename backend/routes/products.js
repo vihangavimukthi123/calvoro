@@ -98,6 +98,7 @@ router.get('/', async (req, res) => {
             const catParts = category.split(',').map(c => c.trim());
             const categories = await db.getAllCategories();
             const resolvedIds = [];
+            console.log(`[Products] Filtering by category: ${category}`);
             catParts.forEach(part => {
                 if (/^\d+$/.test(part)) resolvedIds.push(parseInt(part, 10));
                 else {
@@ -107,9 +108,14 @@ router.get('/', async (req, res) => {
                     else if (byName) resolvedIds.push(byName.id);
                 }
             });
+            console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
             if (resolvedIds.length) {
                 // Strict Filtering: Only show products in the requested categories
-                products = products.filter(p => p.category_id != null && resolvedIds.includes(Number(p.category_id)));
+                products = products.filter(p => {
+                    if (p.category_id == null) return false;
+                    const pid = Number(p.category_id);
+                    return resolvedIds.includes(pid);
+                });
             }
         }
 
@@ -171,7 +177,11 @@ router.get('/', async (req, res) => {
         if (status) {
             products = products.filter(p => p.status === status);
         } else {
-            products = products.filter(p => (p.status || p.is_active) === 'active' || p.status === undefined);
+            // Default: Show 'active' products or those with no status set (defaulting to active)
+            products = products.filter(p => {
+                const s = (p.status || '').toLowerCase();
+                return s === 'active' || s === '' || p.status === undefined || p.status === null || p.is_active === true;
+            });
         }
 
         if (search && search.trim().length >= 2) {
@@ -337,14 +347,16 @@ router.post('/', requireAdmin, async (req, res) => {
     }
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    let finalCategoryId = category_id || null;
-    if (finalCategoryId) {
+    let finalCategoryId = category_id ? parseInt(category_id, 10) : null;
+    if (finalCategoryId && !isNaN(finalCategoryId)) {
         const categories = await db.getAllCategories();
-        const selected = (categories || []).find(c => String(c.id) === String(finalCategoryId));
+        const selected = (categories || []).find(c => Number(c.id) === finalCategoryId);
         const isGiftCategory = selected && (((selected.slug || '').toLowerCase() === 'gifts') || ((selected.name || '').toLowerCase() === 'gifts'));
         if (isGiftCategory) {
             return res.status(400).json({ error: 'Gift Vouchers are managed separately. Please use the Vouchers section.' });
         }
+    } else {
+        finalCategoryId = null;
     }
 
     const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
@@ -397,14 +409,16 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    let finalCategoryId = category_id || null;
-    if (finalCategoryId) {
+    let finalCategoryId = category_id !== undefined ? (category_id ? parseInt(category_id, 10) : null) : undefined;
+    if (finalCategoryId && !isNaN(finalCategoryId)) {
         const categories = await db.getAllCategories();
-        const selected = (categories || []).find(c => String(c.id) === String(finalCategoryId));
+        const selected = (categories || []).find(c => Number(c.id) === finalCategoryId);
         const isGiftCategory = selected && (((selected.slug || '').toLowerCase() === 'gifts') || ((selected.name || '').toLowerCase() === 'gifts'));
         if (isGiftCategory) {
             return res.status(400).json({ error: 'Gift Vouchers are managed separately. Please use the Vouchers section.' });
         }
+    } else if (finalCategoryId === 0 || isNaN(finalCategoryId)) {
+        if (category_id !== undefined) finalCategoryId = null;
     }
 
     const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
