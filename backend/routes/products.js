@@ -103,10 +103,14 @@ router.get('/', async (req, res) => {
             catParts.forEach(part => {
                 if (/^\d+$/.test(part)) resolvedIds.push(parseInt(part, 10));
                 else {
-                    const bySlug = categories.find(c => (c.slug || '').toLowerCase() === part.toLowerCase());
-                    const byName = categories.find(c => (c.name || '').toLowerCase() === part.toLowerCase());
-                    if (bySlug) resolvedIds.push(bySlug.id);
-                    else if (byName) resolvedIds.push(byName.id);
+                    const normalizedPart = part.toLowerCase();
+                    const matches = categories.filter(c => 
+                        (c.slug || '').toLowerCase().includes(normalizedPart) || 
+                        (c.name || '').toLowerCase().includes(normalizedPart)
+                    );
+                    matches.forEach(m => {
+                        if (!resolvedIds.includes(m.id)) resolvedIds.push(m.id);
+                    });
                 }
             });
             console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
