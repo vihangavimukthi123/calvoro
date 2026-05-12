@@ -97,25 +97,27 @@ router.get('/', async (req, res) => {
         if (category) {
             const catParts = category.split(',').map(c => c.trim());
             const categories = await db.getAllCategories();
-            console.log(`[Products] Categories in DB: ${categories.map(c => `${c.name}(ID:${c.id}, Slug:${c.slug})`).join(', ')}`);
             const resolvedIds = [];
-            console.log(`[Products] Filtering by category: ${category}`);
             catParts.forEach(part => {
                 if (/^\d+$/.test(part)) resolvedIds.push(parseInt(part, 10));
                 else {
                     const normalizedPart = part.toLowerCase();
-                    const matches = categories.filter(c => 
-                        (c.slug || '').toLowerCase().includes(normalizedPart) || 
-                        (c.name || '').toLowerCase().includes(normalizedPart)
-                    );
+                    const matches = categories.filter(c => {
+                        const slug = (c.slug || '').toLowerCase();
+                        const name = (c.name || '').toLowerCase();
+                        
+                        // Special case: 'men' should not match 'women'
+                        if (normalizedPart === 'men') {
+                            return slug === 'men' || name === 'men' || (slug.includes('men') && !slug.includes('women')) || (name.includes('men') && !name.includes('women'));
+                        }
+                        
+                        return slug === normalizedPart || name === normalizedPart || slug.includes(normalizedPart) || name.includes(normalizedPart);
+                    });
                     matches.forEach(m => {
                         if (!resolvedIds.includes(m.id)) resolvedIds.push(m.id);
                     });
                 }
             });
-            console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
-            console.log(`[Products] Before category filter: ${products.length} products`);
-            console.log(`[Products] Current Product Category IDs: ${products.map(p => p.category_id).join(', ')}`);
             if (resolvedIds.length) {
                 // Strict Filtering: Only show products in the requested categories
                 products = products.filter(p => {
@@ -125,7 +127,6 @@ router.get('/', async (req, res) => {
                     return match;
                 });
             }
-            console.log(`[Products] After category filter: ${products.length} products`);
         }
 
         if (color) {
