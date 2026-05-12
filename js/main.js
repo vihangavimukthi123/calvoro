@@ -1719,40 +1719,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initCategoryImages() {
-    var base = _calvoroApiBase();
     try {
-        var r = await fetch(base + '/api/category-images');
-        var d = await r.json().catch(function() { return {}; });
-        if (r.ok && d) {
-            if (d.men) {
-                var el = document.getElementById('cat-img-men');
-                if (el) {
-                    if (el.tagName === 'IMG') el.src = d.men;
-                    else { el.style.backgroundImage = 'url(' + d.men + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
-                }
+        const r = await fetch(_calvoroApiBase('/api/category-images'));
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) return;
+
+        const updateEl = (id, url) => {
+            const el = document.getElementById(id);
+            if (!el || !url) return;
+            const fullUrl = window.getImgUrl(url);
+            if (el.tagName === 'IMG') {
+                el.src = fullUrl;
+            } else {
+                el.style.backgroundImage = `url("${fullUrl}")`;
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundPosition = 'center';
             }
-            if (d.women) {
-                var el = document.getElementById('cat-img-women');
-                if (el) {
-                    if (el.tagName === 'IMG') el.src = d.women;
-                    else { el.style.backgroundImage = 'url(' + d.women + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
-                }
-            }
-            if (d.gifts) {
-                var el = document.getElementById('cat-img-gifts');
-                if (el) {
-                    if (el.tagName === 'IMG') el.src = d.gifts;
-                    else { el.style.backgroundImage = 'url(' + d.gifts + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
-                }
-            }
-            if (d.unisex) {
-                var el = document.getElementById('cat-img-unisex');
-                if (el) {
-                    if (el.tagName === 'IMG') el.src = d.unisex;
-                    else { el.style.backgroundImage = 'url(' + d.unisex + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
-                }
-            }
-        }
+        };
+
+        updateEl('cat-img-men', d.men);
+        updateEl('cat-img-women', d.women);
+        updateEl('cat-img-gifts', d.gifts);
+        updateEl('cat-img-unisex', d.unisex);
     } catch (_err) {
         // Keep placeholders when category images cannot be loaded.
     }
