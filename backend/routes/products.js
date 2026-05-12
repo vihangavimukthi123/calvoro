@@ -31,7 +31,18 @@ function normalizeProductMediaFields(product) {
     if (p.color_images && typeof p.color_images === 'object' && !Array.isArray(p.color_images)) {
         const normalized = {};
         Object.keys(p.color_images).forEach((k) => {
-            normalized[k] = normalizeUrlPath(p.color_images[k]);
+            const val = p.color_images[k];
+            if (typeof val === 'string') {
+                normalized[k] = normalizeUrlPath(val);
+            } else if (val && typeof val === 'object') {
+                normalized[k] = {
+                    main: normalizeUrlPath(val.main || ''),
+                    subs: Array.isArray(val.subs) ? val.subs.map(normalizeUrlPath).filter(Boolean) : [],
+                    video: normalizeUrlPath(val.video || '')
+                };
+            } else {
+                normalized[k] = val;
+            }
         });
         p.color_images = normalized;
     } else {
@@ -60,7 +71,14 @@ function normalizeProductMediaFields(product) {
     }
 
     if (!p.image_url) {
-        p.image_url = p.images[0] || Object.values(p.color_images)[0] || '';
+        const firstColor = Object.values(p.color_images)[0];
+        if (typeof firstColor === 'string') {
+            p.image_url = p.images[0] || firstColor || '';
+        } else if (firstColor && typeof firstColor === 'object') {
+            p.image_url = p.images[0] || firstColor.main || (firstColor.subs && firstColor.subs[0]) || '';
+        } else {
+            p.image_url = p.images[0] || '';
+        }
     } else {
         p.image_url = normalizeUrlPath(p.image_url);
     }

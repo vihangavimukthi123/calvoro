@@ -95,4 +95,20 @@ function debounce(func, wait) {
     };
 }
 
+// Get image URL with proper normalization
+function getImgUrl(url) {
+    if (!url) return '';
+    // Handle new variant object structure
+    if (typeof url === 'object' && !Array.isArray(url)) {
+        url = url.main || (url.subs && url.subs[0]) || '';
+    }
+    if (!url || typeof url !== 'string') return '';
+    
+    // Normalize path
+    const normalized = url.trim().replace(/\\/g, '/');
+    const cleanUrl = normalized.startsWith('/') ? normalized : '/' + normalized;
+    const base = (window.CalvoroAPIBase !== undefined && window.CalvoroAPIBase) ? window.CalvoroAPIBase : '';
+    return base.replace(/\/$/, '') + cleanUrl;
+}
+
 console.log('Admin panel loaded');

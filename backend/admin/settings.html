@@ -149,6 +149,9 @@
                         <div class="form-group">
                             <label>Men's Collection Image URL</label>
                             <input type="text" id="catImgMen" placeholder="https://images.unsplash.com/...">
+                            <div class="preview-container" style="margin-top:8px;">
+                                <img id="catPrevMen" src="" alt="" style="max-height:80px; border-radius:4px; display:none;">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Upload Men's Image</label>
@@ -160,6 +163,9 @@
                         <div class="form-group">
                             <label>Women's Collection Image URL</label>
                             <input type="text" id="catImgWomen" placeholder="https://images.unsplash.com/...">
+                            <div class="preview-container" style="margin-top:8px;">
+                                <img id="catPrevWomen" src="" alt="" style="max-height:80px; border-radius:4px; display:none;">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Upload Women's Image</label>
@@ -171,6 +177,9 @@
                         <div class="form-group">
                             <label>Gift Vouchers Image URL</label>
                             <input type="text" id="catImgGifts" placeholder="https://images.unsplash.com/...">
+                            <div class="preview-container" style="margin-top:8px;">
+                                <img id="catPrevGifts" src="" alt="" style="max-height:80px; border-radius:4px; display:none;">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Upload Gift Vouchers Image</label>
@@ -182,6 +191,9 @@
                         <div class="form-group">
                             <label>Unisex Collection Image URL</label>
                             <input type="text" id="catImgUnisex" placeholder="https://images.unsplash.com/...">
+                            <div class="preview-container" style="margin-top:8px;">
+                                <img id="catPrevUnisex" src="" alt="" style="max-height:80px; border-radius:4px; display:none;">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Upload Unisex Image</label>
@@ -559,17 +571,37 @@
         async function loadCategoryImages() {
             const status = document.getElementById('catImgStatusText');
             status.textContent = 'Loading...';
-            const r = await fetch(apiUrl('/api/category-images'), { credentials: 'include' });
-            const d = await r.json().catch(() => ({}));
-            if (!r.ok) {
-                status.textContent = 'Failed to load category images.';
-                return;
+            try {
+                const r = await fetch(apiUrl('/api/category-images'), { credentials: 'include' });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    status.textContent = 'Failed to load category images.';
+                    return;
+                }
+                
+                const setVal = (id, prevId, val) => {
+                    const input = document.getElementById(id);
+                    const prev = document.getElementById(prevId);
+                    if (input) input.value = val || '';
+                    if (prev) {
+                        if (val) {
+                            prev.src = window.getImgUrl ? window.getImgUrl(val) : val;
+                            prev.style.display = 'block';
+                        } else {
+                            prev.style.display = 'none';
+                        }
+                    }
+                };
+
+                setVal('catImgMen', 'catPrevMen', d.men);
+                setVal('catImgWomen', 'catPrevWomen', d.women);
+                setVal('catImgGifts', 'catPrevGifts', d.gifts);
+                setVal('catImgUnisex', 'catPrevUnisex', d.unisex);
+                status.textContent = '';
+            } catch (e) {
+                console.error(e);
+                status.textContent = 'Connection error';
             }
-            document.getElementById('catImgMen').value = d.men || '';
-            document.getElementById('catImgWomen').value = d.women || '';
-            document.getElementById('catImgGifts').value = d.gifts || '';
-            document.getElementById('catImgUnisex').value = d.unisex || '';
-            status.textContent = '';
         }
 
         async function saveCategoryImages() {
@@ -595,13 +627,28 @@
                     body: JSON.stringify(payload)
                 });
                 if (!r.ok) throw new Error('Failed');
-                status.textContent = 'Saved.';
                 
+                // Update inputs and previews with new values
                 if (upMen) document.getElementById('catImgMen').value = upMen;
                 if (upWomen) document.getElementById('catImgWomen').value = upWomen;
                 if (upGifts) document.getElementById('catImgGifts').value = upGifts;
                 if (upUnisex) document.getElementById('catImgUnisex').value = upUnisex;
                 
+                // Refresh previews
+                ['Men', 'Women', 'Gifts', 'Unisex'].forEach(cat => {
+                    const val = document.getElementById('catImg' + cat).value;
+                    const prev = document.getElementById('catPrev' + cat);
+                    if (prev) {
+                        if (val) {
+                            prev.src = window.getImgUrl ? window.getImgUrl(val) : val;
+                            prev.style.display = 'block';
+                        } else {
+                            prev.style.display = 'none';
+                        }
+                    }
+                });
+
+                status.textContent = 'Saved.';
                 setTimeout(() => { status.textContent = ''; }, 1500);
             } catch (e) {
                 status.textContent = 'Failed to save';

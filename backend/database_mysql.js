@@ -756,30 +756,68 @@ class CalvoroMySQLDatabase {
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+
+        // Deep Normalize color_images object
+        if (product.color_images && typeof product.color_images === 'object') {
+            const normalized = {};
+            Object.keys(product.color_images).forEach(color => {
+                const data = product.color_images[color];
+                if (typeof data === 'string') {
+                    normalized[color] = normalizeMediaPath(data);
+                } else if (data && typeof data === 'object') {
+                    normalized[color] = {
+                        main: normalizeMediaPath(data.main || ''),
+                        subs: Array.isArray(data.subs) ? data.subs.map(normalizeMediaPath).filter(Boolean) : [],
+                        video: normalizeMediaPath(data.video || '')
+                    };
+                }
+            });
+            product.color_images = normalized;
+        }
+
         const slug = (product.slug || (product.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')).substring(0, 255);
+        
+        // Build dynamic update to avoid wiping columns that are NOT provided in the input object
+        const updates = [];
+        const values = [];
+
+        const addField = (col, val) => {
+            if (val !== undefined) {
+                updates.push(`${col} = ?`);
+                values.push(val);
+            }
+        };
+
+        const addJsonField = (col, val) => {
+            if (val !== undefined) {
+                updates.push(`${col} = ?`);
+                values.push(JSON.stringify(val || (col === 'images' || col === 'colors' || col === 'sizes' || col === 'media' ? [] : {})));
+            }
+        };
+
+        addField('name', product.name);
+        addField('slug', slug);
+        addField('description', product.description);
+        addField('category_id', product.category_id);
+        addField('price', product.price);
+        addField('sale_price', product.sale_price);
+        addJsonField('images', product.images);
+        addJsonField('color_images', product.color_images);
+        addJsonField('color_videos', product.color_videos);
+        addJsonField('colors', product.colors);
+        addJsonField('sizes', product.sizes);
+        addJsonField('media', product.media);
+        addField('size_guide_url', product.size_guide_url != null ? normalizeMediaPath(product.size_guide_url) : undefined);
+        addField('stock', product.stock);
+        addField('featured', product.featured !== undefined ? (product.featured ? 1 : 0) : undefined);
+        addField('status', product.status);
+
+        if (updates.length === 0) return { changes: 0 };
+
+        values.push(id);
         const [result] = await this.pool.query(
-            `UPDATE products SET name = ?, slug = ?, description = ?, category_id = ?, price = ?, sale_price = ?,
-             images = ?, color_images = ?, color_videos = ?, colors = ?, sizes = ?, media = ?, size_guide_url = ?, stock = ?, featured = ?, status = ?
-             WHERE id = ?`,
-            [
-                product.name,
-                slug,
-                product.description || '',
-                product.category_id || null,
-                product.price ?? 0,
-                product.sale_price ?? null,
-                JSON.stringify(product.images || []),
-                JSON.stringify(product.color_images != null ? product.color_images : {}),
-                JSON.stringify(product.color_videos != null ? product.color_videos : {}),
-                JSON.stringify(product.colors || []),
-                JSON.stringify(product.sizes || []),
-                JSON.stringify(product.media || []),
-                product.size_guide_url || '',
-                product.stock ?? 0,
-                product.featured ? 1 : 0,
-                product.status || 'active',
-                id
-            ]
+            `UPDATE products SET ${updates.join(', ')} WHERE id = ?`,
+            values
         );
         return { changes: result.affectedRows };
     }

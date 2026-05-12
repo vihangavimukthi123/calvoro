@@ -174,8 +174,16 @@ function normalizeAdminProductMedia(product) {
     const inColorImages = p.color_images && typeof p.color_images === 'object' ? p.color_images : {};
     p.color_images = {};
     Object.keys(inColorImages).forEach((key) => {
-        const normalized = normalizeAdminMediaUrl(inColorImages[key]);
-        if (normalized) p.color_images[key] = normalized;
+        const val = inColorImages[key];
+        if (typeof val === 'string') {
+            p.color_images[key] = normalizeAdminMediaUrl(val);
+        } else if (val && typeof val === 'object') {
+            p.color_images[key] = {
+                main: normalizeAdminMediaUrl(val.main || ''),
+                subs: Array.isArray(val.subs) ? val.subs.map(normalizeAdminMediaUrl).filter(Boolean) : [],
+                video: normalizeAdminMediaUrl(val.video || '')
+            };
+        }
     });
 
     const inColorVideos = p.color_videos && typeof p.color_videos === 'object' ? p.color_videos : {};
@@ -195,9 +203,18 @@ function normalizeAdminProductMedia(product) {
         p.media = [];
     }
 
-    p.image_url = normalizeAdminMediaUrl(
-        p.image_url || p.images[0] || Object.values(p.color_images)[0] || ''
-    );
+    if (!p.image_url) {
+        const firstColor = Object.values(p.color_images)[0];
+        if (typeof firstColor === 'string') {
+            p.image_url = p.images[0] || firstColor || '';
+        } else if (firstColor && typeof firstColor === 'object') {
+            p.image_url = p.images[0] || firstColor.main || (firstColor.subs && firstColor.subs[0]) || '';
+        } else {
+            p.image_url = p.images[0] || '';
+        }
+    }
+    
+    p.image_url = normalizeAdminMediaUrl(p.image_url || '');
     p.size_guide_url = normalizeAdminMediaUrl(p.size_guide_url || '');
     return p;
 }
