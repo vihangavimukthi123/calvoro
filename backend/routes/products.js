@@ -111,12 +111,14 @@ router.get('/', async (req, res) => {
             });
             console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
             console.log(`[Products] Before category filter: ${products.length} products`);
+            products.forEach(p => console.log(`  - Product ID: ${p.id}, Name: ${p.name}, category_id: ${p.category_id}`));
             if (resolvedIds.length) {
                 // Strict Filtering: Only show products in the requested categories
                 products = products.filter(p => {
                     if (p.category_id == null) return false;
                     const pid = Number(p.category_id);
-                    return resolvedIds.includes(pid);
+                    const match = resolvedIds.includes(pid);
+                    return match;
                 });
             }
             console.log(`[Products] After category filter: ${products.length} products`);
