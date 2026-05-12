@@ -97,6 +97,7 @@ router.get('/', async (req, res) => {
         if (category) {
             const catParts = category.split(',').map(c => c.trim());
             const categories = await db.getAllCategories();
+            console.log(`[Products] Total categories in DB: ${categories.length}`);
             const resolvedIds = [];
             console.log(`[Products] Filtering by category: ${category}`);
             catParts.forEach(part => {
@@ -109,6 +110,7 @@ router.get('/', async (req, res) => {
                 }
             });
             console.log(`[Products] Resolved category IDs: ${resolvedIds.join(', ')}`);
+            console.log(`[Products] Before category filter: ${products.length} products`);
             if (resolvedIds.length) {
                 // Strict Filtering: Only show products in the requested categories
                 products = products.filter(p => {
@@ -117,6 +119,7 @@ router.get('/', async (req, res) => {
                     return resolvedIds.includes(pid);
                 });
             }
+            console.log(`[Products] After category filter: ${products.length} products`);
         }
 
         if (color) {

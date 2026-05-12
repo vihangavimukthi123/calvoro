@@ -625,7 +625,9 @@ class ProductFilters {
         // Initial load: always fetch products for this collection so "no filters" shows correct list
         const runInitialLoad = () => {
             const container = document.querySelector('.products');
-            if (container && document.body.dataset.collection) {
+            const collection = document.body.dataset.collection;
+            console.log('[ProductFilters] runInitialLoad - container:', !!container, 'collection:', collection);
+            if (container && collection) {
                 this.initialProductsHTML = null;
                 this.applyFilters();
             }
@@ -708,9 +710,12 @@ class ProductFilters {
             params.append('pricing', '1');
 
             const apiUrl = _calvoroApiBase() + '/api/products?' + params.toString();
+            console.log('[ProductFilters] Fetching:', apiUrl);
             const response = await fetch(apiUrl);
+            console.log('[ProductFilters] Response status:', response.status);
             if (!response.ok) throw new Error('Server returned ' + response.status);
             const data = await response.json();
+            console.log('[ProductFilters] Received data:', data);
             const products = Array.isArray(data) ? data : (data.products || []);
             this.displayProducts(products);
             if (this.initialProductsHTML == null && !hasFilterSelection) this.initialProductsHTML = container.innerHTML;
