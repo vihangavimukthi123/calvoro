@@ -186,7 +186,10 @@
                         <button type="button" class="chip" data-value="Green">Green</button>
                         <button type="button" class="chip" data-value="Maroon">Maroon</button>
                     </div>
-                    <input type="text" id="productColorsInput" placeholder="Or type custom (e.g. Olive, Beige) and press Enter" class="chip-input">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="text" id="productColorsInput" placeholder="Or type custom (e.g. Olive, Beige) and press Enter" class="chip-input" style="flex:1;">
+                        <input type="color" id="productColorPalette" style="width:36px;height:36px;padding:0;border:none;cursor:pointer;border-radius:4px;background:none;" title="Pick a custom color">
+                    </div>
                     <input type="hidden" id="productColors">
 
                 </div>
@@ -576,6 +579,52 @@
         }
         function syncColorsToHidden() { document.getElementById('productColors').value = getSelectedColors().join(', '); }
         function syncSizesToHidden() { document.getElementById('productSizes').value = getSelectedSizes().join(', '); }
+        function addCustomColorChip(c) {
+            c = c.trim();
+            if (!c) return;
+            var chipsContainer = document.getElementById('colorChips');
+            var exists = Array.from(chipsContainer.querySelectorAll('.chip')).find(function(el) { return el.getAttribute('data-value').toLowerCase() === c.toLowerCase(); });
+            if (exists) {
+                exists.classList.add('selected');
+                return;
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'chip selected';
+            btn.setAttribute('data-value', c);
+            if (c.startsWith('#')) {
+                btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:' + c + ';border-radius:50%;margin-right:4px;"></span>' + c;
+            } else {
+                btn.textContent = c;
+            }
+            btn.onclick = function() {
+                this.classList.toggle('selected');
+                syncColorsToHidden();
+            };
+            chipsContainer.appendChild(btn);
+        }
+
+        function addCustomSizeChip(s) {
+            s = s.trim();
+            if (!s) return;
+            var chipsContainer = document.getElementById('sizeChips');
+            var exists = Array.from(chipsContainer.querySelectorAll('.chip')).find(function(el) { return el.getAttribute('data-value').toUpperCase() === s.toUpperCase(); });
+            if (exists) {
+                exists.classList.add('selected');
+                return;
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'chip selected';
+            btn.setAttribute('data-value', s);
+            btn.textContent = s;
+            btn.onclick = function() {
+                this.classList.toggle('selected');
+                syncSizesToHidden();
+            };
+            chipsContainer.appendChild(btn);
+        }
+
         function initColorSizeChips() {
             document.querySelectorAll('#colorChips .chip').forEach(function(btn) {
                 btn.onclick = function() {
@@ -590,10 +639,33 @@
                 };
             });
             document.getElementById('productColorsInput').onkeydown = function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); var v = this.value.trim(); if (v) { getSelectedColors(); syncColorsToHidden(); this.value = ''; } }
+                if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    var v = this.value.trim(); 
+                    if (v) { 
+                        v.split(/[,\n]/).forEach(addCustomColorChip);
+                        syncColorsToHidden(); 
+                        this.value = ''; 
+                    } 
+                }
             };
+            var colorPalette = document.getElementById('productColorPalette');
+            if (colorPalette) {
+                colorPalette.onchange = function() {
+                    addCustomColorChip(this.value);
+                    syncColorsToHidden();
+                };
+            }
             document.getElementById('productSizesInput').onkeydown = function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); var v = this.value.trim(); if (v) { getSelectedSizes(); syncSizesToHidden(); this.value = ''; } }
+                if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    var v = this.value.trim(); 
+                    if (v) { 
+                        v.split(/[,\n]/).forEach(addCustomSizeChip);
+                        syncSizesToHidden(); 
+                        this.value = ''; 
+                    } 
+                }
             };
         }
         function showAddProductModal() {
@@ -604,7 +676,17 @@
             renderProductImages();
             document.getElementById('colorImagesContainer').innerHTML = '';
             addColorImageRow();
-            document.querySelectorAll('#colorChips .chip, #sizeChips .chip').forEach(function(el) { el.classList.remove('selected'); });
+            document.querySelectorAll('#colorChips .chip, #sizeChips .chip').forEach(function(el) { 
+                var presetColors = ['Black','White','Grey','Blue','Navy','Red','Pink','Brown','Green','Maroon'];
+                var presetSizes = ['XS','S','M','L','XL','XXL'];
+                if (el.parentElement.id === 'colorChips' && presetColors.indexOf(el.getAttribute('data-value')) === -1) {
+                    el.remove();
+                } else if (el.parentElement.id === 'sizeChips' && presetSizes.indexOf(el.getAttribute('data-value')) === -1) {
+                    el.remove();
+                } else {
+                    el.classList.remove('selected'); 
+                }
+            });
             document.getElementById('productColorsInput').value = '';
             document.getElementById('productSizesInput').value = '';
             syncColorsToHidden();
@@ -639,10 +721,20 @@
             var sizes = Array.isArray(product.sizes) ? product.sizes : (product.sizes ? String(product.sizes).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : []);
             var presetColors = ['Black','White','Grey','Blue','Navy','Red','Pink','Brown','Green','Maroon'];
             var presetSizes = ['XS','S','M','L','XL','XXL'];
-            document.querySelectorAll('#colorChips .chip').forEach(function(el) { el.classList.toggle('selected', colors.indexOf(el.getAttribute('data-value')) !== -1); });
-            document.getElementById('productColorsInput').value = colors.filter(function(c) { return presetColors.indexOf(c) === -1; }).join(', ');
-            document.querySelectorAll('#sizeChips .chip').forEach(function(el) { el.classList.toggle('selected', sizes.indexOf(el.getAttribute('data-value')) !== -1); });
-            document.getElementById('productSizesInput').value = sizes.filter(function(s) { return presetSizes.indexOf(s) === -1; }).join(', ');
+            
+            document.querySelectorAll('#colorChips .chip').forEach(function(el) { 
+                if (presetColors.indexOf(el.getAttribute('data-value')) === -1) el.remove();
+                else el.classList.toggle('selected', colors.indexOf(el.getAttribute('data-value')) !== -1); 
+            });
+            colors.filter(function(c) { return presetColors.indexOf(c) === -1; }).forEach(addCustomColorChip);
+            document.getElementById('productColorsInput').value = '';
+
+            document.querySelectorAll('#sizeChips .chip').forEach(function(el) { 
+                if (presetSizes.indexOf(el.getAttribute('data-value')) === -1) el.remove();
+                else el.classList.toggle('selected', sizes.indexOf(el.getAttribute('data-value')) !== -1); 
+            });
+            sizes.filter(function(s) { return presetSizes.indexOf(s) === -1; }).forEach(addCustomSizeChip);
+            document.getElementById('productSizesInput').value = '';
             syncColorsToHidden();
             syncSizesToHidden();
             document.getElementById('productFeatured').checked = product.featured;

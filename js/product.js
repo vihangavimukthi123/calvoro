@@ -157,9 +157,9 @@
             const colorSwatches = colors.map((c, i) => {
                 const img = toAbsoluteUrl(getColorImage(c) || images[i] || images[0]) || defaultImg;
                 const hoverVid = getColorVideo(c) ? toAbsoluteUrl(getColorVideo(c)) : '';
-                const hex = COLORS_HEX[(c || '').toLowerCase()] || '#666';
-                const border = (c || '').toLowerCase() === 'white' ? ' border: 1px solid #ddd;' : '';
-                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(c) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + hex + ';' + border + '" title="' + escapeAttr(c) + '"></span>';
+                const hex = (c || '').startsWith('#') ? c : (COLORS_HEX[(c || '').toLowerCase()] || '#666');
+                const border = ((c || '').toLowerCase() === 'white' || (c || '').toLowerCase() === '#ffffff' || (c || '').toLowerCase() === '#fff') ? ' border: 1px solid #ddd;' : '';
+                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(c) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + escapeAttr(hex) + ';' + border + '" title="' + escapeAttr(c) + '"></span>';
             }).join('');
 
             const sizeButtons = sizes.map((s, i) => '<button type="button" ' + (i === 0 ? 'class="active"' : '') + ' data-size="' + escapeAttr(s) + '">' + escapeAttr(s) + '</button>').join('');
