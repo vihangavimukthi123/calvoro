@@ -768,7 +768,8 @@ class CalvoroMySQLDatabase {
                     normalized[color] = {
                         main: normalizeMediaPath(data.main || ''),
                         subs: Array.isArray(data.subs) ? data.subs.map(normalizeMediaPath).filter(Boolean) : [],
-                        video: normalizeMediaPath(data.video || '')
+                        video: normalizeMediaPath(data.video || ''),
+                        hex: data.hex || ''
                     };
                 }
             });

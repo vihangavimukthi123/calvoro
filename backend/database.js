@@ -213,7 +213,19 @@ class CalvoroDatabase {
         if (!p.color_images || typeof p.color_images !== 'object' || Array.isArray(p.color_images)) p.color_images = {};
         else {
             const normalized = {};
-            Object.keys(p.color_images).forEach(k => { normalized[k] = this._normalizeMediaPath(p.color_images[k]); });
+            Object.keys(p.color_images).forEach(k => {
+                const val = p.color_images[k];
+                if (typeof val === 'string') {
+                    normalized[k] = this._normalizeMediaPath(val);
+                } else if (val && typeof val === 'object') {
+                    normalized[k] = {
+                        main: this._normalizeMediaPath(val.main || ''),
+                        subs: Array.isArray(val.subs) ? val.subs.map(u => this._normalizeMediaPath(u)).filter(Boolean) : [],
+                        video: this._normalizeMediaPath(val.video || ''),
+                        hex: val.hex || ''
+                    };
+                }
+            });
             p.color_images = normalized;
         }
 
