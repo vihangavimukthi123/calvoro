@@ -187,8 +187,9 @@
                         <button type="button" class="chip" data-value="Maroon">Maroon</button>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="text" id="productColorsInput" placeholder="Or type custom (e.g. Olive, Beige) and press Enter" class="chip-input" style="flex:1;">
+                        <input type="text" id="productColorsInput" placeholder="Color Name (e.g. SKY BLUE)" class="chip-input" style="flex:1;">
                         <input type="color" id="productColorPalette" style="width:36px;height:36px;padding:0;border:none;cursor:pointer;border-radius:4px;background:none;" title="Pick a custom color">
+                        <button type="button" class="btn-sm" id="addCustomColorBtn">Add</button>
                     </div>
                     <input type="hidden" id="productColors">
 
@@ -582,6 +583,15 @@
         function addCustomColorChip(c) {
             c = c.trim();
             if (!c) return;
+            var name = c, hex = '';
+            if (c.includes('|')) {
+                var parts = c.split('|');
+                name = parts[0];
+                hex = parts[1];
+            } else if (c.startsWith('#')) {
+                name = c;
+                hex = c;
+            }
             var chipsContainer = document.getElementById('colorChips');
             var exists = Array.from(chipsContainer.querySelectorAll('.chip')).find(function(el) { return el.getAttribute('data-value').toLowerCase() === c.toLowerCase(); });
             if (exists) {
@@ -592,10 +602,10 @@
             btn.type = 'button';
             btn.className = 'chip selected';
             btn.setAttribute('data-value', c);
-            if (c.startsWith('#')) {
-                btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:' + c + ';border-radius:50%;margin-right:4px;"></span>' + c;
+            if (hex) {
+                btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:' + hex + ';border-radius:50%;margin-right:4px;"></span>' + name;
             } else {
-                btn.textContent = c;
+                btn.textContent = name;
             }
             btn.onclick = function() {
                 this.classList.toggle('selected');
@@ -638,24 +648,32 @@
                     syncSizesToHidden();
                 };
             });
-            document.getElementById('productColorsInput').onkeydown = function(e) {
+            var colorInput = document.getElementById('productColorsInput');
+            var colorPalette = document.getElementById('productColorPalette');
+            var addCustomColorBtn = document.getElementById('addCustomColorBtn');
+
+            function handleAddColor() {
+                var name = colorInput.value.trim();
+                if (name) {
+                    var hex = colorPalette ? colorPalette.value : '';
+                    if (hex && hex !== '#000000') {
+                        addCustomColorChip(name + '|' + hex);
+                    } else {
+                        name.split(/[,\n]/).forEach(function(n) { addCustomColorChip(n.trim()); });
+                    }
+                    syncColorsToHidden();
+                    colorInput.value = '';
+                }
+            }
+
+            if (addCustomColorBtn) addCustomColorBtn.onclick = handleAddColor;
+
+            colorInput.onkeydown = function(e) {
                 if (e.key === 'Enter') { 
                     e.preventDefault(); 
-                    var v = this.value.trim(); 
-                    if (v) { 
-                        v.split(/[,\n]/).forEach(addCustomColorChip);
-                        syncColorsToHidden(); 
-                        this.value = ''; 
-                    } 
+                    handleAddColor();
                 }
             };
-            var colorPalette = document.getElementById('productColorPalette');
-            if (colorPalette) {
-                colorPalette.onchange = function() {
-                    addCustomColorChip(this.value);
-                    syncColorsToHidden();
-                };
-            }
             document.getElementById('productSizesInput').onkeydown = function(e) {
                 if (e.key === 'Enter') { 
                     e.preventDefault(); 

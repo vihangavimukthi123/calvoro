@@ -64,9 +64,21 @@
                 var v = getColorVariant(color);
                 return v ? v.video : null;
             }
+            var colorData = {};
+            var colorListRaw = product.colors && product.colors.length ? product.colors : [];
+            colorListRaw.forEach(function(c) {
+                if (c && c.includes('|')) {
+                    var parts = c.split('|');
+                    colorData[parts[0]] = parts[1];
+                } else if (c) {
+                    if (!colorData[c]) colorData[c] = null;
+                }
+            });
             var colorKeys = Object.keys(colorImagesRaw);
-            var colorList = product.colors && product.colors.length ? product.colors : [];
-            var colors = colorList.length || colorKeys.length ? Array.from(new Set(colorList.concat(colorKeys))) : ['Black'];
+            colorKeys.forEach(function(k) {
+                if (!colorData[k]) colorData[k] = null;
+            });
+            var colors = Object.keys(colorData).length ? Object.keys(colorData) : ['Black'];
             const defaultImg = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><rect fill="#eee" width="600" height="800"/><text x="300" y="400" fill="#999" font-size="20" text-anchor="middle" dy=".3em">No image</text></svg>');
             
             // Process media array (supports images and videos)
@@ -154,12 +166,13 @@
             };
             const priceDisplay = (onSale ? '<del>' + fmt(compareAt) + '</del> ' : '') + fmt(price);
 
-            const colorSwatches = colors.map((c, i) => {
-                const img = toAbsoluteUrl(getColorImage(c) || images[i] || images[0]) || defaultImg;
-                const hoverVid = getColorVideo(c) ? toAbsoluteUrl(getColorVideo(c)) : '';
-                const hex = (c || '').startsWith('#') ? c : (COLORS_HEX[(c || '').toLowerCase()] || '#666');
-                const border = ((c || '').toLowerCase() === 'white' || (c || '').toLowerCase() === '#ffffff' || (c || '').toLowerCase() === '#fff') ? ' border: 1px solid #ddd;' : '';
-                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(c) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + escapeAttr(hex) + ';' + border + '" title="' + escapeAttr(c) + '"></span>';
+            const colorSwatches = colors.map((colorName, i) => {
+                const img = toAbsoluteUrl(getColorImage(colorName) || images[i] || images[0]) || defaultImg;
+                const hoverVid = getColorVideo(colorName) ? toAbsoluteUrl(getColorVideo(colorName)) : '';
+                const customHex = colorData[colorName];
+                const hex = customHex ? customHex : ((colorName || '').startsWith('#') ? colorName : (COLORS_HEX[(colorName || '').toLowerCase()] || '#666'));
+                const border = ((colorName || '').toLowerCase() === 'white' || hex.toLowerCase() === '#ffffff' || hex.toLowerCase() === '#fff') ? ' border: 1px solid #ddd;' : '';
+                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(colorName) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + escapeAttr(hex) + ';' + border + '" title="' + escapeAttr(colorName) + '"></span>';
             }).join('');
 
             const sizeButtons = sizes.map((s, i) => '<button type="button" ' + (i === 0 ? 'class="active"' : '') + ' data-size="' + escapeAttr(s) + '">' + escapeAttr(s) + '</button>').join('');

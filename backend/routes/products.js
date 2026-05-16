@@ -132,7 +132,11 @@ router.get('/', async (req, res) => {
         if (color) {
             const colors = color.split(',').map(c => c.trim().toLowerCase());
             products = products.filter(p => {
-                const pColors = (p.colors || []).map(c => (c || '').toLowerCase());
+            const pColors = (p.colors || []).map(c => {
+                let name = c || '';
+                if (name.includes('|')) name = name.split('|')[0];
+                return name.toLowerCase();
+            });
                 return colors.some(c => pColors.includes(c));
             });
         }
