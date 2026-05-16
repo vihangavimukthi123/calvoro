@@ -38,7 +38,8 @@ function normalizeProductMediaFields(product) {
                 normalized[k] = {
                     main: normalizeUrlPath(val.main || ''),
                     subs: Array.isArray(val.subs) ? val.subs.map(normalizeUrlPath).filter(Boolean) : [],
-                    video: normalizeUrlPath(val.video || '')
+                    video: normalizeUrlPath(val.video || ''),
+                    hex: val.hex || ''
                 };
             } else {
                 normalized[k] = val;
@@ -132,11 +133,7 @@ router.get('/', async (req, res) => {
         if (color) {
             const colors = color.split(',').map(c => c.trim().toLowerCase());
             products = products.filter(p => {
-            const pColors = (p.colors || []).map(c => {
-                let name = c || '';
-                if (name.includes('|')) name = name.split('|')[0];
-                return name.toLowerCase();
-            });
+                const pColors = (p.colors || []).map(c => (c || '').toLowerCase());
                 return colors.some(c => pColors.includes(c));
             });
         }

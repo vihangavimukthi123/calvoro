@@ -187,9 +187,7 @@
                         <button type="button" class="chip" data-value="Maroon">Maroon</button>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="text" id="productColorsInput" placeholder="Color Name (e.g. SKY BLUE)" class="chip-input" style="flex:1;">
-                        <input type="color" id="productColorPalette" style="width:36px;height:36px;padding:0;border:none;cursor:pointer;border-radius:4px;background:none;" title="Pick a custom color">
-                        <button type="button" class="btn-sm" id="addCustomColorBtn">Add</button>
+                        <input type="text" id="productColorsInput" placeholder="Or type custom (e.g. Olive, Beige) and press Enter" class="chip-input">
                     </div>
                     <input type="hidden" id="productColors">
 
@@ -423,7 +421,7 @@
             fileInput.click();
         }
 
-        function addColorImageRow(colorName, mainUrl, subs, videoUrl) {
+        function addColorImageRow(colorName, mainUrl, subs, videoUrl, hexCode) {
             const container = document.getElementById('colorImagesContainer');
             const row = document.createElement('div');
             row.className = 'color-image-row';
@@ -435,8 +433,11 @@
             row.innerHTML = `
                 <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
                     <div style="flex:1;">
-                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Color Name (matches 'Colors' list)</label>
-                        <input type="text" placeholder="e.g. Red" class="color-name" value="${(colorName || '').replace(/"/g, '&quot;')}" style="width:100%;">
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Color Name & Hex Code</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" placeholder="e.g. Red" class="color-name" value="${(colorName || '').replace(/"/g, '&quot;')}" style="flex:1;">
+                            <input type="color" class="color-hex" value="${hexCode || '#000000'}" style="width:32px;height:32px;padding:0;border:none;cursor:pointer;border-radius:4px;background:none;" title="Pick hex code for swatch">
+                        </div>
                     </div>
                     <button type="button" class="btn-sm btn-danger" onclick="this.closest('.color-image-row').remove()" style="margin-top:22px;">Delete Variant</button>
                 </div>
@@ -583,15 +584,6 @@
         function addCustomColorChip(c) {
             c = c.trim();
             if (!c) return;
-            var name = c, hex = '';
-            if (c.includes('|')) {
-                var parts = c.split('|');
-                name = parts[0];
-                hex = parts[1];
-            } else if (c.startsWith('#')) {
-                name = c;
-                hex = c;
-            }
             var chipsContainer = document.getElementById('colorChips');
             var exists = Array.from(chipsContainer.querySelectorAll('.chip')).find(function(el) { return el.getAttribute('data-value').toLowerCase() === c.toLowerCase(); });
             if (exists) {
@@ -602,10 +594,10 @@
             btn.type = 'button';
             btn.className = 'chip selected';
             btn.setAttribute('data-value', c);
-            if (hex) {
-                btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:' + hex + ';border-radius:50%;margin-right:4px;"></span>' + name;
+            if (c.startsWith('#')) {
+                btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:' + c + ';border-radius:50%;margin-right:4px;"></span>' + c;
             } else {
-                btn.textContent = name;
+                btn.textContent = c;
             }
             btn.onclick = function() {
                 this.classList.toggle('selected');
@@ -648,30 +640,15 @@
                     syncSizesToHidden();
                 };
             });
-            var colorInput = document.getElementById('productColorsInput');
-            var colorPalette = document.getElementById('productColorPalette');
-            var addCustomColorBtn = document.getElementById('addCustomColorBtn');
-
-            function handleAddColor() {
-                var name = colorInput.value.trim();
-                if (name) {
-                    var hex = colorPalette ? colorPalette.value : '';
-                    if (hex && hex !== '#000000') {
-                        addCustomColorChip(name + '|' + hex);
-                    } else {
-                        name.split(/[,\n]/).forEach(function(n) { addCustomColorChip(n.trim()); });
-                    }
-                    syncColorsToHidden();
-                    colorInput.value = '';
-                }
-            }
-
-            if (addCustomColorBtn) addCustomColorBtn.onclick = handleAddColor;
-
-            colorInput.onkeydown = function(e) {
+            document.getElementById('productColorsInput').onkeydown = function(e) {
                 if (e.key === 'Enter') { 
                     e.preventDefault(); 
-                    handleAddColor();
+                    var v = this.value.trim(); 
+                    if (v) { 
+                        v.split(/[,\n]/).forEach(addCustomColorChip);
+                        syncColorsToHidden(); 
+                        this.value = ''; 
+                    } 
                 }
             };
             document.getElementById('productSizesInput').onkeydown = function(e) {
@@ -770,7 +747,7 @@
                     if (typeof data === 'string') {
                         addColorImageRow(color, data, [], (product.color_videos || {})[color] || '');
                     } else {
-                        addColorImageRow(color, data.main || '', data.subs || [], data.video || '');
+                        addColorImageRow(color, data.main || '', data.subs || [], data.video || '', data.hex || '');
                     }
                 });
             }
@@ -823,13 +800,15 @@
                 const name = row.querySelector('.color-name').value.trim();
                 const mainUrl = row.querySelector('.color-url').value.trim();
                 const videoUrl = row.querySelector('.color-video-url').value.trim();
+                const hexCode = row.querySelector('.color-hex').value;
                 const subs = Array.from(row.querySelectorAll('.color-sub-url')).map(el => el.value);
                 
                 if (name && (mainUrl || subs.length > 0)) {
                     colorImages[name] = {
                         main: mainUrl,
                         subs: subs,
-                        video: videoUrl
+                        video: videoUrl,
+                        hex: hexCode
                     };
                 }
             });
