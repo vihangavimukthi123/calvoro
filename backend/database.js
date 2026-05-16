@@ -621,6 +621,27 @@ class CalvoroDatabase {
         throw new Error('Coupons require MySQL (set USE_MYSQL=true and run discount-engine-schema.sql).');
     }
 
+    // ---- Trending Products ----
+    getTrendingProductsSetting() {
+        this._loadSettingsFresh();
+        const raw = this.settings.trendingProducts;
+        if (!raw) return [];
+        try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    setTrendingProductsSetting(productIds) {
+        this._loadSettingsFresh();
+        const cleaned = Array.isArray(productIds) ? productIds.map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+        this.settings.trendingProducts = cleaned;
+        this.saveJSON(SETTINGS_FILE, this.settings);
+        return cleaned;
+    }
+
     setVideoStrip({ items }) {
         this._loadSettingsFresh();
         const cleaned = Array.isArray(items) ? items

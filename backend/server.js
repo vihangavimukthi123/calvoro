@@ -228,22 +228,16 @@ app.get('/api/admin/products', requireAdmin, requirePermission('products'), asyn
 
 app.get('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
-        const [rows] = await db.pool.query('SELECT product_id FROM trending_products ORDER BY display_order ASC');
-        res.json({ productIds: (rows || []).map(t => t.product_id) });
+        const productIds = typeof db.getTrendingProductsSetting === 'function' ? await db.getTrendingProductsSetting() : [];
+        res.json({ productIds });
     } catch (e) { res.json({ productIds: [] }); }
 });
 
 app.post('/api/admin/trending-products', requireAdmin, requirePermission('products'), async (req, res) => {
     try {
         const { productIds } = req.body;
-        await db.pool.query('DELETE FROM trending_products');
-        if (productIds && productIds.length > 0) {
-            for (let i = 0; i < productIds.length; i++) {
-                await db.pool.query(
-                    'INSERT INTO trending_products (product_id, display_order) VALUES (?, ?)',
-                    [productIds[i], i + 1]
-                );
-            }
+        if (typeof db.setTrendingProductsSetting === 'function') {
+            await db.setTrendingProductsSetting(productIds);
         }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Failed' }); }
