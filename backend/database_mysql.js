@@ -645,11 +645,24 @@ class CalvoroMySQLDatabase {
         }
     }
 
+    async ensureProductTypeAndFit() {
+        if (this._productTypeAndFitEnsured) return;
+        const cols = [
+            ['product_type', 'ALTER TABLE products ADD COLUMN product_type VARCHAR(100) NULL'],
+            ['fit',          'ALTER TABLE products ADD COLUMN fit VARCHAR(100) NULL']
+        ];
+        for (const [, sql] of cols) {
+            try { await this.pool.query(sql); } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') console.error('ensureProductTypeAndFit:', e.message); }
+        }
+        this._productTypeAndFitEnsured = true;
+    }
+
     async getAllProducts(includeDeleted = false) {
         await this.ensureProductsColorImages();
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+        await this.ensureProductTypeAndFit();
         const whereClause = includeDeleted ? '' : "WHERE p.status != 'deleted'";
         const [rows] = await this.pool.query(`
             SELECT p.*, c.name as category_name
@@ -665,6 +678,8 @@ class CalvoroMySQLDatabase {
             description: row.description,
             category_id: row.category_id,
             category_name: row.category_name,
+            product_type: row.product_type || '',
+            fit: row.fit || '',
             price: Number(row.price),
             base_price: Number(row.price),
             sale_price: row.sale_price != null ? Number(row.sale_price) : null,
@@ -688,6 +703,7 @@ class CalvoroMySQLDatabase {
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+        await this.ensureProductTypeAndFit();
         const [rows] = await this.pool.query(`
             SELECT p.*, c.name as category_name
             FROM products p
@@ -703,6 +719,8 @@ class CalvoroMySQLDatabase {
             description: row.description,
             category_id: row.category_id,
             category_name: row.category_name,
+            product_type: row.product_type || '',
+            fit: row.fit || '',
             price: Number(row.price),
             base_price: Number(row.price),
             sale_price: row.sale_price != null ? Number(row.sale_price) : null,
@@ -725,10 +743,11 @@ class CalvoroMySQLDatabase {
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+        await this.ensureProductTypeAndFit();
         const slug = (product.slug || (product.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')).substring(0, 255);
         const [result] = await this.pool.query(
-            `INSERT INTO products (name, slug, description, category_id, price, sale_price, images, color_images, color_videos, colors, sizes, media, size_guide_url, stock, featured, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO products (name, slug, description, category_id, price, sale_price, images, color_images, color_videos, colors, sizes, media, size_guide_url, product_type, fit, stock, featured, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 product.name,
                 slug,
@@ -743,6 +762,8 @@ class CalvoroMySQLDatabase {
                 JSON.stringify(product.sizes || []),
                 JSON.stringify(product.media || []),
                 product.size_guide_url || '',
+                product.product_type || null,
+                product.fit || null,
                 product.stock ?? 0,
                 product.featured ? 1 : 0,
                 product.status || 'active'
@@ -756,8 +777,9 @@ class CalvoroMySQLDatabase {
         await this.ensureProductsColorVideos();
         await this.ensureProductsMedia();
         await this.ensureProductsSizeGuideUrl();
+        await this.ensureProductTypeAndFit();
 
-        // Deep Normalize color_images object
+        // Deep Normalize color_images object (preserve hex)
         if (product.color_images && typeof product.color_images === 'object') {
             const normalized = {};
             Object.keys(product.color_images).forEach(color => {
@@ -809,6 +831,8 @@ class CalvoroMySQLDatabase {
         addJsonField('sizes', product.sizes);
         addJsonField('media', product.media);
         addField('size_guide_url', product.size_guide_url != null ? normalizeMediaPath(product.size_guide_url) : undefined);
+        addField('product_type', product.product_type !== undefined ? (product.product_type || null) : undefined);
+        addField('fit', product.fit !== undefined ? (product.fit || null) : undefined);
         addField('stock', product.stock);
         addField('featured', product.featured !== undefined ? (product.featured ? 1 : 0) : undefined);
         addField('status', product.status);

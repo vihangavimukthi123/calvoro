@@ -181,7 +181,8 @@ function normalizeAdminProductMedia(product) {
             p.color_images[key] = {
                 main: normalizeAdminMediaUrl(val.main || ''),
                 subs: Array.isArray(val.subs) ? val.subs.map(normalizeAdminMediaUrl).filter(Boolean) : [],
-                video: normalizeAdminMediaUrl(val.video || '')
+                video: normalizeAdminMediaUrl(val.video || ''),
+                hex: val.hex || ''
             };
         }
     });

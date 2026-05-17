@@ -371,7 +371,18 @@ router.post('/', requireAdmin, async (req, res) => {
     }
 
     const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
-    const normalizedColorImages = color_images && typeof color_images === 'object' ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => [k, normalizeUrlPath(v)])) : {};
+    const normalizedColorImages = color_images && typeof color_images === 'object'
+        ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => {
+            if (typeof v === 'string') return [k, normalizeUrlPath(v)];
+            if (v && typeof v === 'object') return [k, {
+                main: normalizeUrlPath(v.main || ''),
+                subs: Array.isArray(v.subs) ? v.subs.map(normalizeUrlPath).filter(Boolean) : [],
+                video: normalizeUrlPath(v.video || ''),
+                hex: v.hex || ''
+            }];
+            return [k, v];
+        }))
+        : {};
     const normalizedColorVideos = color_videos && typeof color_videos === 'object' ? Object.fromEntries(Object.entries(color_videos).map(([k, v]) => [k, normalizeUrlPath(v)])) : {};
     const normalizedMedia = Array.isArray(media) ? media.map((m) => ({
         type: m && m.type ? m.type : 'image',
@@ -433,7 +444,18 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 
     const normalizedImages = Array.isArray(images) ? images.map(normalizeUrlPath).filter(Boolean) : undefined;
-    const normalizedColorImages = color_images && typeof color_images === 'object' ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => [k, normalizeUrlPath(v)])) : undefined;
+    const normalizedColorImages = color_images && typeof color_images === 'object'
+        ? Object.fromEntries(Object.entries(color_images).map(([k, v]) => {
+            if (typeof v === 'string') return [k, normalizeUrlPath(v)];
+            if (v && typeof v === 'object') return [k, {
+                main: normalizeUrlPath(v.main || ''),
+                subs: Array.isArray(v.subs) ? v.subs.map(normalizeUrlPath).filter(Boolean) : [],
+                video: normalizeUrlPath(v.video || ''),
+                hex: v.hex || ''
+            }];
+            return [k, v];
+        }))
+        : undefined;
     const normalizedColorVideos = color_videos && typeof color_videos === 'object' ? Object.fromEntries(Object.entries(color_videos).map(([k, v]) => [k, normalizeUrlPath(v)])) : undefined;
     const normalizedMedia = Array.isArray(media) ? media.map((m) => ({
         type: m && m.type ? m.type : 'image',
