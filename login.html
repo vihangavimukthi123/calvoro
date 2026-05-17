@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in â€“ CALVORO</title>
+    <title>Sign in - CALVORO</title>
     <script>(function(){var v=localStorage.getItem('calvoro_theme');var dark=v==='dark'||(!v&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();</script>
     <script src="js/config.js"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -122,7 +122,7 @@
                 var err = document.getElementById('loginError');
                 var btn = document.getElementById('loginSubmitBtn');
                 if (err) err.style.display = 'none';
-                if (btn) { btn.disabled = true; btn.textContent = 'Signing inâ€¦'; }
+                if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
                 try {
                     var base = window.CalvoroAPIBase || '';
                     var res = await fetch(base + '/api/users/login', {

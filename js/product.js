@@ -278,7 +278,7 @@
                 '<div class="info-item"><span>Free delivery on orders above LKR 10,000</span></div>' +
                 '<div class="info-item"><span>Free Exchanges & Returns</span></div>' +
             '</div>' +
-            '<details open><summary>Details</summary><p>' + escapeHtml(product.description || 'Premium quality.') + '</p></details>' +
+            '<details open><summary>Details</summary><p style="white-space: pre-wrap; font-family: inherit;">' + escapeHtml(product.description || 'Premium quality.') + '</p></details>' +
         '</div>' +
         reviewsLeftHtml +
         reviewsRightHtml;
