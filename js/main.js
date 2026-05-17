@@ -1721,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initCategoryImages() {
     try {
-        const r = await fetch(_calvoroApiBase('/api/category-images'));
+        const r = await fetch(_calvoroApiBase() + '/api/category-images');
         const d = await r.json().catch(() => ({}));
         if (!r.ok) return;
 
