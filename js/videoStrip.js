@@ -1,15 +1,5 @@
-// Home page video-strip loader (admin-configurable)
+// Home page video-strip loader (admin-configurable with lazy-loading)
 (function () {
-    function playStripVideos() {
-        var videos = document.querySelectorAll('.video-strip video');
-        videos.forEach(function (v) {
-            try {
-                v.muted = true;
-                v.play().catch(function () { });
-            } catch (e) { }
-        });
-    }
-
     function setText(el, value) {
         el.textContent = (value == null ? '' : String(value));
     }
@@ -20,21 +10,11 @@
         a.href = item.href || '#';
 
         var video = document.createElement('video');
-        video.autoplay = true;
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = 'auto';
-
-        var source = document.createElement('source');
-        source.src = item.videoSrc || '';
-        // Set a best-effort mime type based on file extension.
-        var ext = String(item.videoSrc || '').split('.').pop().toLowerCase();
-        var mime = 'video/mp4';
-        if (ext === 'webm') mime = 'video/webm';
-        if (ext === 'mov' || ext === 'qt') mime = 'video/quicktime';
-        source.type = mime;
-        video.appendChild(source);
+        video.preload = 'none'; // Do not preload aggressively
+        video.setAttribute('data-src', item.videoSrc || '');
 
         var overlay = document.createElement('span');
         overlay.className = 'video-panel-overlay';
@@ -56,12 +36,62 @@
         return a;
     }
 
+    function lazyLoadVideos() {
+        var videos = document.querySelectorAll('.video-strip video');
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function (entries, obs) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        var video = entry.target;
+                        var src = video.getAttribute('data-src');
+                        if (src) {
+                            var source = document.createElement('source');
+                            source.src = src;
+                            var ext = src.split('.').pop().toLowerCase();
+                            var mime = 'video/mp4';
+                            if (ext === 'webm') mime = 'video/webm';
+                            if (ext === 'mov' || ext === 'qt') mime = 'video/quicktime';
+                            source.type = mime;
+                            
+                            video.appendChild(source);
+                            video.load();
+                            video.removeAttribute('data-src');
+                        }
+                        try {
+                            video.muted = true;
+                            video.play().catch(function() {});
+                        } catch (e) {}
+                        obs.unobserve(video);
+                    }
+                });
+            }, { rootMargin: '100px' });
+
+            videos.forEach(function (v) {
+                observer.observe(v);
+            });
+        } else {
+            // Fallback for older browsers
+            videos.forEach(function (video) {
+                var src = video.getAttribute('data-src');
+                if (src) {
+                    var source = document.createElement('source');
+                    source.src = src;
+                    video.appendChild(source);
+                    video.load();
+                }
+                try {
+                    video.muted = true;
+                    video.play().catch(function() {});
+                } catch(e) {}
+            });
+        }
+    }
+
     async function init() {
         var grid = document.getElementById('videoStripGrid');
         if (!grid) return;
 
         try {
-            // වෙනස් කළ කොටස: කෙලින්ම /api/... යොදා ඇත
             var r = await fetch('/api/video-strip', { credentials: 'include' });
             var d = await r.json().catch(function () { return {}; });
             if (!r.ok) throw new Error((d && d.error) ? d.error : 'Failed to load');
@@ -76,7 +106,7 @@
         } catch (e) {
             // If admin config fails, keep the current hardcoded markup.
         } finally {
-            playStripVideos();
+            lazyLoadVideos();
         }
     }
 
