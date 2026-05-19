@@ -202,65 +202,85 @@
         }
 
         async function viewOrder(id) {
-            const order = orders.find(o => o.id === id);
-            if (!order) return;
-
-            const itemsHtml = (order.items || []).map(item => `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.quantity}</td>
-                    <td>LKR ${(item.price || 0).toLocaleString()}</td>
-                    <td>LKR ${(item.quantity * item.price).toLocaleString()}</td>
-                </tr>
-            `).join('');
-
-            document.getElementById('orderDetails').innerHTML = `
-                <div>
-                    <h3>Order ${order.order_number || '#' + order.id}</h3>
-                    <p><strong>Status:</strong> <span class="badge badge-${order.status}">${order.status}</span></p>
-                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-                    
-                    <h4 style="margin-top: 24px;">Customer Information</h4>
-                    <p><strong>Name:</strong> ${order.customer_name}</p>
-                    <p><strong>Email:</strong> ${order.customer_email}</p>
-                    <p><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</p>
-                    <p><strong>Address:</strong> ${order.customer_address || 'N/A'}</p>
-                    
-                    <h4 style="margin-top: 24px;">Items</h4>
-                    <table style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>${itemsHtml}</tbody>
-                    </table>
-                    
-                    <div style="margin-top: 24px; text-align: right;">
-                        <p><strong>Subtotal:</strong> LKR ${(order.subtotal || 0).toLocaleString()}</p>
-                        <p><strong>Shipping:</strong> LKR ${(order.shipping || 0).toLocaleString()}</p>
-                        <h3><strong>Total:</strong> LKR ${(order.total || 0).toLocaleString()}</h3>
-                    </div>
-                    
-                    <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <h4 style="margin: 0 0 12px 0;">📦 Shipping & Tracking</h4>
-                        <div style="display: flex; gap: 12px; align-items: center;">
-                            <input type="text" id="trackingInput" placeholder="Enter tracking number..." 
-                                   value="${order.tracking_number || ''}" 
-                                   style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
-                            <button class="btn-primary" onclick="sendTracking(${order.id})" style="padding: 8px 20px;">Send Tracking Email</button>
-                        </div>
-                        <p style="font-size: 12px; color: #64748b; margin: 8px 0 0 0;">This will update the order tracking and notify the customer immediately.</p>
-                    </div>
-
-                    ${order.notes ? `<p style="margin-top: 16px;"><strong>Notes:</strong> ${order.notes}</p>` : ''}
-                </div>
-            `;
-
+            document.getElementById('orderDetails').innerHTML = '<div style="text-align:center; padding: 24px; color: #64748b;">Loading order details...</div>';
             document.getElementById('orderModal').classList.add('active');
+
+            try {
+                const res = await fetch(`/api/admin/orders/${id}`, { credentials: 'include' });
+                if (!res.ok) {
+                    document.getElementById('orderDetails').innerHTML = '<div style="color:red; padding: 24px; text-align:center;">Failed to load order details.</div>';
+                    return;
+                }
+                const order = await res.json();
+
+                const itemsHtml = (order.items || []).map(item => {
+                    const colorDesc = item.color ? `<div style="font-size: 12px; color: #64748b; margin-top: 2px;">🎨 Color: <strong>${item.color}</strong></div>` : '';
+                    const sizeDesc = item.size ? `<div style="font-size: 12px; color: #64748b;">📏 Size: <strong>${item.size}</strong></div>` : '';
+                    return `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px 0;">
+                                <div style="font-weight: 600; color: #1e293b;">${item.name}</div>
+                                ${colorDesc}
+                                ${sizeDesc}
+                            </td>
+                            <td style="padding: 12px 0; color: #334155;">${item.quantity}</td>
+                            <td style="padding: 12px 0; color: #334155;">LKR ${(item.price || 0).toLocaleString()}</td>
+                            <td style="padding: 12px 0; font-weight: 600; color: #0f172a;">LKR ${(item.quantity * item.price).toLocaleString()}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('orderDetails').innerHTML = `
+                    <div>
+                        <h3>Order ${order.order_number || '#' + order.id}</h3>
+                        <p><strong>Status:</strong> <span class="badge badge-${order.status}">${order.status}</span></p>
+                        <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                        
+                        <h4 style="margin-top: 24px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">Customer Information</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                            <p><strong>Name:</strong> ${order.customer_name}</p>
+                            <p><strong>Email:</strong> ${order.customer_email}</p>
+                            <p><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</p>
+                            <p><strong>Address:</strong> ${order.customer_address || 'N/A'}</p>
+                        </div>
+                        
+                        <h4 style="margin-top: 24px; color: #1e293b; padding-bottom: 6px;">Items</h4>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                                    <th style="padding: 8px 0; color: #475569; font-weight: 600;">Product</th>
+                                    <th style="padding: 8px 0; color: #475569; font-weight: 600;">Quantity</th>
+                                    <th style="padding: 8px 0; color: #475569; font-weight: 600;">Price</th>
+                                    <th style="padding: 8px 0; color: #475569; font-weight: 600;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                        
+                        <div style="margin-top: 24px; text-align: right; line-height: 1.6;">
+                            <p style="color: #64748b;"><strong>Subtotal:</strong> LKR ${(order.subtotal || 0).toLocaleString()}</p>
+                            <p style="color: #64748b;"><strong>Shipping:</strong> LKR ${(order.shipping || 0).toLocaleString()}</p>
+                            <h3 style="color: #0f172a; margin-top: 8px;"><strong>Total:</strong> LKR ${(order.total || 0).toLocaleString()}</h3>
+                        </div>
+                        
+                        <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <h4 style="margin: 0 0 12px 0; color: #1e293b;">📦 Shipping & Tracking</h4>
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <input type="text" id="trackingInput" placeholder="Enter tracking number..." 
+                                       value="${order.tracking_number || ''}" 
+                                       style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px;">
+                                <button class="btn-primary" onclick="sendTracking(${order.id})" style="padding: 8px 20px; font-size: 14px; border-radius: 4px;">Send Tracking Email</button>
+                            </div>
+                            <p style="font-size: 12px; color: #64748b; margin: 8px 0 0 0;">This will update the order tracking and notify the customer immediately.</p>
+                        </div>
+
+                        ${order.notes ? `<p style="margin-top: 16px; background: #fdf2f8; padding: 12px; border-radius: 6px; border-left: 4px solid #db2777; color: #831843;"><strong>Notes:</strong> ${order.notes}</p>` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                console.error(error);
+                document.getElementById('orderDetails').innerHTML = '<div style="color:red; padding: 24px; text-align:center;">Error loading order details.</div>';
+            }
         }
 
         async function updateStatus(id, status) {
