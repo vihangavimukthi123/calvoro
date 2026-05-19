@@ -5,7 +5,10 @@
     if (!id) { productDetailEl.innerHTML = '<p><a href="../index.html">Product not found</a>. Go back to <a href="../men.html">shop</a>.</p>'; return; }
 
     const apiBase = window.CalvoroAPIBase || window.location.origin;
-    const COLORS_HEX = { black: '#000', white: '#fff', grey: '#6b7280', gray: '#6b7280', blue: '#1e40af', brown: '#8b4513', green: '#065f46', red: '#dc2626', maroon: '#831843', navy: '#1e3a5f' };
+    const COLORS_HEX = { 
+        black: '#000', white: '#fff', grey: '#6b7280', gray: '#6b7280', blue: '#1e40af', brown: '#8b4513', green: '#065f46', red: '#dc2626', maroon: '#831843', navy: '#1e3a5f',
+        'dark green': '#064e3b', 'faded ash': '#9ca3af', 'smoke blue': '#60a5fa', 'smoky blue': '#60a5fa', 'storm olive': '#556b2f', 'coffee brown': '#4a3018', 'olive green': '#4d7c0f', 'pastel purple': '#c084fc', 'navy blue': '#1e3a5f'
+    };
 
     function toAbsoluteUrl(url) {
         if (!url) return '';
