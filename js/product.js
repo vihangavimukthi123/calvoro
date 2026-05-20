@@ -6,8 +6,14 @@
 
     const apiBase = window.CalvoroAPIBase || window.location.origin;
     const COLORS_HEX = { 
-        black: '#000', white: '#fff', grey: '#6b7280', gray: '#6b7280', blue: '#1e40af', brown: '#8b4513', green: '#065f46', red: '#dc2626', maroon: '#831843', navy: '#1e3a5f',
-        'dark green': '#064e3b', 'faded ash': '#9ca3af', 'smoke blue': '#60a5fa', 'smoky blue': '#60a5fa', 'storm olive': '#556b2f', 'coffee brown': '#4a3018', 'olive green': '#4d7c0f', 'pastel purple': '#c084fc', 'navy blue': '#1e3a5f'
+        black: '#000000', white: '#ffffff', grey: '#6b7280', gray: '#6b7280', blue: '#1e40af', brown: '#8b4513', green: '#065f46', red: '#dc2626', maroon: '#831843', navy: '#1e3a5f',
+        pink: '#ec4899', olive: '#808000', 'olive green': '#4d7c0f', sage: '#9caf88', beige: '#f5f5dc', khaki: '#f0e68c', lavender: '#e6e6fa', purple: '#800080',
+        teal: '#008080', mustard: '#ffdb58', peach: '#ffdab9', cream: '#fffdd0', apricot: '#fbceb1', coral: '#ff7f50', tan: '#d2b48c', charcoal: '#36454f',
+        burgundy: '#800020', turquoise: '#40e0d0', mint: '#98ff98', magenta: '#ff00ff', lime: '#00ff00', gold: '#ffd700', silver: '#c0c0c0', orange: '#ffa500',
+        yellow: '#ffff00', sand: '#c2b280', 'dusty pink': '#dcaebd', rust: '#b7410e', emerald: '#50c878', crimson: '#dc143c', plum: '#dda0dd', violet: '#ee82ee',
+        cyan: '#00ffff', bronze: '#cd7f32', copper: '#b87333', lilac: '#c8a2c8', salmon: '#fa8072', chocolate: '#7b3f00',
+        'dark green': '#064e3b', 'faded ash': '#9ca3af', 'smoke blue': '#60a5fa', 'smoky blue': '#60a5fa', 'storm olive': '#556b2f', 'coffee brown': '#4a3018',
+        'pastel purple': '#c084fc', 'navy blue': '#1e3a5f'
     };
 
     function toAbsoluteUrl(url) {
@@ -163,8 +169,7 @@
                 const variant = getColorVariant(colorName);
                 const customHex = variant ? variant.hex : null;
                 const hex = customHex ? customHex : ((colorName || '').startsWith('#') ? colorName : (COLORS_HEX[(colorName || '').toLowerCase()] || '#666'));
-                const border = ((colorName || '').toLowerCase() === 'white' || hex.toLowerCase() === '#ffffff' || hex.toLowerCase() === '#fff') ? ' border: 1px solid #ddd;' : '';
-                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(colorName) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + escapeAttr(hex) + ';' + border + '" title="' + escapeAttr(colorName) + '"></span>';
+                return '<span class="color-swatch ' + (i === 0 ? 'active' : '') + '" data-color="' + escapeAttr(colorName) + '" data-image="' + escapeAttr(img) + '"' + (hoverVid ? ' data-hover-video="' + escapeAttr(hoverVid) + '"' : '') + ' style="background: ' + escapeAttr(hex) + '" title="' + escapeAttr(colorName) + '"></span>';
             }).join('');
 
             const sizeButtons = sizes.map((s, i) => '<button type="button" ' + (i === 0 ? 'class="active"' : '') + ' data-size="' + escapeAttr(s) + '">' + escapeAttr(s) + '</button>').join('');
